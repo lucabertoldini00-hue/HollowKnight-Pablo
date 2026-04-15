@@ -46,9 +46,7 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
     private float jumpSpeed;
     private BaseActor belowSensor;
 
-    private boolean isAttacking = false;
-    private boolean isJumping = false;
-    private boolean isLanding = false;
+    private Playerstate currentState;
     private boolean wasOnSolid = true;
 
     private float jumpTimer = 0;
@@ -64,6 +62,10 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
     public Pablo(float x, float y, Stage s)
     {
         super(x, y, s);
+
+        // Inizializzo lo stato di pablo
+        currentState = Playerstate.IDLE;
+
         stand = loadTexture("assets/stand.png");
 
         String[] walkFile={"assets/walk1.png","assets/walk2.png","assets/walk3.png","assets/walk4.png", "assets/walk5.png", "assets/walk6.png", "assets/walk7.png", "assets/walk8.png", "assets/walk9.png" };
@@ -110,136 +112,176 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
 
     public void act(float dt)
     {
-        super.act( dt );
+        super.act(dt);
 
-        boolean currentlyOnSolid = isOnSolid();
+        boolean onSolid = isOnSolid();   // calcolato una sola volta, utilizzato ovunque di seguito
 
-        // Logica per rilevare l'inizio di una caduta (Coyote time o salto)
-        if (wasOnSolid && !currentlyOnSolid && !isJumping)
-        {
-            isJumping = true;
-            jumpTimer = totalJumpTime * 0.11f;
-        }
+        // 1. PHYSICS
 
-        // Logica per rilevare l'atterraggio
-        if (!wasOnSolid && currentlyOnSolid)
-        {
-            isJumping = false;
-            isLanding = true;
-            jumpTimer = 0;
-            elapsedTime = 0;
-        }
-
-        wasOnSolid = currentlyOnSolid;
-
-        if (!isAttacking)
-        {
-            if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.J))
-            {
-                isAttacking = true;
-                elapsedTime = 0;
-                setAnimation(attack);
-            }
-        }
-
-        if (!isAttacking)
+        // Input orizzontale (bloccato durante l'attacco)
+        if (currentState != Playerstate.ATTACKING)
         {
             if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A))
-                accelerationVec.add( -walkAcceleration, 0 );
+                accelerationVec.add(-walkAcceleration, 0);
             if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D))
-                accelerationVec.add( walkAcceleration, 0 );
+                accelerationVec.add(walkAcceleration, 0);
         }
 
-        //l'effetto di gravità agisce anche sulla velocità del personaggio
+        // La gravità fa cadere pablo sempre verso il basso
         accelerationVec.add(0, -gravity);
-        velocityVec.add( accelerationVec.x * dt, accelerationVec.y * dt );
+        velocityVec.add(accelerationVec.x * dt, accelerationVec.y * dt);
 
-        /*
-        Successivamente, se il personaggio non sta accelerando (il che accade quando il giocatore non preme sinistra o destra),
-        allora avviene una decelerazione. Innanzitutto, viene calcolata la quantità di decelerazione (che dipende da dt, la
-        quantità di tempo trascorso).
-        La direzione di camminata (positiva indica destra, negativa indica sinistra) e la velocità di camminata (il valore assoluto della velocità) vengono memorizzate nelle variabili. La velocità di camminata
-        viene diminuita della quantità di decelerazione e, se il valore diventa negativo, viene impostato su 0.
-        Dopo queste regolazioni, il valore della velocità x viene ricalcolato dalla velocità e dalla direzione di camminata
-         */
-        if ( !Gdx.input.isKeyPressed(Input.Keys.RIGHT) && !Gdx.input.isKeyPressed(Input.Keys.LEFT) &&
-                !Gdx.input.isKeyPressed(Input.Keys.D) && !Gdx.input.isKeyPressed(Input.Keys.A) )
+        // Decelera quando non viene premuto alcun tasto orizzontale
+        if (!Gdx.input.isKeyPressed(Input.Keys.RIGHT) && !Gdx.input.isKeyPressed(Input.Keys.LEFT) &&
+                !Gdx.input.isKeyPressed(Input.Keys.D)     && !Gdx.input.isKeyPressed(Input.Keys.A))
         {
-            float decelerationAmount = walkDeceleration * dt;
-            float walkDirection = (velocityVec.x > 0) ? 1 : -1;
-            float walkSpeed = Math.abs( velocityVec.x );
-            walkSpeed -= decelerationAmount;
-            if (walkSpeed < 0)
-                walkSpeed = 0;
-            velocityVec.x = walkSpeed * walkDirection;
+            float dec = walkDeceleration * dt;
+            float dir = (velocityVec.x > 0) ? 1 : -1;
+            float spd = Math.abs(velocityVec.x) - dec;
+            if (spd < 0) spd = 0;
+            velocityVec.x = spd * dir;
         }
 
-        /*
-        Oltre agli effetti della decelerazione, la velocità nelle direzioni x e y deve rimanere entro
-        i limiti stabiliti dalle variabili che memorizzano la velocità massima in queste direzioni. Ciò può essere
-        ottenuto utilizzando il metodo clamp della classe MathUtils come segue:
-         */
-        velocityVec.x = MathUtils.clamp( velocityVec.x, -maxHorizontalSpeed, maxHorizontalSpeed );
-        velocityVec.y = MathUtils.clamp( velocityVec.y, -maxVerticalSpeed, maxVerticalSpeed );
+        // Blocca entrambi gli assi
+        velocityVec.x = MathUtils.clamp(velocityVec.x, -maxHorizontalSpeed, maxHorizontalSpeed);
+        velocityVec.y = MathUtils.clamp(velocityVec.y, -maxVerticalSpeed,    maxVerticalSpeed);
 
-        //si aggiorna la posizione del personaggio
-        moveBy( velocityVec.x * dt, velocityVec.y * dt );
-        accelerationVec.set(0,0);
+        // Applica il movimento e reimposta l'accelerazione
+        moveBy(velocityVec.x * dt, velocityVec.y * dt);
+        accelerationVec.set(0, 0);
 
-        //allinea il sensore nella corretta posizione, IMPORTANTE inserirlo dopo il reset dell'accelerazione
-        belowSensor.setPosition( getX() + 4, getY() - 8 );
+        // Mantiene il sensore di terra sotto il giocatore
+        belowSensor.setPosition(getX() + 4, getY() - 8);
 
-        /*
-        Infine, devi passare da un'animazione all'altra in base allo stato (attacco, salto, movimento);
-        una velocità pari a 0 indica che il personaggio è fermo e dovrebbe usare l'animazione corrispondente.
-        Inoltre, se il personaggio si muove verso sinistra, si utilizza l'immagine speculare delle texture in modo che
-        sembri rivolto verso sinistra.
-        L'inversione dell'immagine può essere facilmente eseguita impostando la scala nella direzione x su -1 e l'immagine può essere ripristinata impostando di nuovo la scala su 1.
-         */
-        if (isAttacking)
+        // 2. STATE MACHINE — transizioni, animazioni e input per stato
+
+        switch (currentState)
         {
-            if (attack.isAnimationFinished(elapsedTime))
-            {
-                isAttacking = false;
-            }
+            case IDLE:
+            case WALKING:
+
+                // Attack maggiore priorità
+                if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.J))
+                {
+                    currentState = Playerstate.ATTACKING;
+                    elapsedTime  = 0;
+                    break;
+                }
+
+                // Jump
+                if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W))
+                {
+                    if (onSolid) { jump(); break; }
+                }
+
+                // Cammina oltre un dirupo (senza jump premuto)
+                if (wasOnSolid && !onSolid)
+                {
+                    currentState = Playerstate.FALLING;
+                    jumpTimer    = totalJumpTime * 0.55f; // Inizia la cadutà a "metà" della animazione
+                    break;
+                }
+
+                // Resta a terra — IDLE (fermo) o WALKING
+                if (Math.abs(velocityVec.x) > 1f)
+                {
+                    currentState = Playerstate.WALKING;
+                }
+                else
+                {
+                    currentState = Playerstate.IDLE;
+                }
+
+                setAnimation(currentState == Playerstate.WALKING ? walk : stand);
+                break;
+
+            case JUMPING:
+
+                jumpTimer += dt;
+
+                // Raggiunge picco (apex), inizia a cadere
+                if (velocityVec.y <= 0)
+                {
+                    currentState = Playerstate.FALLING;
+                    break;
+                }
+
+                // Colpisce qualcosa dal basso (rimbalzo sul soffitto)
+                if (onSolid && !wasOnSolid)
+                {
+                    currentState = Playerstate.LANDING;
+                    elapsedTime = 0;
+                    jumpTimer = 0;
+                    break;
+                }
+
+                updateJumpAnimation();
+                break;
+
+            case FALLING:
+
+                jumpTimer += dt; // continua ad incrementare in modo che i frame caduta fanno animazione
+
+                // Atteratto
+                if (onSolid && !wasOnSolid)
+                {
+                    currentState = Playerstate.LANDING;
+                    elapsedTime  = 0;
+                    jumpTimer    = 0;
+                    break;
+                }
+
+                updateJumpAnimation();
+                break;
+
+            case LANDING:
+
+                setAnimation(jumpLand);
+
+                if (jumpLand.isAnimationFinished(elapsedTime))
+                {
+                    currentState = (Math.abs(velocityVec.x) > 1f)
+                            ? Playerstate.WALKING
+                            : Playerstate.IDLE;
+                }
+                break;
+
+            case ATTACKING:
+
+                setAnimation(attack);
+
+                if (attack.isAnimationFinished(elapsedTime))
+                {
+                    if (!onSolid)
+                        currentState = Playerstate.FALLING;
+                    else if (Math.abs(velocityVec.x) > 1f)
+                        currentState = Playerstate.WALKING;
+                    else
+                        currentState = Playerstate.IDLE;
+                }
+                break;
         }
-        else if (isLanding)
+
+        // 3. DIREZIONE DOVE GUARDA, usa currentState
+
+        if (currentState != Playerstate.ATTACKING)
         {
-            setAnimation(jumpLand);
-            if (jumpLand.isAnimationFinished(elapsedTime))
-            {
-                isLanding = false;
-            }
+            if (velocityVec.x > 0) setScaleX(1);
+            if (velocityVec.x < 0) setScaleX(-1);
         }
-        else if (isJumping)
+
+        // 4. CONTROLLO TERRA
+
+        wasOnSolid = onSolid;
+        if (onSolid)
         {
-            jumpTimer += dt;
-            updateJumpAnimation();
+            belowSensor.setColor(Color.GREEN);
         }
         else
         {
-            if ( currentlyOnSolid )
-            {
-                belowSensor.setColor( Color.GREEN );
-                if ( velocityVec.x == 0 )
-                    setAnimation(stand);
-                else
-                    setAnimation(walk);
-
-                if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W))
-                {
-                    jump();
-                }
-            }
+            belowSensor.setColor(Color.RED);
         }
 
-        if (!isAttacking)
-        {
-            if ( velocityVec.x > 0 ) setScaleX(1);
-            if ( velocityVec.x < 0 ) setScaleX(-1);
-        }
-
-        //allinea la telecamera sul personaggio e verifica che non si superino i confini della mappa
         alignCamera();
         boundToWorld();
     }
@@ -294,8 +336,8 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
     public void jump()
     {
         velocityVec.y = jumpSpeed;
-        isJumping = true;
-        jumpTimer = 0;
-        elapsedTime = 0;
+        currentState  = Playerstate.JUMPING;
+        jumpTimer     = 0;
+        elapsedTime   = 0;
     }
 }

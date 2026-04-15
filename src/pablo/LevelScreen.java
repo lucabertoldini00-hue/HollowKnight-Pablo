@@ -54,16 +54,11 @@ public class LevelScreen extends BaseScreen
         }
     }
 
-    //metodo che gestisce il salto del personaggio
+    // Metodo che gestisce il salto del personaggio
     public boolean keyDown(int keyCode)
     {
-        if (keyCode == Input.Keys.SPACE || keyCode == Input.Keys.W)
-        {
-            if ( pablo.isOnSolid() )
-            {
-                pablo.jump();
-            }
-        }
+        // Ora il jump è gestito nella "Pablo state machine"
+        // Qua si possono aggiungere funzionalità future
         return false;
     }
 }

@@ -1,4 +1,12 @@
+// Playerstate.java
 package pablo.entities.player;
 
-public class Playerstate {
+public enum Playerstate
+{
+    IDLE,
+    WALKING,
+    JUMPING,
+    FALLING,
+    LANDING,
+    ATTACKING
 }

@@ -59,6 +59,18 @@ public class LevelScreen extends BaseScreen
     {
         // Ora il jump è gestito nella "Pablo state machine"
         // Qua si possono aggiungere funzionalità future
+        // Questo è quello che dovrebbe succedere --^
+
+        // Questa è la versione vecchia e funzionanete, toglientdo il codice sotto tranne
+        // return false dovrebbe funzionare ma non va :(
+
+        if (keyCode == Input.Keys.SPACE || keyCode == Input.Keys.W)
+        {
+            if ( pablo.isOnSolid() )
+            {
+                pablo.jump();
+            }
+        }
         return false;
     }
 }

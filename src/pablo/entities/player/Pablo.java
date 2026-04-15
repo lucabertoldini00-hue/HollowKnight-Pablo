@@ -192,7 +192,14 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
                     currentState = Playerstate.IDLE;
                 }
 
-                setAnimation(currentState == Playerstate.WALKING ? walk : stand);
+                if (currentState == Playerstate.WALKING)
+                {
+                    setAnimation(walk);
+                }
+                else
+                {
+                    setAnimation(stand);
+                }
                 break;
 
             case JUMPING:
@@ -240,9 +247,14 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
 
                 if (jumpLand.isAnimationFinished(elapsedTime))
                 {
-                    currentState = (Math.abs(velocityVec.x) > 1f)
-                            ? Playerstate.WALKING
-                            : Playerstate.IDLE;
+                    if (Math.abs(velocityVec.x) > 1f)
+                    {
+                        currentState = Playerstate.WALKING;
+                    }
+                    else
+                    {
+                        currentState = Playerstate.IDLE;
+                    }
                 }
                 break;
 

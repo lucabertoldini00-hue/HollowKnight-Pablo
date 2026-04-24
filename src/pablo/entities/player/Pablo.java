@@ -10,6 +10,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import pablo.Object;
 import pablo.framework.BaseActor;
+import pablo.entities.combat.Hitbox;
 
 public class Pablo extends BaseActor
 {
@@ -165,6 +166,7 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
                 {
                     currentState = Playerstate.ATTACKING;
                     elapsedTime  = 0;
+                    spawnAttackHitbox();
                     break;
                 }
 
@@ -351,5 +353,28 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
         currentState  = Playerstate.JUMPING;
         jumpTimer     = 0;
         elapsedTime   = 0;
+    }
+
+    private void spawnAttackHitbox()
+    {
+        float hitboxWidth  = 40f;
+        float hitboxHeight = 30f;
+
+        // vertically centered on Pablo's body
+        float hitboxY = getY() + getHeight() / 2f - hitboxHeight / 2f;
+
+        // getScaleX() is 1 (right) or -1 (left) — set during IDLE/WALKING, frozen during ATTACKING
+        float hitboxX;
+
+        if (getScaleX() > 0) {
+            // facing right → place to the right
+            hitboxX = getX() + getWidth();
+        } else {
+            // facing left → place to the left
+            hitboxX = getX() - hitboxWidth;
+        }
+
+        // damage=10, lifetime=0.05s ≈ 3 frames at 60 fps
+        new Hitbox(hitboxX, hitboxY, hitboxWidth, hitboxHeight, 10, 0.05f, getStage());
     }
 }

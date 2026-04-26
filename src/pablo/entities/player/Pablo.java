@@ -30,6 +30,10 @@ public class Pablo extends BaseActor
     private float gravity;
     private float maxVerticalSpeed;
 
+    // Health — maxHealth valore massimo per regolare la vita, dovrebbe diventare +20 (uso 5 per il test)
+    private int maxHealth;
+    private int health;
+
     /*
     Variabili utili al salto.
     Bisogna determinare quando il personaggio è a terra e quindi in grado di saltare.
@@ -80,6 +84,9 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
         gravity = 700;
         maxVerticalSpeed = 1000;
         jumpSpeed = 500;
+
+        maxHealth = 5;
+        health    = maxHealth;
 
         // Calcolo il tempo "fisico" del salto.
         // Tempo fino all'apice (altezza max salto) = jumpSpeed/gravity. Il tempo totale è il doppio di questo.
@@ -377,4 +384,23 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
         // damage=10, lifetime=0.05s ≈ 3 frames at 60 fps
         new Hitbox(hitboxX, hitboxY, hitboxWidth, hitboxHeight, 10, 0.05f, getStage());
     }
+
+    public void takeDamage(int amount)
+    {
+        health -= amount;
+        if (health < 0)
+            health = 0;
+        if (health == 0)
+            System.out.println("Pablo died!"); // placeholder — death screen comes later
+    }
+
+    public void heal(int amount)
+    {
+        health += amount;
+        if (health > maxHealth)
+            health = maxHealth;
+    }
+
+    public int getHealth()    { return health; }
+    public int getMaxHealth() { return maxHealth; }
 }

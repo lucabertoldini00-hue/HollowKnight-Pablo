@@ -16,9 +16,16 @@ import pablo.framework.BaseGame;
 import pablo.framework.BaseScreen;
 import pablo.framework.TilemapActor;
 
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
+import pablo.framework.BaseGame;
+
 public class LevelScreen extends BaseScreen
 {
     private Pablo pablo;
+
+    private ProgressBar healthBar;
+    private Label healthLabel;
 
     public void initialize()
     {
@@ -41,6 +48,16 @@ public class LevelScreen extends BaseScreen
         MapObject startPoint  = tma.getRectangleList("start").get(0);
         MapProperties startProps = startPoint.getProperties();
         pablo = new Pablo((float) startProps.get("x"), (float) startProps.get("y"), mainStage);
+
+        healthLabel = new Label("HP", BaseGame.labelStyle);
+
+        healthBar = new ProgressBar(0, pablo.getMaxHealth(), 1, false,
+                BaseGame.progressBarStyle);
+        healthBar.setValue(pablo.getMaxHealth()); // Inizia piena
+
+        uiTable.top().left();
+        uiTable.add(healthLabel).pad(10).left().row();
+        uiTable.add(healthBar).width(200).height(20).padLeft(10).left().row();
 
         // Spawn Crawlid (prova)
         for (MapObject obj : tma.getTileList("Crawlid"))
@@ -66,6 +83,8 @@ public class LevelScreen extends BaseScreen
 
     public void update(float dt)
     {
+        healthBar.setValue(pablo.getHealth());
+
         // Collisioni Pablo
         for (BaseActor actor : BaseActor.getList(mainStage, Object.class.getName()))
         {
@@ -115,9 +134,15 @@ public class LevelScreen extends BaseScreen
             return true;
         }
 
+        if (keyCode == Input.Keys.K)
+        {
+            pablo.takeDamage(1);
+            return true;
+        }
+
         if (keyCode == Input.Keys.SPACE || keyCode == Input.Keys.W)
         {
-            if ( pablo.isOnSolid() )
+            if (pablo.isOnSolid())
             {
                 pablo.jump();
             }

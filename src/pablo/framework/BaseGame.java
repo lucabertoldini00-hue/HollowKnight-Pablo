@@ -17,6 +17,13 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
 import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
 
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Pixmap.Format;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar.ProgressBarStyle;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+
 /**
  *  Created when program is launched;
  *  manages the screens that appear during the game.
@@ -30,6 +37,7 @@ public abstract class BaseGame extends Game
 
     public static LabelStyle labelStyle;
     public static TextButtonStyle textButtonStyle;
+    public static ProgressBarStyle progressBarStyle;
 
     /**
      *  Called when game is initialized; stores global reference to game object.
@@ -67,6 +75,35 @@ public abstract class BaseGame extends Game
         labelStyle.font = customFont;
 
         textButtonStyle = new TextButtonStyle();
+
+        // dark gray background track
+        Pixmap bgPixmap = new Pixmap(1, 1, Format.RGBA8888);
+        bgPixmap.setColor(0x555555FF);
+        bgPixmap.fill();
+        TextureRegionDrawable bgDrawable = new TextureRegionDrawable(
+                new TextureRegion(new Texture(bgPixmap)));
+        bgPixmap.dispose();
+
+        // white filled portion
+        Pixmap fillPixmap = new Pixmap(1, 1, Format.RGBA8888);
+        fillPixmap.setColor(0xFFFFFFFF);
+        fillPixmap.fill();
+        TextureRegionDrawable fillDrawable = new TextureRegionDrawable(
+                new TextureRegion(new Texture(fillPixmap)));
+        fillPixmap.dispose();
+
+        // empty drawable for the knob handle (no visible handle needed)
+        Pixmap knobPixmap = new Pixmap(1, 1, Format.RGBA8888);
+        knobPixmap.setColor(0x00000000);
+        knobPixmap.fill();
+        TextureRegionDrawable knobDrawable = new TextureRegionDrawable(
+                new TextureRegion(new Texture(knobPixmap)));
+        knobPixmap.dispose();
+
+        progressBarStyle = new ProgressBarStyle();
+        progressBarStyle.background = bgDrawable;
+        progressBarStyle.knobBefore  = fillDrawable;
+        progressBarStyle.knob        = knobDrawable;
 
         Texture   buttonTex   = new Texture( Gdx.files.internal("assets/button.png") );
         NinePatch buttonPatch = new NinePatch(buttonTex, 24,24,24,24);

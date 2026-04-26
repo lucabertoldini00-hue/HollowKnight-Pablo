@@ -12,6 +12,7 @@ import pablo.entities.enemies.Tiktik;
 import pablo.entities.enemies.Vengefly;
 import pablo.entities.player.Pablo;
 import pablo.framework.BaseActor;
+import pablo.framework.BaseGame;
 import pablo.framework.BaseScreen;
 import pablo.framework.TilemapActor;
 
@@ -108,10 +109,18 @@ public class LevelScreen extends BaseScreen
 
     public boolean keyDown(int keyCode)
     {
+        if (keyCode == Input.Keys.ESCAPE || keyCode == Input.Keys.P)
+        {
+            BaseGame.setActiveScreen(new PauseScreen(this));
+            return true;
+        }
+
         if (keyCode == Input.Keys.SPACE || keyCode == Input.Keys.W)
         {
-            if (pablo.isOnSolid())
+            if ( pablo.isOnSolid() )
+            {
                 pablo.jump();
+            }
         }
         return false;
     }

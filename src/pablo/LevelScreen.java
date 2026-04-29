@@ -20,6 +20,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
 import pablo.framework.BaseGame;
 
+import com.badlogic.gdx.graphics.Camera;
+import pablo.entities.enemies.FalseKnight;
+
 public class LevelScreen extends BaseScreen
 {
     private Pablo pablo;
@@ -27,9 +30,13 @@ public class LevelScreen extends BaseScreen
     private ProgressBar healthBar;
     private Label healthLabel;
 
+    private FalseKnight falseKnight;
+    private float shakeDuration  = 0f;
+    private float shakeIntensity = 5f;
+
     public void initialize()
     {
-        TilemapActor tma = new TilemapActor("assets/mappa1.tmx", mainStage);
+        TilemapActor tma = new TilemapActor("assets/Maps/mapPablo2.tmx", mainStage);
 
         // Oggetti solidi
         for (MapObject obj : tma.getRectangleList("solido"))
@@ -79,6 +86,17 @@ public class LevelScreen extends BaseScreen
             MapProperties props = obj.getProperties();
             new Vengefly((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
+
+        // Spawn FalseKnight
+        MapObject fkPoint   = tma.getRectangleList("FalseKnight").get(0);
+        MapProperties fkProps = fkPoint.getProperties();
+        falseKnight = new FalseKnight(
+                (float) fkProps.get("x"),
+                (float) fkProps.get("y"),
+                mainStage,
+                pablo
+        );
+        falseKnight.setScreenShakeCallback(() -> shakeDuration = 0.15f);
     }
 
     public void update(float dt)
@@ -124,6 +142,38 @@ public class LevelScreen extends BaseScreen
                 }
             }
         }
+
+        // Screen shake
+        if (shakeDuration > 0) {
+            shakeDuration -= dt;
+            Camera cam = mainStage.getCamera();
+            cam.position.y += (Math.random() > 0.5 ? 1 : -1) * shakeIntensity;
+            cam.update();
+        }
+
+        // FalseKnight collision with solids
+        if (!falseKnight.isDead()) {
+            for (BaseActor sActor : BaseActor.getList(mainStage, Object.class.getName())) {
+                Object solid = (Object) sActor;
+                if (falseKnight.overlaps(solid) && solid.isEnable()) {
+                    Vector2 offset = falseKnight.preventOverlap(solid);
+                    if (offset != null) {
+                        if (Math.abs(offset.x) > Math.abs(offset.y)) {
+                            falseKnight.velocityVec.x = 0;
+                            falseKnight.onWallHit();
+                        } else {
+                            falseKnight.velocityVec.y = 0;
+                            falseKnight.onGroundLanded();
+                        }
+                    }
+                }
+            }
+        }
+
+        // Mace hits Pablo
+        if (!falseKnight.isDead() && falseKnight.maceOverlapsPablo()) {
+            pablo.takeDamage(1);
+        }
     }
 
     public boolean keyDown(int keyCode)
@@ -137,6 +187,12 @@ public class LevelScreen extends BaseScreen
         if (keyCode == Input.Keys.K)
         {
             pablo.takeDamage(1);
+            return true;
+        }
+
+        if (keyCode == Input.Keys.O)
+        {
+            falseKnight.takeDamage(1);
             return true;
         }
 

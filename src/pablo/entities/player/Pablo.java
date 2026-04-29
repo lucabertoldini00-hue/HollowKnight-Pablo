@@ -33,6 +33,7 @@ public class Pablo extends BaseActor
     // Health — maxHealth valore massimo per regolare la vita, dovrebbe diventare +20 (uso 5 per il test)
     private int maxHealth;
     private int health;
+    private boolean isDead = false;
 
     /*
     Variabili utili al salto.
@@ -385,13 +386,17 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
         new Hitbox(hitboxX, hitboxY, hitboxWidth, hitboxHeight, 10, 0.05f, getStage());
     }
 
+    // KEEP and update this one
     public void takeDamage(int amount)
     {
+        if (isDead) return;          // add this line
         health -= amount;
-        if (health < 0)
+        if (health <= 0)             // change < to <= to be safe
+        {
             health = 0;
-        if (health == 0)
-            System.out.println("Pablo died!"); // placeholder — death screen comes later
+            isDead = true;           // add this line
+            System.out.println("Pablo died!");
+        }
     }
 
     public void heal(int amount)
@@ -400,6 +405,8 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
         if (health > maxHealth)
             health = maxHealth;
     }
+
+    public boolean isDead() { return isDead; }
 
     public int getHealth()    { return health; }
     public int getMaxHealth() { return maxHealth; }

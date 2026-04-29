@@ -68,6 +68,7 @@ public class FalseKnight extends BaseActor {
     // Animations
     // -------------------------------------------------------------------------
     private Animation animIdle;
+    private Animation animTurn;
     private Animation animRunAnticipate;
     private Animation animRun;
     private Animation animAttackAnticipate;
@@ -107,80 +108,84 @@ public class FalseKnight extends BaseActor {
     // =========================================================================
     private void loadAnimations() {
 
-        // IDLE — ~12 FPS = 0.083s, breathing loop: 2→3→4→5→4→3
+        // IDLE — breathing loop
         animIdle = loadAnimationFromFiles(new String[]{
-                PATH+"idle1.png",
                 PATH+"idle2.png", PATH+"idle3.png", PATH+"idle4.png", PATH+"idle5.png",
                 PATH+"idle4.png", PATH+"idle3.png", PATH+"idle2.png"
         }, 0.083f, true);
 
-        // RUN ANTICIPATE — 60ms each, plays once before patrol begins
+        // TURN — single frame, held ~40ms (handled by timer in tickTurn)
+        animTurn = loadAnimationFromFiles(new String[]{
+                PATH+"turn.png"
+        }, 0.040f, false);
+
+        // RUN ANTICIPATE
         animRunAnticipate = loadAnimationFromFiles(new String[]{
-                PATH+"run_anticipate1.png", PATH+"run_anticipate2.png"
+                PATH+"run(anticipate)1.png", PATH+"run(anticipate)2.png"
         }, 0.060f, false);
 
-        // RUN — ~20 FPS = 0.050s, looping
+        // RUN
         animRun = loadAnimationFromFiles(new String[]{
                 PATH+"run1.png", PATH+"run2.png", PATH+"run3.png",
                 PATH+"run4.png", PATH+"run5.png"
         }, 0.050f, true);
 
-        // ATTACK ANTICIPATE — frames 1-4 at 50ms, frame 5 held ~175ms (3× duplicate)
+        // ATTACK ANTICIPATE — frame 5 duplicated to fake the hold
         animAttackAnticipate = loadAnimationFromFiles(new String[]{
-                PATH+"attack_anticipate1.png", PATH+"attack_anticipate2.png",
-                PATH+"attack_anticipate3.png", PATH+"attack_anticipate4.png",
-                PATH+"attack_anticipate5.png", PATH+"attack_anticipate5.png",
-                PATH+"attack_anticipate5.png"
+                PATH+"attack(anticipate)1.png", PATH+"attack(anticipate)2.png",
+                PATH+"attack(anticipate)3.png", PATH+"attack(anticipate)4.png",
+                PATH+"attack(anticipate)5.png", PATH+"attack(anticipate)5.png",
+                PATH+"attack(anticipate)5.png"
         }, 0.050f, false);
 
-        // ATTACK — lightning fast: 30ms each; attack3 is the impact frame (hit-stop applied in code)
+        // ATTACK — lightning fast
         animAttack = loadAnimationFromFiles(new String[]{
                 PATH+"attack1.png", PATH+"attack2.png", PATH+"attack3.png"
         }, 0.030f, false);
 
-        // ATTACK RECOVER — 60ms each, recover5 held by duplicates (~150ms)
+        // ATTACK RECOVER — recover5 held by duplicates
         animAttackRecover = loadAnimationFromFiles(new String[]{
-                PATH+"attack_recover1.png", PATH+"attack_recover2.png",
-                PATH+"attack_recover3.png", PATH+"attack_recover4.png",
-                PATH+"attack_recover5.png", PATH+"attack_recover5.png",
-                PATH+"attack_recover5.png"
+                PATH+"attack(recover)1.png", PATH+"attack(recover)2.png",
+                PATH+"attack(recover)3.png", PATH+"attack(recover)4.png",
+                PATH+"attack(recover)5.png", PATH+"attack(recover)5.png",
+                PATH+"attack(recover)5.png"
         }, 0.060f, false);
 
-        // JUMP ANTICIPATE — 40ms each
+        // JUMP ANTICIPATE
         animJumpAnticipate = loadAnimationFromFiles(new String[]{
-                PATH+"jump_anticipate1.png", PATH+"jump_anticipate2.png",
-                PATH+"jump_anticipate3.png"
+                PATH+"jump(anticipate)1.png", PATH+"jump(anticipate)2.png",
+                PATH+"jump(anticipate)3.png"
         }, 0.040f, false);
 
-        // JUMP UP — in-air phases (upward → apex → falling begins → fast fall)
+        // JUMP UP — in-air phases
         animJumpUp = loadAnimationFromFiles(new String[]{
                 PATH+"jump1.png", PATH+"jump2.png", PATH+"jump3.png", PATH+"jump4.png"
         }, 0.060f, false);
 
-        // JUMP ATTACK FALL — jumpAttack1 = apex hold, jumpAttack2 = rapid fall
+        // JUMP ATTACK FALL — apex hold then rapid fall
         animJumpAttackFall = loadAnimationFromFiles(new String[]{
-                PATH+"jumpAttack1.png", PATH+"jumpAttack1.png",    // hold apex longer
+                PATH+"jumpAttack1.png", PATH+"jumpAttack1.png",
                 PATH+"jumpAttack2.png"
         }, 0.050f, false);
 
-        // JUMP LAND — 30ms / 50ms / 60ms approximated as duplicates at 30ms
+        // JUMP LAND
         animJumpLand = loadAnimationFromFiles(new String[]{
                 PATH+"land1.png",
                 PATH+"land2.png", PATH+"land2.png",
                 PATH+"land3.png", PATH+"land3.png"
         }, 0.030f, false);
 
-        // STUN ROLL — 66ms each, plays while sliding backward
+        // STUN ROLL
         animStunRoll = loadAnimationFromFiles(new String[]{
-                PATH+"stun_roll1.png", PATH+"stun_roll2.png", PATH+"stun_roll3.png",
-                PATH+"stun_roll4.png", PATH+"stun_roll5.png"
+                PATH+"stun(roll)1.png", PATH+"stun(roll)2.png", PATH+"stun(roll)3.png",
+                PATH+"stun(roll)4.png", PATH+"stun(roll)5.png"
         }, 0.066f, false);
 
-        // STUN END — 66ms each, stun_end5 held by duplicates
+        // STUN END — stun(end)5 held by duplicates
         animStunEnd = loadAnimationFromFiles(new String[]{
-                PATH+"stun_end1.png", PATH+"stun_end2.png", PATH+"stun_end3.png",
-                PATH+"stun_end4.png",
-                PATH+"stun_end5.png", PATH+"stun_end5.png", PATH+"stun_end5.png"
+                PATH+"stun(end)1.png", PATH+"stun(end)2.png", PATH+"stun(end)3.png",
+                PATH+"stun(end)4.png",
+                PATH+"stun(end)5.png", PATH+"stun(end)5.png", PATH+"stun(end)5.png"
         }, 0.066f, false);
     }
 
@@ -259,7 +264,7 @@ public class FalseKnight extends BaseActor {
     }
 
     private void tickTurn() {
-        // Hold for ~40ms then flip
+        setAnimation(animTurn);
         velocityVec.x = 0;
         if (stateTimer > 0.040f) {
             facingDir = -facingDir;

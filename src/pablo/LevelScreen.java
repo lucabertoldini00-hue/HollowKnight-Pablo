@@ -70,7 +70,7 @@ public class LevelScreen extends BaseScreen
         for (MapObject obj : tma.getTileList("Crawlid"))
         {
             MapProperties props = obj.getProperties();
-            new Crawlid((float) props.get("x"), (float) props.get("y"), mainStage);
+            new Crawlid((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
 
         // Spawn Tiktik (prova)

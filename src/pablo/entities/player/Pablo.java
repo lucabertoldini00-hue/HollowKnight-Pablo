@@ -383,7 +383,7 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
         }
 
         // damage=10, lifetime=0.05s ≈ 3 frames at 60 fps
-        new Hitbox(hitboxX, hitboxY, hitboxWidth, hitboxHeight, 10, 0.05f, getStage());
+        new Hitbox(hitboxX, hitboxY, hitboxWidth, hitboxHeight, 4, 0.05f, getStage());
     }
 
     // KEEP and update this one

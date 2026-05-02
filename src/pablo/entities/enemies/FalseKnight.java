@@ -42,7 +42,7 @@ public class FalseKnight extends BaseActor {
     // -------------------------------------------------------------------------
     // Combat
     // -------------------------------------------------------------------------
-    private int     hp              = 6;
+    private int     hp              = 50;
     private boolean isDead          = false;
     private float   hitStopTimer    = 0f;
     private boolean hitStopFired    = false;   // prevents re-triggering per attack state

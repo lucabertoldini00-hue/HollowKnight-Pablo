@@ -67,29 +67,39 @@ public class LevelScreen extends BaseScreen
         uiTable.add(healthBar).width(200).height(20).padLeft(10).left().row();
 
         // Spawn Crawlid
-        for (MapObject obj : tma.getRectangleList("Crawlid"))  // was getTileList
-        {
-            MapProperties props = obj.getProperties();
-            new Crawlid((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
-        }
+        MapObject crawlidPoint = tma.getRectangleList("Crawlid").get(0);
+        MapProperties crawlidProps = crawlidPoint.getProperties();
+        new Crawlid(
+                (float) crawlidProps.get("x"),
+                (float) crawlidProps.get("y"),
+                mainStage,
+                pablo
+        );
 
-// Spawn Tiktik
-        for (MapObject obj : tma.getRectangleList("Tiktik"))   // was getTileList
-        {
-            MapProperties props = obj.getProperties();
-            new Tiktik((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
-        }
+        // Spawn Tiktik
+        MapObject tiktikPoint = tma.getRectangleList("Tiktik").get(0);
+        MapProperties tiktikProps = tiktikPoint.getProperties();
+        new Tiktik(
+                (float) tiktikProps.get("x"),
+                (float) tiktikProps.get("y"),
+                mainStage,
+                pablo
+        );
 
-// Spawn Vengefly
-        for (MapObject obj : tma.getRectangleList("Vengefly")) // was getTileList
-        {
-            MapProperties props = obj.getProperties();
-            new Vengefly((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
-        }
+        // Spawn Vengefly
+        MapObject vengeflyPoint = tma.getRectangleList("Vengefly").get(0);
+        MapProperties vengeflyProps = vengeflyPoint.getProperties();
+        new Vengefly(
+                (float) vengeflyProps.get("x"),
+                (float) vengeflyProps.get("y"),
+                mainStage,
+                pablo
+        );
 
         // Spawn FalseKnight
-        MapObject fkPoint   = tma.getRectangleList("FalseKnight").get(0);
+        MapObject fkPoint = tma.getRectangleList("FalseKnight").get(0);
         MapProperties fkProps = fkPoint.getProperties();
+
         falseKnight = new FalseKnight(
                 (float) fkProps.get("x"),
                 (float) fkProps.get("y"),

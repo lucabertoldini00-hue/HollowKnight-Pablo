@@ -84,7 +84,7 @@ public class Vengefly extends Enemy
         this.spawnX = x;
         this.spawnY = y;
 
-        health = 4; // one hit from Pablo's 4-dmg nail
+        health = 8;
 
         // --- Idle: 5 frames, 50ms each, looping ---
         animIdle = loadAnimationFromFiles(new String[]{

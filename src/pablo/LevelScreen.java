@@ -66,22 +66,22 @@ public class LevelScreen extends BaseScreen
         uiTable.add(healthLabel).pad(10).left().row();
         uiTable.add(healthBar).width(200).height(20).padLeft(10).left().row();
 
-        // Spawn Crawlid (prova)
-        for (MapObject obj : tma.getTileList("Crawlid"))
+        // Spawn Crawlid
+        for (MapObject obj : tma.getRectangleList("Crawlid"))  // was getTileList
         {
             MapProperties props = obj.getProperties();
             new Crawlid((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
 
-        // Spawn Tiktik (prova)
-        for (MapObject obj : tma.getTileList("Tiktik"))
+// Spawn Tiktik
+        for (MapObject obj : tma.getRectangleList("Tiktik"))   // was getTileList
         {
             MapProperties props = obj.getProperties();
             new Tiktik((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
 
-        // Spawn Vengefly (prova)
-        for (MapObject obj : tma.getTileList("Vengefly"))
+// Spawn Vengefly
+        for (MapObject obj : tma.getRectangleList("Vengefly")) // was getTileList
         {
             MapProperties props = obj.getProperties();
             new Vengefly((float) props.get("x"), (float) props.get("y"), mainStage, pablo);

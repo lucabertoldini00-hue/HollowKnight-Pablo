@@ -8,5 +8,7 @@ public enum Playerstate
     JUMPING,
     FALLING,
     LANDING,
-    ATTACKING
+    ATTACKING,
+    HEALING,
+    DASHING
 }

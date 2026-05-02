@@ -235,8 +235,12 @@ public class Crawlid extends Enemy
         if (health <= 0)
         {
             health = 0;
-            // Record which side Pablo is on so knockback flies the right way
-            deathKnockbackDir = (pablo.getX() < getX()) ? 1f : -1f;
+
+            if (pablo.getX() < getX())
+                deathKnockbackDir = 1f;
+            else
+                deathKnockbackDir = -1f;
+
             hitStopTimer = HIT_STOP_DURATION;
             enterState(State.HIT_STOP);
         }

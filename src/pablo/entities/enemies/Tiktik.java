@@ -248,7 +248,12 @@ public class Tiktik extends Enemy
         if (health <= 0)
         {
             health = 0;
-            deathKnockbackDir = (pablo.getX() < getX()) ? 1f : -1f;
+
+            if (pablo.getX() < getX())
+                deathKnockbackDir = 1f;
+            else
+                deathKnockbackDir = -1f;
+
             hitStopTimer = HIT_STOP_DURATION;
             enterState(State.HIT_STOP);
         }

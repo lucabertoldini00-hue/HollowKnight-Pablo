@@ -77,7 +77,7 @@ public class LevelScreen extends BaseScreen
         for (MapObject obj : tma.getTileList("Tiktik"))
         {
             MapProperties props = obj.getProperties();
-            new Tiktik((float) props.get("x"), (float) props.get("y"), mainStage);
+            new Tiktik((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
 
         // Spawn Vengefly (prova)

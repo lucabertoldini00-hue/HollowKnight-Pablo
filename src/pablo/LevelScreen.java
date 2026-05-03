@@ -42,12 +42,12 @@ public class LevelScreen extends BaseScreen
     // -----------------------------------------------------------------------
     // Ricettacolo anima — struttura dati
     //
-    // Stato 0  → "9.png"       (vuoto, 1 frame)
+    // Stato 0  → texture generata (vuoto, 1 frame)
     // Stato 1  → "1_1..1_6"   (6 frame)
     // ...
     // Stato 8  → "8_1..8_6"   (6 frame)
     //
-    // Soglie anima (0-99): lo stato aumenta ogni ~11 punti
+    // Soglie anima (0-100): lo stato aumenta ogni ~12 punti
     // -----------------------------------------------------------------------
     private static final int   VESSEL_STATES      = 9;    // 0..8
     private static final int   FRAMES_PER_STATE   = 6;    // stati 1-8
@@ -99,6 +99,7 @@ public class LevelScreen extends BaseScreen
                 (float) startProps.get("y"),
                 mainStage
         );
+        pablo.setSoul(0);
 
         // -----------------------------------------------------------------------
         // UI — maschere HP
@@ -121,11 +122,10 @@ public class LevelScreen extends BaseScreen
         vesselTextures  = new Texture[VESSEL_STATES][];
         vesselDrawables = new TextureRegionDrawable[VESSEL_STATES][];
 
-        // Stato 0: "9.png" — 1 frame
+        // Stato 0: texture generata (vuoto) — 1 frame
         vesselTextures[0]  = new Texture[1];
         vesselDrawables[0] = new TextureRegionDrawable[1];
-        vesselTextures[0][0]  = loadTextureSafe(SOUL_DIR + "9.png",
-                new Color(0.1f, 0.1f, 0.1f, 1f));
+        vesselTextures[0][0]  = createEmptyVesselTexture(48);
         vesselDrawables[0][0] = new TextureRegionDrawable(
                 new TextureRegion(vesselTextures[0][0]));
 
@@ -285,11 +285,7 @@ public class LevelScreen extends BaseScreen
 
         // Mappa soul (0-99) → stato (0-8)
         // stato 0 = vuoto, stati 1-8 proporzionali
-        int vesselState;
-        if (soul <= 0)
-            vesselState = 0;
-        else
-            vesselState = Math.min(1 + (soul - 1) * 8 / (Pablo.MAX_SOUL - 1), 8);
+        int vesselState = getVesselStateForSoul(soul);
 
         // Se cambio stato, resetta il timer di animazione
         if (vesselState != lastVesselState)
@@ -332,7 +328,7 @@ public class LevelScreen extends BaseScreen
         }
         if (keyCode == Input.Keys.K) { pablo.takeDamage(1);       return true; }
         if (keyCode == Input.Keys.O) { falseKnight.takeDamage(1); return true; }
-        if (keyCode == Input.Keys.L) { pablo.gainSoul(33);        return true; }
+        if (keyCode == Input.Keys.L) { bumpSoulToNextVesselState(); return true; }
 
         if (keyCode == Input.Keys.SPACE || keyCode == Input.Keys.W)
             if (pablo.isOnSolid()) pablo.jump();
@@ -360,6 +356,54 @@ public class LevelScreen extends BaseScreen
             pix.dispose();
             return t;
         }
+    }
+
+    private Texture createEmptyVesselTexture(int size)
+    {
+        // Cerchio scuro su fondo trasparente per indicare il vuoto.
+        Pixmap pix = new Pixmap(size, size, Pixmap.Format.RGBA8888);
+        pix.setColor(0f, 0f, 0f, 0f);
+        pix.fill();
+
+        int cx = size / 2;
+        int cy = size / 2;
+        int radius = Math.max(1, (size / 2) - 2);
+
+        pix.setColor(0.12f, 0.12f, 0.12f, 1f);
+        pix.fillCircle(cx, cy, radius - 2);
+
+        pix.setColor(0.35f, 0.35f, 0.35f, 1f);
+        pix.drawCircle(cx, cy, radius - 1);
+
+        Texture t = new Texture(pix);
+        pix.dispose();
+        return t;
+    }
+
+    private int getVesselStateForSoul(int soul)
+    {
+        if (soul <= 0) return 0;
+        return Math.min(1 + (soul - 1) * 8 / (Pablo.MAX_SOUL - 1), 8);
+    }
+
+    private int getSoulForVesselState(int state)
+    {
+        if (state <= 0) return 0;
+        if (state >= 8) return Pablo.MAX_SOUL;
+
+        for (int soul = 1; soul <= Pablo.MAX_SOUL; soul++)
+        {
+            if (getVesselStateForSoul(soul) == state)
+                return soul;
+        }
+        return Pablo.MAX_SOUL;
+    }
+
+    private void bumpSoulToNextVesselState()
+    {
+        int currentState = getVesselStateForSoul(pablo.getSoul());
+        int nextState = Math.min(currentState + 1, 8);
+        pablo.setSoul(getSoulForVesselState(nextState));
     }
 
     // -----------------------------------------------------------------------

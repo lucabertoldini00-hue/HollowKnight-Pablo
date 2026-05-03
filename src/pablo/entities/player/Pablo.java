@@ -29,7 +29,7 @@ public class Pablo extends BaseActor
     private boolean isDead = false;
 
     // Anima
-    public  static final int MAX_SOUL      = 99;
+    public  static final int MAX_SOUL      = 100;
     private static final int SOUL_PER_HEAL = 33;
     private int soul = 0;
 
@@ -107,7 +107,7 @@ public class Pablo extends BaseActor
         maxHorizontalSpeed = 200;
         walkAcceleration   = 200;
         walkDeceleration   = 200;
-        gravity            = 700;
+        gravity            = 500;
         maxVerticalSpeed   = 1000;
         jumpSpeed          = 500;
 
@@ -554,6 +554,11 @@ public class Pablo extends BaseActor
     public void gainSoul(int amount)
     {
         soul = Math.min(soul + amount, MAX_SOUL);
+    }
+
+    public void setSoul(int amount)
+    {
+        soul = MathUtils.clamp(amount, 0, MAX_SOUL);
     }
 
     public int     getSoul()          { return soul; }

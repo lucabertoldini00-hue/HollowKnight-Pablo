@@ -200,6 +200,7 @@ public class OptionsScreen extends BaseScreen
         // 1. Sfondo (stessa immagine del menù)
         if (background != null)
         {
+            mainStage.getViewport().apply();
             batch.setProjectionMatrix(mainStage.getCamera().combined);
             batch.begin();
             batch.draw(background, 0, 0, viewportWidth, viewportHeight);
@@ -207,6 +208,7 @@ public class OptionsScreen extends BaseScreen
         }
 
         // 2. Overlay semitrasparente
+        uiStage.getViewport().apply();
         Gdx.gl.glEnable(GL20.GL_BLEND);
         shapes.setProjectionMatrix(uiStage.getCamera().combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);

@@ -8,6 +8,7 @@ public class PabloGame extends BaseGame
     public void create()
     {
         super.create();
-        setActiveScreen( new IntroScreen() ); // era: new MenuScreen()
+        // Ora il fullscreen è già impostato dal Launcher
+        setActiveScreen( new IntroScreen() );
     }
 }

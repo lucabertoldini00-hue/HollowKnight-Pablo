@@ -1,7 +1,7 @@
 // Playerstate.java
 package pablo.entities.player;
 
-public enum Playerstate
+public enum PabloState
 {
     IDLE,
     WALKING,

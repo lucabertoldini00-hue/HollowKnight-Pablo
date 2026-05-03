@@ -22,6 +22,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
 import com.badlogic.gdx.graphics.Camera;
 import pablo.entities.enemies.falseKnight.FalseKnight;
 
+import pablo.entities.enemies.huskHornhead.HuskHornhead;
+
 public class LevelScreen extends BaseScreen
 {
     private Pablo pablo;
@@ -105,6 +107,13 @@ public class LevelScreen extends BaseScreen
         System.out.println("Crawlid count in stage: " + BaseActor.count(mainStage, Crawlid.class.getName()));
         System.out.println("Tiktik count in stage: "  + BaseActor.count(mainStage, Tiktik.class.getName()));
         System.out.println("Vengefly count in stage: " + BaseActor.count(mainStage, Vengefly.class.getName()));
+
+        // Spawn HuskHornhead
+        for (MapObject obj : tma.getRectangleList("HuskHornhead"))
+        {
+            MapProperties props = obj.getProperties();
+            new HuskHornhead((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
+        }
     }
 
     public void update(float dt)

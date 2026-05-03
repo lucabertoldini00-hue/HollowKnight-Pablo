@@ -52,7 +52,7 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
     private float jumpSpeed;
     private BaseActor belowSensor;
 
-    private Playerstate currentState;
+    private PabloState currentState;
     private boolean wasOnSolid = true;
 
     private float jumpTimer = 0;
@@ -72,7 +72,7 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
         super(x, y, s);
 
         // Inizializzo lo stato di pablo
-        currentState = Playerstate.IDLE;
+        currentState = PabloState.IDLE;
 
         stand = loadTexture(PATH+"idle.png");
 
@@ -130,7 +130,7 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
         // 1. PHYSICS
 
         // Input orizzontale (bloccato durante l'attacco)
-        if (currentState != Playerstate.ATTACKING)
+        if (currentState != PabloState.ATTACKING)
         {
             if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A))
                 accelerationVec.add(-walkAcceleration, 0);
@@ -174,7 +174,7 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
                 // Attack maggiore priorità
                 if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.J))
                 {
-                    currentState = Playerstate.ATTACKING;
+                    currentState = PabloState.ATTACKING;
                     elapsedTime  = 0;
                     spawnAttackHitbox();
                     break;
@@ -189,7 +189,7 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
                 // Cammina oltre un dirupo (senza jump premuto)
                 if (wasOnSolid && !onSolid)
                 {
-                    currentState = Playerstate.FALLING;
+                    currentState = PabloState.FALLING;
                     jumpTimer    = totalJumpTime * 0.55f; // Inizia la cadutà a "metà" della animazione
                     break;
                 }
@@ -197,14 +197,14 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
                 // Resta a terra — IDLE (fermo) o WALKING
                 if (Math.abs(velocityVec.x) > 1f)
                 {
-                    currentState = Playerstate.WALKING;
+                    currentState = PabloState.WALKING;
                 }
                 else
                 {
-                    currentState = Playerstate.IDLE;
+                    currentState = PabloState.IDLE;
                 }
 
-                if (currentState == Playerstate.WALKING)
+                if (currentState == PabloState.WALKING)
                 {
                     setAnimation(walk);
                 }
@@ -221,14 +221,14 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
                 // Raggiunge picco (apex), inizia a cadere
                 if (velocityVec.y <= 0)
                 {
-                    currentState = Playerstate.FALLING;
+                    currentState = PabloState.FALLING;
                     break;
                 }
 
                 // Colpisce qualcosa dal basso (rimbalzo sul soffitto)
                 if (onSolid && !wasOnSolid)
                 {
-                    currentState = Playerstate.LANDING;
+                    currentState = PabloState.LANDING;
                     elapsedTime = 0;
                     jumpTimer = 0;
                     break;
@@ -244,7 +244,7 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
                 // Atteratto
                 if (onSolid && !wasOnSolid)
                 {
-                    currentState = Playerstate.LANDING;
+                    currentState = PabloState.LANDING;
                     elapsedTime  = 0;
                     jumpTimer    = 0;
                     break;
@@ -261,11 +261,11 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
                 {
                     if (Math.abs(velocityVec.x) > 1f)
                     {
-                        currentState = Playerstate.WALKING;
+                        currentState = PabloState.WALKING;
                     }
                     else
                     {
-                        currentState = Playerstate.IDLE;
+                        currentState = PabloState.IDLE;
                     }
                 }
                 break;
@@ -277,18 +277,18 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
                 if (attack.isAnimationFinished(elapsedTime))
                 {
                     if (!onSolid)
-                        currentState = Playerstate.FALLING;
+                        currentState = PabloState.FALLING;
                     else if (Math.abs(velocityVec.x) > 1f)
-                        currentState = Playerstate.WALKING;
+                        currentState = PabloState.WALKING;
                     else
-                        currentState = Playerstate.IDLE;
+                        currentState = PabloState.IDLE;
                 }
                 break;
         }
 
         // 3. DIREZIONE DOVE GUARDA, usa currentState
 
-        if (currentState != Playerstate.ATTACKING)
+        if (currentState != PabloState.ATTACKING)
         {
             if (velocityVec.x > 0) setScaleX(1);
             if (velocityVec.x < 0) setScaleX(-1);
@@ -360,7 +360,7 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
     public void jump()
     {
         velocityVec.y = jumpSpeed;
-        currentState  = Playerstate.JUMPING;
+        currentState  = PabloState.JUMPING;
         jumpTimer     = 0;
         elapsedTime   = 0;
     }

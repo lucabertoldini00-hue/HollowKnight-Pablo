@@ -28,10 +28,8 @@ public abstract class BaseScreen implements Screen, InputProcessor
 
     public BaseScreen()
     {
-        // FitViewport: scala il mondo 800x640 per riempire lo schermo mantenendo
-        // le proporzioni (aggiunge bande nere se necessario).
-        // Corretto per il gameplay — la camera del tilemap rimane coerente.
-        mainStage = new Stage( new ExtendViewport(WORLD_WIDTH, WORLD_HEIGHT) );
+        // StretchViewport: riempie lo schermo senza bande nere (deforma l'aspect ratio).
+        mainStage = new Stage( new StretchViewport(WORLD_WIDTH, WORLD_HEIGHT) );
 
         // ScreenViewport: 1 unità = 1 pixel reale.
         // Corretto per la UI — i bottoni e i font si posizionano in coordinate schermo reali.
@@ -50,6 +48,9 @@ public abstract class BaseScreen implements Screen, InputProcessor
     public void render(float dt)
     {
         dt = Math.min(dt, 1 / 30f);
+
+        mainStage.getViewport().apply();
+        uiStage.getViewport().apply();
 
         uiStage.act(dt);
         mainStage.act(dt);

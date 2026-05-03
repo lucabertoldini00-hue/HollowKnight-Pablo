@@ -65,8 +65,8 @@ public class GameSettings
             Gdx.graphics.setWindowedMode(800, 640);
         }
 
-        // Forza il ridimensionamento della viewport
-        // (non è garantito che resize() sia automaticamente chiamato)
+        // Su Windows il resize non è sempre notificato dopo il cambio modalità.
+        Gdx.app.getApplicationListener().resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         Gdx.graphics.requestRendering();
     }
 

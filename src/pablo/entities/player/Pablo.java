@@ -17,34 +17,57 @@ public class Pablo extends BaseActor
     private Animation stand;
     private Animation walk;
 
-    /*
-       Queste sono le variabili relative alla fisica:
-       - valori di accelerazione e decelerazione per camminare,
-       - la massima velocità orizzontale (di camminata),
-       - l'entità della forza di gravità che tira il personaggio verso il basso
-       - la massima velocità verticale possibile (di salto/caduta).
-     */
     private float walkAcceleration;
     private float walkDeceleration;
     private float maxHorizontalSpeed;
     private float gravity;
     private float maxVerticalSpeed;
 
-    // Health — maxHealth valore massimo per regolare la vita, dovrebbe diventare +20 (uso 5 per il test)
+    // Health
     private int maxHealth;
     private int health;
     private boolean isDead = false;
 
-    /*
-    Variabili utili al salto.
-    Bisogna determinare quando il personaggio è a terra e quindi in grado di saltare.
-    Controllare se la velocità nella direzione y è uguale a 0 non è sufficiente, poiché ciò è vero anche nell'istante in cui
-    il personaggio è all'altezza massima di un salto.
-    L'approccio che verrà utilizzato qui è quello di creare un piccolo oggetto ausiliario (chiamato belowSensor)
-posizionato direttamente sotto il personaggio in ogni momento. Se questo oggetto si sovrappone a un oggetto solido,
-allora il koala sarà in grado di saltare. Nella versione finale del gioco, questo sensore sarà invisibile, ma per
-fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala sia su un solido o meno.
-     */
+    // Anima
+    public  static final int MAX_SOUL      = 99;
+    private static final int SOUL_PER_HEAL = 33;
+    private int soul = 0;
+
+    // -----------------------------------------------------------------------
+    // Invulnerabilità
+    // -----------------------------------------------------------------------
+    private static final float INVULN_DURATION = 1.5f;
+    private static final float FLASH_INTERVAL  = 0.08f;
+    private boolean invulnerable = false;
+    private float   invulnTimer  = 0f;
+    private float   flashTimer   = 0f;
+    private boolean flashVisible = true;
+
+    // -----------------------------------------------------------------------
+    // Hitstop — congela Pablo per un istante quando viene colpito
+    // -----------------------------------------------------------------------
+    private static final float HITSTOP_DURATION = 0.12f;
+    private float   hitstopTimer = 0f;
+    private boolean hitstopActive = false;
+
+    // -----------------------------------------------------------------------
+    // Dash
+    // -----------------------------------------------------------------------
+    private static final float DASH_SPEED     = 520f;  // velocità orizzontale durante il dash
+    private static final float DASH_DURATION  = 0.18f; // secondi di durata del dash
+    private static final float DASH_COOLDOWN  = 0.6f;  // secondi prima di poter rifare dash
+    private float dashTimer    = 0f;
+    private float dashCooldown = 0f;
+    private float dashDir      = 1f; // direzione al momento del dash
+    private Animation dashAnim;
+
+    // -----------------------------------------------------------------------
+    // Doppio salto
+    // -----------------------------------------------------------------------
+    private boolean canDoubleJump  = false; // diventa true dopo il primo salto
+    private boolean doubleJumpUsed = false; // resettato all'atterraggio
+
+    // Animazioni salto
     private Animation jumpUp;
     private Animation jumpLand;
     private Animation frameRise1, frameRise2, frameAltezzaMax, frameDrop1, frameDrop2;
@@ -55,92 +78,145 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
     private Playerstate currentState;
     private boolean wasOnSolid = true;
 
-    private float jumpTimer = 0;
-    // private float totalJumpTime = 0.8f; // vecchio valore, era fisso
-    private float totalJumpTime; // Valore assegnato nel costruttore
+    private float jumpTimer   = 0;
+    private float totalJumpTime;
 
     private Animation attack;
 
-    //Nel costruttore si devono personalizzare le diverse immagini per i diversi movimenti del personaggio
-    //Per poter implementare la fisica nel salto per prima cosa, nella classe BaseActor, cambia il modificatore di accesso
-    // delle variabili accelerationVec e velocityVec da private a protected in modo che la classe Sceriffo possa accedere direttamente a queste variabili
+    // Animazione cura
+    private Animation healAnim;
+    private boolean   healApplied = false;
 
+    // -----------------------------------------------------------------------
+    // Costruttore
+    // -----------------------------------------------------------------------
     public Pablo(float x, float y, Stage s)
     {
         super(x, y, s);
 
-        // Inizializzo lo stato di pablo
         currentState = Playerstate.IDLE;
 
-        stand = loadTexture("assets/stand.png");
+        stand = loadTexture("assets/Pablo/stand.png");
 
-        String[] walkFile={"assets/walk1.png","assets/walk2.png","assets/walk3.png","assets/walk4.png", "assets/walk5.png", "assets/walk6.png", "assets/walk7.png", "assets/walk8.png", "assets/walk9.png" };
-        walk = loadAnimationFromFiles(walkFile,0.10f,true);
+        String[] walkFile = {
+                "assets/Pablo/Camminata/walk1.png","assets/Pablo/Camminata/walk2.png","assets/Pablo/Camminata/walk3.png","assets/Pablo/Camminata/walk4.png",
+                "assets/Pablo/Camminata/walk5.png","assets/Pablo/Camminata/walk6.png","assets/Pablo/Camminata/walk7.png","assets/Pablo/Camminata/walk8.png","assets/Pablo/Camminata/walk9.png"
+        };
+        walk = loadAnimationFromFiles(walkFile, 0.10f, true);
 
-        // Definisco la "fisica" del personaggio
-        //per effetti fisici diversi modificare questi valori
         maxHorizontalSpeed = 200;
-        walkAcceleration = 200;
-        walkDeceleration = 200;
-        gravity = 700;
-        maxVerticalSpeed = 1000;
-        jumpSpeed = 500;
+        walkAcceleration   = 200;
+        walkDeceleration   = 200;
+        gravity            = 700;
+        maxVerticalSpeed   = 1000;
+        jumpSpeed          = 500;
 
         maxHealth = 5;
         health    = maxHealth;
 
-        // Calcolo il tempo "fisico" del salto.
-        // Tempo fino all'apice (altezza max salto) = jumpSpeed/gravity. Il tempo totale è il doppio di questo.
         totalJumpTime = (jumpSpeed / gravity) * 2.0f;
 
-        // Inizializzazione delle animazioni per il salto usando totalJumpTime
-        String[] upFiles = {"assets/jump1.png", "assets/jump2.png", "assets/jump3.png"};
+        String[] upFiles   = {"assets/Pablo/Salto/jump1.png","assets/Pablo/Salto/jump2.png","assets/Pablo/Salto/jump3.png"};
         jumpUp = loadAnimationFromFiles(upFiles, (totalJumpTime * 0.10f) / 3f, false);
 
-        String[] landFiles = {"assets/jump9.png", "assets/jump10.png"};
+        String[] landFiles = {"assets/Pablo/Salto/jump9.png","assets/Pablo/Salto/jump10.png"};
         jumpLand = loadAnimationFromFiles(landFiles, (totalJumpTime * 0.10f) / 2f, false);
 
-        frameRise1 = loadTexture("assets/jump4.png");
-        frameRise2 = loadTexture("assets/jump5.png");
-        frameAltezzaMax = loadTexture("assets/jump6.png");
-        frameDrop1 = loadTexture("assets/jump7.png");
-        frameDrop2 = loadTexture("assets/jump8.png");
+        frameRise1      = loadTexture("assets/Pablo/Salto/jump4.png");
+        frameRise2      = loadTexture("assets/Pablo/Salto/jump5.png");
+        frameAltezzaMax = loadTexture("assets/Pablo/Salto/jump6.png");
+        frameDrop1      = loadTexture("assets/Pablo/Salto/jump7.png");
+        frameDrop2      = loadTexture("assets/Pablo/Salto/jump8.png");
 
         setBoundaryPolygon(6);
-        belowSensor = new BaseActor(0,0, s);
+        belowSensor = new BaseActor(0, 0, s);
         belowSensor.loadTexture("assets/white.png");
-        belowSensor.setSize( this.getWidth() - 8, 8 );
+        belowSensor.setSize(this.getWidth() - 8, 8);
         belowSensor.setBoundaryRectangle();
         belowSensor.setVisible(true);
 
-        //inizializzazione degli oggetti per l'attacco
-        String[] attackFile = {"assets/attack3.png", "assets/attack10.png", "assets/attack8.png", "assets/attack9.png"};
+        String[] attackFile = {
+                "assets/Pablo/Attacco/attack3.png","assets/Pablo/Attacco/attack10.png","assets/Pablo/Attacco/attack8.png","assets/Pablo/Attacco/attack9.png"
+        };
         attack = loadAnimationFromFiles(attackFile, 0.06f, false);
         attack.setPlayMode(Animation.PlayMode.NORMAL);
+
+        String[] healFiles = {
+                "assets/Pablo/Cura/heal1.png","assets/Pablo/Cura/heal2.png",
+                "assets/Pablo/Cura/heal3.png","assets/Pablo/Cura/heal4.png",
+                "assets/Pablo/Cura/heal5.png","assets/Pablo/Cura/heal6.png"
+        };
+        healAnim = loadAnimationFromFiles(healFiles, 0.10f, false);
+        healAnim.setPlayMode(Animation.PlayMode.NORMAL);
+
+        // Dash: 5 frame — durata calcolata per coprire DASH_DURATION
+        String[] dashFiles = {
+                "assets/Pablo/Dash/dash1.png","assets/Pablo/Dash/dash2.png",
+                "assets/Pablo/Dash/dash3.png","assets/Pablo/Dash/dash4.png",
+                "assets/Pablo/Dash/dash5.png"
+        };
+        dashAnim = loadAnimationFromFiles(dashFiles, DASH_DURATION / 5f, false);
+        dashAnim.setPlayMode(Animation.PlayMode.NORMAL);
     }
 
+    // -----------------------------------------------------------------------
+    // act()
+    // -----------------------------------------------------------------------
     public void act(float dt)
     {
         super.act(dt);
 
-        boolean onSolid = isOnSolid();   // calcolato una sola volta, utilizzato ovunque di seguito
-
-        // 1. PHYSICS
-
-        // Input orizzontale (bloccato durante l'attacco)
-        if (currentState != Playerstate.ATTACKING)
+        // --- Hitstop: congela tutto finché il timer è attivo ---
+        if (hitstopActive)
         {
-            if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A))
+            hitstopTimer -= dt;
+            if (hitstopTimer <= 0f)
+                hitstopActive = false;
+            else
+                return; // salta physics e state machine
+        }
+
+        boolean onSolid = isOnSolid();
+
+        // --- Invulnerabilità / flash ---
+        if (invulnerable)
+        {
+            invulnTimer -= dt;
+            flashTimer  -= dt;
+            if (flashTimer <= 0f)
+            {
+                flashVisible = !flashVisible;
+                setVisible(flashVisible);
+                flashTimer = FLASH_INTERVAL;
+            }
+            if (invulnTimer <= 0f)
+            {
+                invulnerable = false;
+                setVisible(true);
+            }
+        }
+
+        // --- Dash cooldown ---
+        if (dashCooldown > 0f) dashCooldown -= dt;
+
+        // --- Atterraggio: resetta doppio salto ---
+        if (onSolid && !wasOnSolid)
+            doubleJumpUsed = false;
+
+        // 1. FISICA (bloccata durante dash, attacco e cura)
+        if (currentState != Playerstate.ATTACKING
+                && currentState != Playerstate.HEALING
+                && currentState != Playerstate.DASHING)
+        {
+            if (Gdx.input.isKeyPressed(Input.Keys.LEFT)  || Gdx.input.isKeyPressed(Input.Keys.A))
                 accelerationVec.add(-walkAcceleration, 0);
             if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D))
                 accelerationVec.add(walkAcceleration, 0);
         }
 
-        // La gravità fa cadere pablo sempre verso il basso
         accelerationVec.add(0, -gravity);
         velocityVec.add(accelerationVec.x * dt, accelerationVec.y * dt);
 
-        // Decelera quando non viene premuto alcun tasto orizzontale
         if (!Gdx.input.isKeyPressed(Input.Keys.RIGHT) && !Gdx.input.isKeyPressed(Input.Keys.LEFT) &&
                 !Gdx.input.isKeyPressed(Input.Keys.D)     && !Gdx.input.isKeyPressed(Input.Keys.A))
         {
@@ -151,25 +227,39 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
             velocityVec.x = spd * dir;
         }
 
-        // Blocca entrambi gli assi
         velocityVec.x = MathUtils.clamp(velocityVec.x, -maxHorizontalSpeed, maxHorizontalSpeed);
         velocityVec.y = MathUtils.clamp(velocityVec.y, -maxVerticalSpeed,    maxVerticalSpeed);
 
-        // Applica il movimento e reimposta l'accelerazione
         moveBy(velocityVec.x * dt, velocityVec.y * dt);
         accelerationVec.set(0, 0);
 
-        // Mantiene il sensore di terra sotto il giocatore
         belowSensor.setPosition(getX() + 4, getY() - 8);
 
-        // 2. STATE MACHINE — transizioni, animazioni e input per stato
-
+        // 2. STATE MACHINE
         switch (currentState)
         {
             case IDLE:
             case WALKING:
 
-                // Attack maggiore priorità
+                // Dash — priorità massima a terra
+                if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f)
+                {
+                    startDash();
+                    break;
+                }
+
+                // Cura
+                if (Gdx.input.isKeyJustPressed(Input.Keys.F)
+                        && soul >= SOUL_PER_HEAL && health < maxHealth)
+                {
+                    soul -= SOUL_PER_HEAL;
+                    currentState = Playerstate.HEALING;
+                    elapsedTime  = 0;
+                    healApplied  = false;
+                    break;
+                }
+
+                // Attacco
                 if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.J))
                 {
                     currentState = Playerstate.ATTACKING;
@@ -178,68 +268,74 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
                     break;
                 }
 
-                // Jump
+                // Salto
                 if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W))
                 {
-                    if (onSolid) { jump(); break; }
+                    if (onSolid) { jump(false); break; }
                 }
 
-                // Cammina oltre un dirupo (senza jump premuto)
+                // Cammina oltre un dirupo
                 if (wasOnSolid && !onSolid)
                 {
-                    currentState = Playerstate.FALLING;
-                    jumpTimer    = totalJumpTime * 0.55f; // Inizia la cadutà a "metà" della animazione
+                    currentState   = Playerstate.FALLING;
+                    jumpTimer      = totalJumpTime * 0.55f;
+                    canDoubleJump  = true; // permetti doppio salto anche cadendo da un bordo
                     break;
                 }
 
-                // Resta a terra — IDLE (fermo) o WALKING
-                if (Math.abs(velocityVec.x) > 1f)
-                {
-                    currentState = Playerstate.WALKING;
-                }
-                else
-                {
-                    currentState = Playerstate.IDLE;
-                }
+                currentState = (Math.abs(velocityVec.x) > 1f) ? Playerstate.WALKING : Playerstate.IDLE;
+                setAnimation(currentState == Playerstate.WALKING ? walk : stand);
+                break;
 
-                if (currentState == Playerstate.WALKING)
+            case DASHING:
+
+                dashTimer -= dt;
+                setAnimation(dashAnim);
+                velocityVec.x = DASH_SPEED * dashDir;
+                velocityVec.y = 0; // niente gravità durante il dash
+
+                if (dashTimer <= 0f)
                 {
-                    setAnimation(walk);
+                    // Fine dash: velocità ridotta, torna allo stato appropriato
+                    velocityVec.x = maxHorizontalSpeed * dashDir * 0.5f;
+                    currentState  = onSolid ? Playerstate.IDLE : Playerstate.FALLING;
+                    dashCooldown  = DASH_COOLDOWN;
                 }
-                else
+                break;
+
+            case HEALING:
+                setAnimation(healAnim);
+                velocityVec.x = 0;
+                if (!healApplied && healAnim.isAnimationFinished(elapsedTime))
                 {
-                    setAnimation(stand);
+                    heal(1);
+                    healApplied = true;
                 }
+                if (healAnim.isAnimationFinished(elapsedTime))
+                    currentState = !onSolid ? Playerstate.FALLING
+                            : Math.abs(velocityVec.x) > 1f ? Playerstate.WALKING : Playerstate.IDLE;
                 break;
 
             case JUMPING:
 
                 jumpTimer += dt;
 
-                // Raggiunge picco (apex), inizia a cadere
-                if (velocityVec.y <= 0)
+                // Dash in aria
+                if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f)
                 {
-                    currentState = Playerstate.FALLING;
+                    startDash();
                     break;
                 }
 
-                // Colpisce qualcosa dal basso (rimbalzo sul soffitto)
-                if (onSolid && !wasOnSolid)
+                // Doppio salto
+                if ((Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W))
+                        && canDoubleJump && !doubleJumpUsed)
                 {
-                    currentState = Playerstate.LANDING;
-                    elapsedTime = 0;
-                    jumpTimer = 0;
+                    jump(true);
                     break;
                 }
 
-                updateJumpAnimation();
-                break;
-
-            case FALLING:
-
-                jumpTimer += dt; // continua ad incrementare in modo che i frame caduta fanno animazione
-
-                // Atteratto
+                if (velocityVec.y <= 0) { currentState = Playerstate.FALLING; break; }
                 if (onSolid && !wasOnSolid)
                 {
                     currentState = Playerstate.LANDING;
@@ -247,167 +343,206 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
                     jumpTimer    = 0;
                     break;
                 }
+                updateJumpAnimation();
+                break;
 
+            case FALLING:
+
+                jumpTimer += dt;
+
+                // Dash in aria
+                if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f)
+                {
+                    startDash();
+                    break;
+                }
+
+                // Doppio salto
+                if ((Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W))
+                        && canDoubleJump && !doubleJumpUsed)
+                {
+                    jump(true);
+                    break;
+                }
+
+                if (onSolid && !wasOnSolid)
+                {
+                    currentState = Playerstate.LANDING;
+                    elapsedTime  = 0;
+                    jumpTimer    = 0;
+                    break;
+                }
                 updateJumpAnimation();
                 break;
 
             case LANDING:
-
                 setAnimation(jumpLand);
-
                 if (jumpLand.isAnimationFinished(elapsedTime))
-                {
-                    if (Math.abs(velocityVec.x) > 1f)
-                    {
-                        currentState = Playerstate.WALKING;
-                    }
-                    else
-                    {
-                        currentState = Playerstate.IDLE;
-                    }
-                }
+                    currentState = Math.abs(velocityVec.x) > 1f ? Playerstate.WALKING : Playerstate.IDLE;
                 break;
 
             case ATTACKING:
-
                 setAnimation(attack);
-
                 if (attack.isAnimationFinished(elapsedTime))
-                {
-                    if (!onSolid)
-                        currentState = Playerstate.FALLING;
-                    else if (Math.abs(velocityVec.x) > 1f)
-                        currentState = Playerstate.WALKING;
-                    else
-                        currentState = Playerstate.IDLE;
-                }
+                    currentState = !onSolid ? Playerstate.FALLING
+                            : Math.abs(velocityVec.x) > 1f ? Playerstate.WALKING : Playerstate.IDLE;
                 break;
         }
 
-        // 3. DIREZIONE DOVE GUARDA, usa currentState
-
-        if (currentState != Playerstate.ATTACKING)
+        // 3. DIREZIONE (bloccata durante dash, attacco e cura)
+        if (currentState != Playerstate.ATTACKING
+                && currentState != Playerstate.HEALING
+                && currentState != Playerstate.DASHING)
         {
             if (velocityVec.x > 0) setScaleX(1);
             if (velocityVec.x < 0) setScaleX(-1);
         }
 
-        // 4. CONTROLLO TERRA
-
+        // 4. SENSORE TERRA
         wasOnSolid = onSolid;
-        if (onSolid)
-        {
-            belowSensor.setColor(Color.GREEN);
-        }
-        else
-        {
-            belowSensor.setColor(Color.RED);
-        }
+        belowSensor.setColor(onSolid ? Color.GREEN : Color.RED);
 
         alignCamera();
         boundToWorld();
     }
 
-    private void updateJumpAnimation()
+    // -----------------------------------------------------------------------
+    // Helpers
+    // -----------------------------------------------------------------------
+
+    /** Avvia il dash nella direzione corrente del personaggio. */
+    private void startDash()
     {
-        float percentuale = jumpTimer / totalJumpTime;
-
-        if (percentuale < 0.10f) // Carica salto - 10%
-        {
-            setAnimation(jumpUp);
-        }
-        else if (percentuale < 0.50f) // Stacco - 40%
-        {
-            float riseProgress = (percentuale - 0.10f) / 0.40f;
-
-            if (riseProgress < 0.40f) setAnimation(frameRise1);
-            else if (riseProgress < 0.80f) setAnimation(frameRise2);
-            else setAnimation(frameAltezzaMax);
-        }
-        else if (percentuale < 0.90f) // Caduta - 40%
-        {
-            float dropProgress = (percentuale - 0.50f) / 0.40f;
-
-            if (dropProgress < 0.20f) setAnimation(frameAltezzaMax);
-            else if (dropProgress < 0.60f) setAnimation(frameDrop1);
-            else setAnimation(frameDrop2);
-        }
-        else // Atterraggio - 10%
-        {
-            setAnimation(frameDrop2);
-        }
+        dashDir      = getScaleX() > 0 ? 1f : -1f;
+        dashTimer    = DASH_DURATION;
+        currentState = Playerstate.DASHING;
+        elapsedTime  = 0;
+        // Il dash concede invulnerabilità per tutta la sua durata (come HK)
+        invulnerable = true;
+        invulnTimer  = DASH_DURATION;
+        flashTimer   = FLASH_INTERVAL;
+        flashVisible = true;
     }
 
-    //metodi per verificare che il sensore sia posizionato sopra un oggetto solido
-    public boolean belowOverlaps(BaseActor actor)
-    {
-        return belowSensor.overlaps(actor);
-    }
-
-    public boolean isOnSolid()
-    {
-        for (BaseActor actor : BaseActor.getList( getStage(), Object.class.getName() ))
-        {
-            Object solid = (Object)actor;
-            if ( belowOverlaps(solid) && solid.isEnable() )
-                return true;
-        }
-        return false;
-    }
-
-    public void jump()
+    /**
+     * Salto normale (isDoubleJump=false) o doppio salto (isDoubleJump=true).
+     * Il doppio salto usa la stessa animazione e la stessa velocità.
+     */
+    private void jump(boolean isDoubleJump)
     {
         velocityVec.y = jumpSpeed;
         currentState  = Playerstate.JUMPING;
         jumpTimer     = 0;
         elapsedTime   = 0;
+
+        if (!isDoubleJump)
+        {
+            canDoubleJump  = true;
+            doubleJumpUsed = false;
+        }
+        else
+        {
+            doubleJumpUsed = true;
+        }
+    }
+
+    /** Mantiene compatibilità con le chiamate esterne (es. LevelScreen). */
+    public void jump()
+    {
+        jump(false);
+    }
+
+    private void updateJumpAnimation()
+    {
+        float p = jumpTimer / totalJumpTime;
+        if      (p < 0.10f) setAnimation(jumpUp);
+        else if (p < 0.50f)
+        {
+            float r = (p - 0.10f) / 0.40f;
+            setAnimation(r < 0.40f ? frameRise1 : r < 0.80f ? frameRise2 : frameAltezzaMax);
+        }
+        else if (p < 0.90f)
+        {
+            float d = (p - 0.50f) / 0.40f;
+            setAnimation(d < 0.20f ? frameAltezzaMax : d < 0.60f ? frameDrop1 : frameDrop2);
+        }
+        else setAnimation(frameDrop2);
     }
 
     private void spawnAttackHitbox()
     {
         float hitboxWidth  = 40f;
         float hitboxHeight = 30f;
-
-        // vertically centered on Pablo's body
         float hitboxY = getY() + getHeight() / 2f - hitboxHeight / 2f;
-
-        // getScaleX() is 1 (right) or -1 (left) — set during IDLE/WALKING, frozen during ATTACKING
-        float hitboxX;
-
-        if (getScaleX() > 0) {
-            // facing right → place to the right
-            hitboxX = getX() + getWidth();
-        } else {
-            // facing left → place to the left
-            hitboxX = getX() - hitboxWidth;
-        }
-
-        // damage=10, lifetime=0.05s ≈ 3 frames at 60 fps
-        new Hitbox(hitboxX, hitboxY, hitboxWidth, hitboxHeight, 4, 0.05f, getStage());
+        float hitboxX = (getScaleX() > 0) ? getX() + getWidth() : getX() - hitboxWidth;
+        new Hitbox(hitboxX, hitboxY, hitboxWidth, hitboxHeight, 10, 0.05f, getStage(),
+                () -> gainSoul(33));
     }
 
-    // KEEP and update this one
+    public boolean belowOverlaps(BaseActor actor) { return belowSensor.overlaps(actor); }
+
+    public boolean isOnSolid()
+    {
+        for (BaseActor actor : BaseActor.getList(getStage(), Object.class.getName()))
+        {
+            Object solid = (Object) actor;
+            if (belowOverlaps(solid) && solid.isEnable()) return true;
+        }
+        return false;
+    }
+
+    // -----------------------------------------------------------------------
+    // HP e danno
+    // -----------------------------------------------------------------------
     public void takeDamage(int amount)
     {
-        if (isDead) return;          // add this line
+        if (isDead || invulnerable) return;
+
+        if (currentState == Playerstate.HEALING)
+        {
+            currentState = Playerstate.IDLE;
+            healApplied  = false;
+        }
+
         health -= amount;
-        if (health <= 0)             // change < to <= to be safe
+
+        if (health <= 0)
         {
             health = 0;
-            isDead = true;           // add this line
+            isDead = true;
+            setVisible(true);
             System.out.println("Pablo died!");
+        }
+        else
+        {
+            // Hitstop + invulnerabilità
+            hitstopActive = true;
+            hitstopTimer  = HITSTOP_DURATION;
+            invulnerable  = true;
+            invulnTimer   = INVULN_DURATION;
+            flashTimer    = FLASH_INTERVAL;
+            flashVisible  = true;
         }
     }
 
     public void heal(int amount)
     {
         health += amount;
-        if (health > maxHealth)
-            health = maxHealth;
+        if (health > maxHealth) health = maxHealth;
     }
 
-    public boolean isDead() { return isDead; }
+    // -----------------------------------------------------------------------
+    // Anima
+    // -----------------------------------------------------------------------
+    public void gainSoul(int amount)
+    {
+        soul = Math.min(soul + amount, MAX_SOUL);
+    }
 
-    public int getHealth()    { return health; }
-    public int getMaxHealth() { return maxHealth; }
+    public int     getSoul()          { return soul; }
+    public int     getMaxSoul()       { return MAX_SOUL; }
+    public boolean isInvulnerable()   { return invulnerable; }
+    public boolean isDead()           { return isDead; }
+    public int     getHealth()        { return health; }
+    public int     getMaxHealth()     { return maxHealth; }
 }

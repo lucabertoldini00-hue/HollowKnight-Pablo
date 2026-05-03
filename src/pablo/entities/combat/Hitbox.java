@@ -12,29 +12,35 @@ import java.util.Set;
 
 public class Hitbox extends BaseActor
 {
-    private final int   damage;
-    private final float lifetime;
-    private float       timer;
+    private final int      damage;
+    private final float    lifetime;
+    private float          timer;
+    private final Runnable onHitCallback; // chiamato una volta per nemico colpito
 
-    // prevents the same enemy from being hit more than once by this hitbox
     private final Set<Enemy> hitEnemies = new HashSet<>();
 
+    // Costruttore senza callback (retrocompatibile)
     public Hitbox(float x, float y, float width, float height,
                   int damage, float lifetime, Stage stage)
+    {
+        this(x, y, width, height, damage, lifetime, stage, null);
+    }
+
+    // Costruttore con callback — onHitCallback.run() chiamato ad ogni nemico colpito
+    public Hitbox(float x, float y, float width, float height,
+                  int damage, float lifetime, Stage stage, Runnable onHitCallback)
     {
         super(x, y, stage);
         setSize(width, height);
         setBoundaryRectangle();
 
-        this.damage   = damage;
-        this.lifetime = lifetime;
-        this.timer    = 0f;
+        this.damage          = damage;
+        this.lifetime        = lifetime;
+        this.timer           = 0f;
+        this.onHitCallback   = onHitCallback;
 
-        // --- DEBUG VISUAL: semi-transparent red box ---
-        // Comment these two lines out once you're happy with positioning
         loadTexture("assets/white.png");
         setColor(new Color(1f, 0f, 0f, 0.45f));
-        // -----------------------------------------------
     }
 
     @Override
@@ -42,19 +48,20 @@ public class Hitbox extends BaseActor
     {
         super.act(dt);
 
-        // scan every enemy currently on the Stage
         for (BaseActor actor : BaseActor.getList(getStage(), Enemy.class.getName()))
         {
             Enemy enemy = (Enemy) actor;
-
             if (!hitEnemies.contains(enemy) && overlaps(enemy))
             {
                 enemy.takeDamage(damage);
-                hitEnemies.add(enemy);   // never hit this enemy again
+                hitEnemies.add(enemy);
+
+                // Notifica Pablo (o chiunque altro) del colpo andato a segno
+                if (onHitCallback != null)
+                    onHitCallback.run();
             }
         }
 
-        // self-destruct — removes this actor from the Stage cleanly
         timer += dt;
         if (timer >= lifetime)
             remove();

@@ -45,7 +45,7 @@ public class PauseScreen extends BaseScreen
     // -----------------------------------------------------------------------
     // Voci del menu
     // -----------------------------------------------------------------------
-    private static final String[] LABELS = { "Continua", "Opzioni", "Torna al menù" };
+    private static final String[] LABELS = { "Continue", "Options", "Quit To Menu" };
     private int selectedIndex = 0;
 
     // -----------------------------------------------------------------------

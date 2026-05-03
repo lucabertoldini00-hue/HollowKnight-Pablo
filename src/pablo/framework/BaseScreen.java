@@ -9,7 +9,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.utils.viewport.*;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import com.badlogic.gdx.scenes.scene2d.Event;
@@ -79,7 +79,6 @@ public abstract class BaseScreen implements Screen, InputProcessor
     public void show()
     {
         InputMultiplexer im = (InputMultiplexer) Gdx.input.getInputProcessor();
-        // BaseScreen prima: keyDown() viene intercettato prima di uiStage
         im.addProcessor(this);
         im.addProcessor(uiStage);
         im.addProcessor(mainStage);
@@ -98,6 +97,12 @@ public abstract class BaseScreen implements Screen, InputProcessor
         return (e instanceof InputEvent) && ((InputEvent) e).getType().equals(Type.touchDown);
     }
 
+    /**
+     * Ridisegna gli stage senza chiamare act() — usato da OptionsScreen e PauseScreen
+     * come sfondo "congelato" mentre la schermata corrente è aperta sopra.
+     * Le sottoclassi che renderizzano con SpriteBatch diretto (es. MenuScreen)
+     * devono fare override per includere anche il proprio batch draw.
+     */
     public void drawFrozen()
     {
         mainStage.getViewport().apply();
@@ -109,11 +114,9 @@ public abstract class BaseScreen implements Screen, InputProcessor
     public boolean keyDown(int keycode)                              { return false; }
     public boolean keyUp(int keycode)                                { return false; }
     public boolean keyTyped(char c)                                  { return false; }
-    public boolean mouseMoved(int x, int y)                         { return false; }
+    public boolean mouseMoved(int x, int y)                          { return false; }
     public boolean scrolled(int amount)                              { return false; }
-    public boolean touchDown(int x, int y, int pointer, int button) { return false; }
-    public boolean touchDragged(int x, int y, int pointer)          { return false; }
-    public boolean touchUp(int x, int y, int pointer, int button)   { return false; }
-
-
+    public boolean touchDown(int x, int y, int pointer, int button)  { return false; }
+    public boolean touchDragged(int x, int y, int pointer)           { return false; }
+    public boolean touchUp(int x, int y, int pointer, int button)    { return false; }
 }

@@ -1,6 +1,6 @@
 // FalseKnightState.java
 
-package pablo.entities.enemies;
+package pablo.entities.enemies.falseKnight;
 
 public enum FalseKnightState
 {

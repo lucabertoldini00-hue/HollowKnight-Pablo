@@ -1,35 +1,35 @@
-// Tiktik.java
-// Brisk ground patroller. Stuns briefly when hit but survives.
-// On death: hit-stop → launch → looping tumble anim → squash land → hold corpse.
-// Tumbling is drawn into the sprites — no engine rotation needed.
+// Crawlid.java
+// Peaceful ground patroller. Turns at edges and walls.
+// On death: hit-stop → knockback launch → airborne spin → ground impact → hold corpse.
 
-package pablo.entities.enemies;
+package pablo.entities.enemies.crawlid;
 
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import pablo.entities.enemies.Enemy;
 import pablo.entities.player.Pablo;
 import pablo.framework.BaseActor;
 
-public class Tiktik extends Enemy
+public class Crawlid extends Enemy
 {
     // -------------------------------------------------------------------------
     // Constants
     // -------------------------------------------------------------------------
-    private static final String PATH = "assets/Tiktik/";
+    private static final String PATH = "assets/Crawlid/";
 
-    private static final float SPEED             = 90f;
-    private static final float DEATH_KNOCKBACK_X = 380f;
-    private static final float DEATH_KNOCKBACK_Y = 450f;
-    private static final float DEATH_GRAVITY     = 1400f;
+    private static final float SPEED             = 60f;
+    private static final float DEATH_KNOCKBACK_X = 320f;
+    private static final float DEATH_KNOCKBACK_Y = 420f;
+    private static final float DEATH_GRAVITY     = 1400f;  // heavier than normal gravity
     private static final float MAX_FALL_SPEED    = 1200f;
-    private static final float HIT_STOP_DURATION = 0.125f; // spec: 100ms–150ms, use midpoint
-    private static final float STUN_ANIM_TOTAL   = 0.200f; // stun1 + stun2 = 2 × 100ms
-    private static final float LAND1_HOLD        = 0.050f; // squash frame: 50ms
+    private static final float SPIN_SPEED        = 480f;   // degrees/sec while airborne
+    private static final float HIT_STOP_DURATION = 0.075f;
+    private static final float LAND1_HOLD        = 0.065f; // how long death(land)1 is shown
 
     // -------------------------------------------------------------------------
     // State
     // -------------------------------------------------------------------------
-    private enum State { PATROL, TURNING, STUNNED, HIT_STOP, DEAD_AIR, DEAD_LAND }
+    private enum State { PATROL, TURNING, HIT_STOP, DEAD_AIR, DEAD_LAND }
     private State state;
     private float stateTimer;
 
@@ -37,10 +37,11 @@ public class Tiktik extends Enemy
     // Death fields
     // -------------------------------------------------------------------------
     private float hitStopTimer;
-    private float deathKnockbackDir; // +1 or -1
+    private float deathKnockbackDir; // +1 or -1 based on Pablo's position
+    private float spinDir;           // +1 CCW, -1 CW
 
     // -------------------------------------------------------------------------
-    // Player reference — only used to determine knockback direction on death
+    // Player reference — needed only for death knockback direction
     // -------------------------------------------------------------------------
     private Pablo pablo;
 
@@ -48,58 +49,59 @@ public class Tiktik extends Enemy
     // Animations
     // -------------------------------------------------------------------------
     private Animation animWalk;
-    private Animation animStun;       // stun1 + stun2, plays once
-    private Animation animDeathAir;   // 7-frame LOOP — sprites draw the tumble
-    private Animation animDeathLand1; // squash impact, held ~50ms
-    private Animation animDeathLand2; // final corpse, held forever
+    private Animation animTurn;
+    private Animation animDeathAir;   // 3 frames; holds on frame 3 (PlayMode.NORMAL)
+    private Animation animDeathLand1; // squash impact — held briefly
+    private Animation animDeathLand2; // final corpse — held forever
 
     // =========================================================================
     // Constructor
     // =========================================================================
-    public Tiktik(float x, float y, Stage stage, Pablo pablo)
+    public Crawlid(float x, float y, Stage stage, Pablo pablo)
     {
         super(x, y, stage);
         this.pablo = pablo;
 
-        health = 8; // takes 2 hits from Pablo (4 dmg each) — stun visible on first hit
+        health = 8;
 
-        // --- Walk: 4 frames, 83ms each, looping ---
+        // --- Walk: 4 frames, ~83ms each, looping ---
         animWalk = loadAnimationFromFiles(new String[]{
                 PATH+"walk1.png", PATH+"walk2.png",
                 PATH+"walk3.png", PATH+"walk4.png"
         }, 0.083f, true);
 
-        // --- Stun: 2 frames at 100ms each, plays once ---
-        animStun = loadAnimationFromFiles(new String[]{
-                PATH+"stun1.png", PATH+"stun2.png"
+        // --- Turn: 2 frames, ~100ms each, plays once then we flip and patrol ---
+        animTurn = loadAnimationFromFiles(new String[]{
+                PATH+"turn1.png", PATH+"turn2.png"
         }, 0.100f, false);
 
-        // --- Death air: 7 frames at 40ms, LOOPING — sprites handle the spin ---
+        // --- Death air: 3 frames at 50ms, sticks on frame 3 (NORMAL = no loop) ---
         animDeathAir = loadAnimationFromFiles(new String[]{
-                PATH+"death(air)1.png", PATH+"death(air)2.png",
-                PATH+"death(air)3.png", PATH+"death(air)4.png",
-                PATH+"death(air)5.png", PATH+"death(air)6.png",
-                PATH+"death(air)7.png"
-        }, 0.040f, true); // true = loop
+                PATH+"death(air)1.png",
+                PATH+"death(air)2.png",
+                PATH+"death(air)3.png"
+        }, 0.050f, false);
 
-        // --- Death land 1: squash, held 50ms ---
+        // --- Death land 1: squash impact, held for LAND1_HOLD seconds ---
         animDeathLand1 = loadAnimationFromFiles(new String[]{
                 PATH+"death(land)1.png"
         }, LAND1_HOLD, false);
 
-        // --- Death land 2: corpse, held forever ---
+        // --- Death land 2: corpse at rest, held indefinitely ---
         animDeathLand2 = loadAnimationFromFiles(new String[]{
                 PATH+"death(land)2.png"
         }, 1f, true);
 
         setBoundaryRectangle();
 
+        // Below sensor — detects ground under feet
         belowSensor = new BaseActor(0, 0, stage);
         belowSensor.loadTexture("assets/white.png");
         belowSensor.setSize(getWidth() - 8f, 6f);
         belowSensor.setBoundaryRectangle();
         belowSensor.setVisible(false);
 
+        // Edge sensor — detects if ground exists one step ahead
         edgeSensor = new BaseActor(0, 0, stage);
         edgeSensor.loadTexture("assets/white.png");
         edgeSensor.setSize(6f, 6f);
@@ -115,15 +117,15 @@ public class Tiktik extends Enemy
     @Override
     public void act(float dt)
     {
-        super.act(dt);
+        super.act(dt); // increments elapsedTime, runs BaseActor logic
 
-        // Hit-stop: freeze everything, then launch into death
+        // Hit-stop: freeze in place, then launch
         if (state == State.HIT_STOP)
         {
             hitStopTimer -= dt;
             if (hitStopTimer <= 0f)
                 launchDeath();
-            return;
+            return; // no movement, no animation switch
         }
 
         stateTimer += dt;
@@ -132,7 +134,6 @@ public class Tiktik extends Enemy
         {
             case PATROL:    tickPatrol(dt);   break;
             case TURNING:   tickTurning(dt);  break;
-            case STUNNED:   tickStunned(dt);  break;
             case DEAD_AIR:  tickDeadAir(dt);  break;
             case DEAD_LAND: tickDeadLand();   break;
         }
@@ -147,6 +148,7 @@ public class Tiktik extends Enemy
         applyGravity(dt);
         updateSensorPositions();
 
+        // At a ledge with no ground ahead → start turn
         if (isOnGround() && !edgeAheadHasGround())
         {
             enterState(State.TURNING);
@@ -163,53 +165,37 @@ public class Tiktik extends Enemy
 
     private void tickTurning(float dt)
     {
-        // Brief edge pause — reuse stun anim timing (200ms) then flip
         applyGravity(dt);
         velocityVec.x = 0;
         moveBy(0, velocityVec.y * dt);
         updateSensorPositions();
 
-        setAnimation(animWalk); // hold walk frame while turning (no separate turn sprite)
+        setAnimation(animTurn);
 
-        if (stateTimer >= 0.10f) // very short pause before flipping
+        // Once both turn frames finish: flip horizontally, resume patrol
+        if (animTurn.isAnimationFinished(stateTimer))
         {
             flip();
             enterState(State.PATROL);
         }
     }
 
-    private void tickStunned(float dt)
-    {
-        // Play stun1→stun2, brief recoil slide, then resume patrol reversed
-        applyGravity(dt);
-
-        // Small recoil slide opposite to travel direction — decelerates naturally
-        float recoilSpeed = Math.max(0f, 60f - (stateTimer / STUN_ANIM_TOTAL) * 60f);
-        velocityVec.x = -direction * recoilSpeed;
-
-        moveBy(velocityVec.x * dt, velocityVec.y * dt);
-        updateSensorPositions();
-
-        setAnimation(animStun);
-
-        if (stateTimer >= STUN_ANIM_TOTAL)
-        {
-            flip(); // reverse direction after stun
-            enterState(State.PATROL);
-        }
-    }
-
     private void tickDeadAir(float dt)
     {
+        // Heavier-than-normal gravity for a satisfying fall arc
         velocityVec.y -= DEATH_GRAVITY * dt;
         velocityVec.y  = Math.max(velocityVec.y, -MAX_FALL_SPEED);
 
         moveBy(velocityVec.x * dt, velocityVec.y * dt);
         updateSensorPositions();
 
-        // Looping 7-frame tumble — sprite art handles the visual spin, no setRotation needed
+        // Spin the sprite while airborne — rotation accumulates each frame
+        setRotation(getRotation() + spinDir * SPIN_SPEED * dt);
+
+        // Animation: plays through frames 1→2→3, then holds on 3 automatically
         setAnimation(animDeathAir);
 
+        // Land detection via below sensor
         if (isOnGround())
         {
             velocityVec.set(0, 0);
@@ -219,15 +205,17 @@ public class Tiktik extends Enemy
 
     private void tickDeadLand()
     {
+        // Stop spinning the moment the corpse hits the floor
+        setRotation(0);
         velocityVec.set(0, 0);
 
-        // Show squash for 50ms, then hold corpse forever
+        // Show squash frame briefly, then hold the corpse frame forever
         if (stateTimer < LAND1_HOLD)
             setAnimation(animDeathLand1);
         else
             setAnimation(animDeathLand2);
 
-        // No remove() — corpse stays on the floor
+        // Intentionally no remove() — corpse stays on the floor
     }
 
     // =========================================================================
@@ -239,7 +227,7 @@ public class Tiktik extends Enemy
     {
         // Ignore hits during death sequence
         if (state == State.HIT_STOP ||
-                state == State.DEAD_AIR  ||
+                state == State.DEAD_AIR ||
                 state == State.DEAD_LAND)
             return;
 
@@ -257,18 +245,15 @@ public class Tiktik extends Enemy
             hitStopTimer = HIT_STOP_DURATION;
             enterState(State.HIT_STOP);
         }
-        else
-        {
-            // Survived the hit — play stun anim and recoil
-            enterState(State.STUNNED);
-        }
+        // If health > 0 (future multi-hit scenarios): could add a stun here
     }
 
-    // Applies launch velocity after hit-stop expires
+    // Called after hit-stop expires — applies launch velocity and enters DEAD_AIR
     private void launchDeath()
     {
-        velocityVec.x = deathKnockbackDir * DEATH_KNOCKBACK_X;
-        velocityVec.y = DEATH_KNOCKBACK_Y;
+        spinDir        = deathKnockbackDir; // spin direction matches knockback side
+        velocityVec.x  = deathKnockbackDir * DEATH_KNOCKBACK_X;
+        velocityVec.y  = DEATH_KNOCKBACK_Y;
         enterState(State.DEAD_AIR);
     }
 
@@ -279,7 +264,7 @@ public class Tiktik extends Enemy
     @Override
     public void onWallHit()
     {
-        // Only flip during normal patrol — ignore walls while stunned or dead
+        // Only flip direction during normal patrol — ignore walls while flying dead
         if (state == State.PATROL)
             flip();
     }
@@ -292,6 +277,6 @@ public class Tiktik extends Enemy
     {
         state       = next;
         stateTimer  = 0f;
-        elapsedTime = 0f;
+        elapsedTime = 0f; // reset BaseActor animation clock
     }
 }

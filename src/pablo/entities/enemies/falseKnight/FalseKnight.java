@@ -1,12 +1,11 @@
 // FalseKnight.java
 
-package pablo.entities.enemies;
+package pablo.entities.enemies.falseKnight;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import pablo.Object;
 import pablo.entities.player.Pablo;
 import pablo.framework.BaseActor;
 

@@ -65,6 +65,8 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
     //Per poter implementare la fisica nel salto per prima cosa, nella classe BaseActor, cambia il modificatore di accesso
     // delle variabili accelerationVec e velocityVec da private a protected in modo che la classe Sceriffo possa accedere direttamente a queste variabili
 
+    private static final String PATH = "assets/Pablo/";
+
     public Pablo(float x, float y, Stage s)
     {
         super(x, y, s);
@@ -72,9 +74,9 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
         // Inizializzo lo stato di pablo
         currentState = Playerstate.IDLE;
 
-        stand = loadTexture("assets/stand.png");
+        stand = loadTexture(PATH+"idle.png");
 
-        String[] walkFile={"assets/walk1.png","assets/walk2.png","assets/walk3.png","assets/walk4.png", "assets/walk5.png", "assets/walk6.png", "assets/walk7.png", "assets/walk8.png", "assets/walk9.png" };
+        String[] walkFile={PATH+"walk1.png",PATH+"walk2.png",PATH+"walk3.png",PATH+"walk4.png", PATH+"walk5.png", PATH+"walk6.png", PATH+"walk7.png", PATH+"walk8.png", PATH+"walk9.png" };
         walk = loadAnimationFromFiles(walkFile,0.10f,true);
 
         // Definisco la "fisica" del personaggio
@@ -94,17 +96,17 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
         totalJumpTime = (jumpSpeed / gravity) * 2.0f;
 
         // Inizializzazione delle animazioni per il salto usando totalJumpTime
-        String[] upFiles = {"assets/jump1.png", "assets/jump2.png", "assets/jump3.png"};
+        String[] upFiles = {PATH+"jump1.png", PATH+"jump2.png", PATH+"jump3.png"};
         jumpUp = loadAnimationFromFiles(upFiles, (totalJumpTime * 0.10f) / 3f, false);
 
-        String[] landFiles = {"assets/jump9.png", "assets/jump10.png"};
+        String[] landFiles = {PATH+"jump9.png", PATH+"jump10.png"};
         jumpLand = loadAnimationFromFiles(landFiles, (totalJumpTime * 0.10f) / 2f, false);
 
-        frameRise1 = loadTexture("assets/jump4.png");
-        frameRise2 = loadTexture("assets/jump5.png");
-        frameAltezzaMax = loadTexture("assets/jump6.png");
-        frameDrop1 = loadTexture("assets/jump7.png");
-        frameDrop2 = loadTexture("assets/jump8.png");
+        frameRise1 = loadTexture(PATH+"jump4.png");
+        frameRise2 = loadTexture(PATH+"jump5.png");
+        frameAltezzaMax = loadTexture(PATH+"jump6.png");
+        frameDrop1 = loadTexture(PATH+"jump7.png");
+        frameDrop2 = loadTexture(PATH+"jump8.png");
 
         setBoundaryPolygon(6);
         belowSensor = new BaseActor(0,0, s);
@@ -114,7 +116,7 @@ fini di test, la casella sarà colorata di verde o rosso, a seconda che il koala
         belowSensor.setVisible(true);
 
         //inizializzazione degli oggetti per l'attacco
-        String[] attackFile = {"assets/attack3.png", "assets/attack10.png", "assets/attack8.png", "assets/attack9.png"};
+        String[] attackFile = {PATH+"attack3.png", PATH+"attack10.png", PATH+"attack8.png", PATH+"attack9.png"};
         attack = loadAnimationFromFiles(attackFile, 0.06f, false);
         attack.setPlayMode(Animation.PlayMode.NORMAL);
     }

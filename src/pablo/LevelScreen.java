@@ -6,10 +6,10 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.math.Vector2;
-import pablo.entities.enemies.Crawlid;
+import pablo.entities.enemies.crawlid.Crawlid;
 import pablo.entities.enemies.Enemy;
-import pablo.entities.enemies.Tiktik;
-import pablo.entities.enemies.Vengefly;
+import pablo.entities.enemies.tiktik.Tiktik;
+import pablo.entities.enemies.vengefly.Vengefly;
 import pablo.entities.player.Pablo;
 import pablo.framework.BaseActor;
 import pablo.framework.BaseGame;
@@ -18,10 +18,9 @@ import pablo.framework.TilemapActor;
 
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
-import pablo.framework.BaseGame;
 
 import com.badlogic.gdx.graphics.Camera;
-import pablo.entities.enemies.FalseKnight;
+import pablo.entities.enemies.falseKnight.FalseKnight;
 
 public class LevelScreen extends BaseScreen
 {

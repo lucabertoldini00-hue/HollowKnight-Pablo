@@ -3,12 +3,13 @@
 // On death: hit-stop → launch → engine-spun death3 frame → land → hold corpse.
 // Death rotation is engine-applied (like Crawlid), NOT sprite-drawn (like Tiktik).
 
-package pablo.entities.enemies;
+package pablo.entities.enemies.vengefly;
 
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import pablo.entities.enemies.Enemy;
 import pablo.entities.player.Pablo;
 import pablo.framework.BaseActor;
 

@@ -99,8 +99,8 @@ public class Pablo extends BaseActor
         stand = loadTexture("assets/Pablo/stand.png");
 
         String[] walkFile = {
-                "assets/Pablo/Camminata/walk1.png","assets/Pablo/Camminata/walk2.png","assets/Pablo/Camminata/walk3.png","assets/Pablo/Camminata/walk4.png",
-                "assets/Pablo/Camminata/walk5.png","assets/Pablo/Camminata/walk6.png","assets/Pablo/Camminata/walk7.png","assets/Pablo/Camminata/walk8.png","assets/Pablo/Camminata/walk9.png"
+                "assets/Pablo/walk1.png","assets/Pablo/walk2.png","assets/Pablo/walk3.png","assets/Pablo/walk4.png",
+                "assets/Pablo/walk5.png","assets/Pablo/walk6.png","assets/Pablo/walk7.png","assets/Pablo/walk8.png","assets/Pablo/walk9.png"
         };
         walk = loadAnimationFromFiles(walkFile, 0.10f, true);
 
@@ -116,17 +116,17 @@ public class Pablo extends BaseActor
 
         totalJumpTime = (jumpSpeed / gravity) * 2.0f;
 
-        String[] upFiles   = {"assets/Pablo/Salto/jump1.png","assets/Pablo/Salto/jump2.png","assets/Pablo/Salto/jump3.png"};
+        String[] upFiles   = {"assets/Pablo/jump1.png","assets/Pablo/jump2.png","assets/Pablo/jump3.png"};
         jumpUp = loadAnimationFromFiles(upFiles, (totalJumpTime * 0.10f) / 3f, false);
 
-        String[] landFiles = {"assets/Pablo/Salto/jump9.png","assets/Pablo/Salto/jump10.png"};
+        String[] landFiles = {"assets/Pablo/jump9.png","assets/Pablo/jump10.png"};
         jumpLand = loadAnimationFromFiles(landFiles, (totalJumpTime * 0.10f) / 2f, false);
 
-        frameRise1      = loadTexture("assets/Pablo/Salto/jump4.png");
-        frameRise2      = loadTexture("assets/Pablo/Salto/jump5.png");
-        frameAltezzaMax = loadTexture("assets/Pablo/Salto/jump6.png");
-        frameDrop1      = loadTexture("assets/Pablo/Salto/jump7.png");
-        frameDrop2      = loadTexture("assets/Pablo/Salto/jump8.png");
+        frameRise1      = loadTexture("assets/Pablo/jump4.png");
+        frameRise2      = loadTexture("assets/Pablo/jump5.png");
+        frameAltezzaMax = loadTexture("assets/Pablo/jump6.png");
+        frameDrop1      = loadTexture("assets/Pablo/jump7.png");
+        frameDrop2      = loadTexture("assets/Pablo/jump8.png");
 
         setBoundaryPolygon(6);
         belowSensor = new BaseActor(0, 0, s);
@@ -136,24 +136,24 @@ public class Pablo extends BaseActor
         belowSensor.setVisible(true);
 
         String[] attackFile = {
-                "assets/Pablo/Attacco/attack3.png","assets/Pablo/Attacco/attack10.png","assets/Pablo/Attacco/attack8.png","assets/Pablo/Attacco/attack9.png"
+                "assets/Pablo/attack3.png","assets/Pablo/attack10.png","assets/Pablo/attack8.png","assets/Pablo/attack9.png"
         };
         attack = loadAnimationFromFiles(attackFile, 0.06f, false);
         attack.setPlayMode(Animation.PlayMode.NORMAL);
 
         String[] healFiles = {
-                "assets/Pablo/Cura/heal1.png","assets/Pablo/Cura/heal2.png",
-                "assets/Pablo/Cura/heal3.png","assets/Pablo/Cura/heal4.png",
-                "assets/Pablo/Cura/heal5.png","assets/Pablo/Cura/heal6.png"
+                "assets/Pablo/heal1.png","assets/Pablo/heal2.png",
+                "assets/Pablo/heal3.png","assets/Pablo/heal4.png",
+                "assets/Pablo/heal5.png","assets/Pablo/heal6.png"
         };
         healAnim = loadAnimationFromFiles(healFiles, 0.10f, false);
         healAnim.setPlayMode(Animation.PlayMode.NORMAL);
 
         // Dash: 5 frame — durata calcolata per coprire DASH_DURATION
         String[] dashFiles = {
-                "assets/Pablo/Dash/dash1.png","assets/Pablo/Dash/dash2.png",
-                "assets/Pablo/Dash/dash3.png","assets/Pablo/Dash/dash4.png",
-                "assets/Pablo/Dash/dash5.png"
+                "assets/Pablo/dash1.png","assets/Pablo/dash2.png",
+                "assets/Pablo/dash3.png","assets/Pablo/dash4.png",
+                "assets/Pablo/dash5.png"
         };
         boolean dashAssetsDisponibili = true;
         for (String fileName : dashFiles)

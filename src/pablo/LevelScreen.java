@@ -172,6 +172,7 @@ public class LevelScreen extends BaseScreen
 
         MapObject fkPoint = tma.getRectangleList("FalseKnight").get(0);
         MapProperties fkProps = fkPoint.getProperties();
+
         falseKnight = new FalseKnight(
                 (float) fkProps.get("x"), (float) fkProps.get("y"),
                 mainStage, pablo

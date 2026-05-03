@@ -126,9 +126,13 @@ public abstract class Enemy extends BaseActor
 
         if (edgeSensor != null)
         {
-            float edgeX = (direction > 0)
-                    ? getX() + getWidth()
-                    : getX() - 6f;
+            float edgeX;
+
+            if (direction > 0)
+                edgeX = getX() + getWidth();
+            else
+                edgeX = getX() - 6f;
+
             edgeSensor.setPosition(edgeX, getY() - 6f);
         }
     }

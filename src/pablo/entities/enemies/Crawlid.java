@@ -1,67 +1,281 @@
 // Crawlid.java
-// Meanders left/right on the ground. Does not chase Pablo.
-// Flips direction when it detects an edge ahead or hits a wall.
-// All shared physics/sensor logic lives in Enemy.java.
+// Peaceful ground patroller. Turns at edges and walls.
+// On death: hit-stop → knockback launch → airborne spin → ground impact → hold corpse.
 
 package pablo.entities.enemies;
 
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import pablo.entities.player.Pablo;
 import pablo.framework.BaseActor;
 
 public class Crawlid extends Enemy
 {
-    private static final float SPEED = 60f;
+    // -------------------------------------------------------------------------
+    // Constants
+    // -------------------------------------------------------------------------
+    private static final String PATH = "assets/Crawlid/";
 
-    public Crawlid(float x, float y, Stage stage)
+    private static final float SPEED             = 60f;
+    private static final float DEATH_KNOCKBACK_X = 320f;
+    private static final float DEATH_KNOCKBACK_Y = 420f;
+    private static final float DEATH_GRAVITY     = 1400f;  // heavier than normal gravity
+    private static final float MAX_FALL_SPEED    = 1200f;
+    private static final float SPIN_SPEED        = 480f;   // degrees/sec while airborne
+    private static final float HIT_STOP_DURATION = 0.075f;
+    private static final float LAND1_HOLD        = 0.065f; // how long death(land)1 is shown
+
+    // -------------------------------------------------------------------------
+    // State
+    // -------------------------------------------------------------------------
+    private enum State { PATROL, TURNING, HIT_STOP, DEAD_AIR, DEAD_LAND }
+    private State state;
+    private float stateTimer;
+
+    // -------------------------------------------------------------------------
+    // Death fields
+    // -------------------------------------------------------------------------
+    private float hitStopTimer;
+    private float deathKnockbackDir; // +1 or -1 based on Pablo's position
+    private float spinDir;           // +1 CCW, -1 CW
+
+    // -------------------------------------------------------------------------
+    // Player reference — needed only for death knockback direction
+    // -------------------------------------------------------------------------
+    private Pablo pablo;
+
+    // -------------------------------------------------------------------------
+    // Animations
+    // -------------------------------------------------------------------------
+    private Animation animWalk;
+    private Animation animTurn;
+    private Animation animDeathAir;   // 3 frames; holds on frame 3 (PlayMode.NORMAL)
+    private Animation animDeathLand1; // squash impact — held briefly
+    private Animation animDeathLand2; // final corpse — held forever
+
+    // =========================================================================
+    // Constructor
+    // =========================================================================
+    public Crawlid(float x, float y, Stage stage, Pablo pablo)
     {
         super(x, y, stage);
+        this.pablo = pablo;
 
-        health = 2;
+        health = 8;
 
-        // Load texture — replace with your actual asset path
-        loadTexture("assets/crawlid.png");
+        // --- Walk: 4 frames, ~83ms each, looping ---
+        animWalk = loadAnimationFromFiles(new String[]{
+                PATH+"walk1.png", PATH+"walk2.png",
+                PATH+"walk3.png", PATH+"walk4.png"
+        }, 0.083f, true);
+
+        // --- Turn: 2 frames, ~100ms each, plays once then we flip and patrol ---
+        animTurn = loadAnimationFromFiles(new String[]{
+                PATH+"turn1.png", PATH+"turn2.png"
+        }, 0.100f, false);
+
+        // --- Death air: 3 frames at 50ms, sticks on frame 3 (NORMAL = no loop) ---
+        animDeathAir = loadAnimationFromFiles(new String[]{
+                PATH+"death(air)1.png",
+                PATH+"death(air)2.png",
+                PATH+"death(air)3.png"
+        }, 0.050f, false);
+
+        // --- Death land 1: squash impact, held for LAND1_HOLD seconds ---
+        animDeathLand1 = loadAnimationFromFiles(new String[]{
+                PATH+"death(land)1.png"
+        }, LAND1_HOLD, false);
+
+        // --- Death land 2: corpse at rest, held indefinitely ---
+        animDeathLand2 = loadAnimationFromFiles(new String[]{
+                PATH+"death(land)2.png"
+        }, 1f, true);
+
         setBoundaryRectangle();
 
-        // belowSensor: thin strip directly under the enemy's feet
+        // Below sensor — detects ground under feet
         belowSensor = new BaseActor(0, 0, stage);
         belowSensor.loadTexture("assets/white.png");
         belowSensor.setSize(getWidth() - 8f, 6f);
         belowSensor.setBoundaryRectangle();
         belowSensor.setVisible(false);
 
-        // edgeSensor: tiny square at ground level, one step ahead in current direction
+        // Edge sensor — detects if ground exists one step ahead
         edgeSensor = new BaseActor(0, 0, stage);
         edgeSensor.loadTexture("assets/white.png");
         edgeSensor.setSize(6f, 6f);
         edgeSensor.setBoundaryRectangle();
         edgeSensor.setVisible(false);
+
+        enterState(State.PATROL);
     }
 
+    // =========================================================================
+    // act()
+    // =========================================================================
     @Override
     public void act(float dt)
     {
-        super.act(dt);
+        super.act(dt); // increments elapsedTime, runs BaseActor logic
 
-        // 1. Apply gravity (defined in Enemy)
+        // Hit-stop: freeze in place, then launch
+        if (state == State.HIT_STOP)
+        {
+            hitStopTimer -= dt;
+            if (hitStopTimer <= 0f)
+                launchDeath();
+            return; // no movement, no animation switch
+        }
+
+        stateTimer += dt;
+
+        switch (state)
+        {
+            case PATROL:    tickPatrol(dt);   break;
+            case TURNING:   tickTurning(dt);  break;
+            case DEAD_AIR:  tickDeadAir(dt);  break;
+            case DEAD_LAND: tickDeadLand();   break;
+        }
+    }
+
+    // =========================================================================
+    // State ticks
+    // =========================================================================
+
+    private void tickPatrol(float dt)
+    {
         applyGravity(dt);
-
-        // 2. Sync sensors before edge check
         updateSensorPositions();
 
-        // 3. At edge with no ground ahead → flip
+        // At a ledge with no ground ahead → start turn
         if (isOnGround() && !edgeAheadHasGround())
-            flip();
+        {
+            enterState(State.TURNING);
+            return;
+        }
 
-        // 4. Horizontal movement
         velocityVec.x = direction * SPEED;
-
-        // 5. Move
         moveBy(velocityVec.x * dt, velocityVec.y * dt);
-
-        // 6. Re-sync sensors after movement
         updateSensorPositions();
 
-        // 7. Face direction of travel
+        setAnimation(animWalk);
         setScaleX(direction);
+    }
+
+    private void tickTurning(float dt)
+    {
+        applyGravity(dt);
+        velocityVec.x = 0;
+        moveBy(0, velocityVec.y * dt);
+        updateSensorPositions();
+
+        setAnimation(animTurn);
+
+        // Once both turn frames finish: flip horizontally, resume patrol
+        if (animTurn.isAnimationFinished(stateTimer))
+        {
+            flip();
+            enterState(State.PATROL);
+        }
+    }
+
+    private void tickDeadAir(float dt)
+    {
+        // Heavier-than-normal gravity for a satisfying fall arc
+        velocityVec.y -= DEATH_GRAVITY * dt;
+        velocityVec.y  = Math.max(velocityVec.y, -MAX_FALL_SPEED);
+
+        moveBy(velocityVec.x * dt, velocityVec.y * dt);
+        updateSensorPositions();
+
+        // Spin the sprite while airborne — rotation accumulates each frame
+        setRotation(getRotation() + spinDir * SPIN_SPEED * dt);
+
+        // Animation: plays through frames 1→2→3, then holds on 3 automatically
+        setAnimation(animDeathAir);
+
+        // Land detection via below sensor
+        if (isOnGround())
+        {
+            velocityVec.set(0, 0);
+            enterState(State.DEAD_LAND);
+        }
+    }
+
+    private void tickDeadLand()
+    {
+        // Stop spinning the moment the corpse hits the floor
+        setRotation(0);
+        velocityVec.set(0, 0);
+
+        // Show squash frame briefly, then hold the corpse frame forever
+        if (stateTimer < LAND1_HOLD)
+            setAnimation(animDeathLand1);
+        else
+            setAnimation(animDeathLand2);
+
+        // Intentionally no remove() — corpse stays on the floor
+    }
+
+    // =========================================================================
+    // Damage
+    // =========================================================================
+
+    @Override
+    public void takeDamage(int amount)
+    {
+        // Ignore hits during death sequence
+        if (state == State.HIT_STOP ||
+                state == State.DEAD_AIR ||
+                state == State.DEAD_LAND)
+            return;
+
+        health -= amount;
+
+        if (health <= 0)
+        {
+            health = 0;
+
+            if (pablo.getX() < getX())
+                deathKnockbackDir = 1f;
+            else
+                deathKnockbackDir = -1f;
+
+            hitStopTimer = HIT_STOP_DURATION;
+            enterState(State.HIT_STOP);
+        }
+        // If health > 0 (future multi-hit scenarios): could add a stun here
+    }
+
+    // Called after hit-stop expires — applies launch velocity and enters DEAD_AIR
+    private void launchDeath()
+    {
+        spinDir        = deathKnockbackDir; // spin direction matches knockback side
+        velocityVec.x  = deathKnockbackDir * DEATH_KNOCKBACK_X;
+        velocityVec.y  = DEATH_KNOCKBACK_Y;
+        enterState(State.DEAD_AIR);
+    }
+
+    // =========================================================================
+    // Wall hit override
+    // =========================================================================
+
+    @Override
+    public void onWallHit()
+    {
+        // Only flip direction during normal patrol — ignore walls while flying dead
+        if (state == State.PATROL)
+            flip();
+    }
+
+    // =========================================================================
+    // Helper
+    // =========================================================================
+
+    private void enterState(State next)
+    {
+        state       = next;
+        stateTimer  = 0f;
+        elapsedTime = 0f; // reset BaseActor animation clock
     }
 }

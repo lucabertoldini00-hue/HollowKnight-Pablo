@@ -42,7 +42,7 @@ public class FalseKnight extends BaseActor {
     // -------------------------------------------------------------------------
     // Combat
     // -------------------------------------------------------------------------
-    private int     hp              = 6;
+    private int     hp              = 50;
     private boolean isDead          = false;
     private float   hitStopTimer    = 0f;
     private boolean hitStopFired    = false;   // prevents re-triggering per attack state
@@ -313,7 +313,10 @@ public class FalseKnight extends BaseActor {
 
         if (animJumpAnticipate.isAnimationFinished(stateTimer)) {
             // Face Pablo before jumping
-            facingDir = (pablo.getX() > getX()) ? 1 : -1;
+            if (pablo.getX() > getX())
+                facingDir = 1;
+            else
+                facingDir = -1;
             jumpTargetX = pablo.getX();
             velocityVec.y = JUMP_SPEED_Y;
             velocityVec.x = JUMP_SPEED_X * facingDir;
@@ -407,9 +410,12 @@ public class FalseKnight extends BaseActor {
 
     private void syncMaceHitbox() {
         // Position the mace in front of the boss at waist height
-        float hx = (facingDir > 0)
-                ? getX() + getWidth()
-                : getX() - maceHitbox.getWidth();
+        float hx;
+        if (facingDir > 0)
+            hx = getX() + getWidth();
+        else
+            hx = getX() - maceHitbox.getWidth();
+
         float hy = getY() + getHeight() * 0.15f;
 
         maceHitbox.setPosition(hx, hy);

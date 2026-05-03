@@ -293,7 +293,12 @@ public class HuskWarrior extends Enemy
         {
             // Hold frame — recoil pushback away from Pablo
             setAnimation(animShieldFrontHold);
-            float recoilDir = (pablo.getX() > getX()) ? -1f : 1f;
+            float recoilDir;
+
+            if (pablo.getX() > getX())
+                recoilDir = -1f;
+            else
+                recoilDir = 1f;
             velocityVec.x   = recoilDir * RECOIL_SPEED;
         }
 
@@ -488,7 +493,10 @@ public class HuskWarrior extends Enemy
         if (health <= 0)
         {
             health = 0;
-            deathKnockbackDir = (pablo.getX() < getX()) ? 1f : -1f;
+            if (pablo.getX() < getX())
+                deathKnockbackDir = 1f;
+            else
+                deathKnockbackDir = -1f;
             spinDir           = deathKnockbackDir;
             hitStopTimer      = HIT_STOP_DURATION;
             spawnShieldProp();
@@ -526,8 +534,10 @@ public class HuskWarrior extends Enemy
     {
         float pabloCenterX = pablo.getX() + pablo.getWidth()  / 2f;
         float selfCenterX  = getX()       + getWidth()        / 2f;
-        return (direction > 0) ? pabloCenterX > selfCenterX
-                : pabloCenterX < selfCenterX;
+        if (direction > 0)
+            return pabloCenterX > selfCenterX;
+        else
+            return pabloCenterX < selfCenterX;
     }
 
     // True when Pablo is falling from above the warrior's midpoint

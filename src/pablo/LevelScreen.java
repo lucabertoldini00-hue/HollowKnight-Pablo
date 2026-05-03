@@ -24,6 +24,7 @@ import pablo.entities.enemies.falseKnight.FalseKnight;
 
 import pablo.entities.enemies.huskHornhead.HuskHornhead;
 import pablo.entities.enemies.huskWarrior.HuskWarrior;
+import pablo.entities.enemies.huskBully.HuskBully;
 
 public class LevelScreen extends BaseScreen
 {
@@ -121,6 +122,12 @@ public class LevelScreen extends BaseScreen
         {
             MapProperties props = obj.getProperties();
             new HuskWarrior((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
+        }
+
+        for (MapObject obj : tma.getRectangleList("HuskBully"))
+        {
+            MapProperties props = obj.getProperties();
+            new HuskBully((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
     }
 

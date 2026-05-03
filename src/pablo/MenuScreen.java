@@ -24,13 +24,9 @@ import pablo.framework.BaseScreen;
 
 public class MenuScreen extends BaseScreen
 {
-    // -----------------------------------------------------------------------
-    // TODO: sostituisci con i path reali
-    // -----------------------------------------------------------------------
-    // -----------------------------------------------------------------------
     private static final String BG_PATH   = "assets/MenùBG.png";
     private static final String FONT_PATH = "assets/TrajanPro-Regular.ttf";
-    // Colori
+
     private static final Color COL_START_NORMAL = Color.WHITE;
     private static final Color COL_START_SEL    = new Color(0.75f, 1f, 0.75f, 1f);
     private static final Color COL_START_DOWN   = new Color(0.4f, 0.9f, 0.4f, 1f);
@@ -56,9 +52,6 @@ public class MenuScreen extends BaseScreen
     private float separatorY  = -1;
     private float separatorX1, separatorX2;
 
-    // -----------------------------------------------------------------------
-    // initialize()
-    // -----------------------------------------------------------------------
     public void initialize()
     {
         batch         = new SpriteBatch();
@@ -69,17 +62,13 @@ public class MenuScreen extends BaseScreen
                 Gdx.files.internal(FONT_PATH));
 
         FreeTypeFontParameter pStart = new FreeTypeFontParameter();
-        pStart.size        = 42;
-        pStart.color       = COL_START_NORMAL;
-        pStart.borderWidth = 1.5f;
-        pStart.borderColor = new Color(0f, 0f, 0f, 0.7f);
+        pStart.size = 42; pStart.color = COL_START_NORMAL;
+        pStart.borderWidth = 1.5f; pStart.borderColor = new Color(0,0,0,0.7f);
         fontStart = gen.generateFont(pStart);
 
         FreeTypeFontParameter pOther = new FreeTypeFontParameter();
-        pOther.size        = 28;
-        pOther.color       = COL_OTHER_NORMAL;
-        pOther.borderWidth = 1.2f;
-        pOther.borderColor = new Color(0f, 0f, 0f, 0.6f);
+        pOther.size = 28; pOther.color = COL_OTHER_NORMAL;
+        pOther.borderWidth = 1.2f; pOther.borderColor = new Color(0,0,0,0.6f);
         fontOther = gen.generateFont(pOther);
 
         gen.dispose();
@@ -89,8 +78,7 @@ public class MenuScreen extends BaseScreen
         styleStartSel = makeStyle(fontStart, COL_START_SEL,   COL_START_SEL,  COL_START_DOWN);
         styleOtherSel = makeStyle(fontOther, COL_OTHER_SEL,   COL_OTHER_SEL,  COL_OTHER_SEL);
 
-        LabelStyle styleDecor = new LabelStyle();
-        styleDecor.font = fontStart;
+        LabelStyle styleDecor = new LabelStyle(); styleDecor.font = fontStart;
 
         TextButton startBtn = new TextButton("INIZIA", styleStart);
         startBtn.addListener(new ChangeListener() {
@@ -102,7 +90,8 @@ public class MenuScreen extends BaseScreen
         TextButton optionsBtn = new TextButton("OPZIONI", styleOther);
         optionsBtn.addListener(new ChangeListener() {
             public void changed(ChangeEvent e, Actor a) {
-                Gdx.app.log("MenuScreen", "Opzioni — non ancora implementato");
+                // Passa MenuScreen come schermata precedente per il tasto Back
+                BaseGame.setActiveScreen(new OptionsScreen(MenuScreen.this));
             }
         });
 
@@ -132,14 +121,10 @@ public class MenuScreen extends BaseScreen
         updateSelection();
     }
 
-    // -----------------------------------------------------------------------
-    // render()
-    // -----------------------------------------------------------------------
     @Override
     public void render(float dt)
     {
         dt = Math.min(dt, 1 / 30f);
-
         int w = Gdx.graphics.getWidth();
         int h = Gdx.graphics.getHeight();
 
@@ -159,21 +144,14 @@ public class MenuScreen extends BaseScreen
             Gdx.gl.glEnable(GL20.GL_BLEND);
             shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             shapeRenderer.setColor(COL_SEP);
-            shapeRenderer.rectLine(separatorX1, separatorY,
-                    separatorX2, separatorY, 1.5f);
+            shapeRenderer.rectLine(separatorX1, separatorY, separatorX2, separatorY, 1.5f);
             shapeRenderer.end();
             Gdx.gl.glDisable(GL20.GL_BLEND);
         }
     }
 
-    // -----------------------------------------------------------------------
-    // update() — vuoto, la tastiera è gestita in keyDown()
-    // -----------------------------------------------------------------------
     public void update(float dt) { }
 
-    // -----------------------------------------------------------------------
-    // keyDown() — navigazione tastiera (chiamato da BaseScreen via InputMultiplexer)
-    // -----------------------------------------------------------------------
     @Override
     public boolean keyDown(int keycode)
     {
@@ -181,7 +159,7 @@ public class MenuScreen extends BaseScreen
         {
             selectedIndex = (selectedIndex + 1) % MENU_COUNT;
             updateSelection();
-            return true; // evento consumato
+            return true;
         }
         if (keycode == Input.Keys.UP || keycode == Input.Keys.W)
         {
@@ -197,19 +175,13 @@ public class MenuScreen extends BaseScreen
         return false;
     }
 
-    // -----------------------------------------------------------------------
-    // resize() — ricalcola separatore e aggiorna SpriteBatch projection
-    // -----------------------------------------------------------------------
     @Override
     public void resize(int width, int height)
     {
-        super.resize(width, height); // aggiorna i viewport di BaseScreen
-        separatorY = -1;             // forza ricalcolo al prossimo frame
+        super.resize(width, height);
+        separatorY = -1;
     }
 
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
     private void updateSelection()
     {
         for (int i = 0; i < buttons.length; i++)
@@ -225,19 +197,16 @@ public class MenuScreen extends BaseScreen
     {
         switch (selectedIndex)
         {
-            case 0: BaseGame.setActiveScreen(new LevelScreen()); break;
-            case 1: Gdx.app.log("MenuScreen", "Opzioni — non ancora implementato"); break;
-            case 2: Gdx.app.exit(); break;
+            case 0: BaseGame.setActiveScreen(new LevelScreen());             break;
+            case 1: BaseGame.setActiveScreen(new OptionsScreen(this));       break;
+            case 2: Gdx.app.exit();                                           break;
         }
     }
 
     private TextButtonStyle makeStyle(BitmapFont font, Color normal, Color over, Color down)
     {
         TextButtonStyle s = new TextButtonStyle();
-        s.font          = font;
-        s.fontColor     = normal;
-        s.overFontColor = over;
-        s.downFontColor = down;
+        s.font = font; s.fontColor = normal; s.overFontColor = over; s.downFontColor = down;
         return s;
     }
 

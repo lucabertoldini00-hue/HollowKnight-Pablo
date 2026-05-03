@@ -1,106 +1,113 @@
-// IntroScreen.java
-//
-// Usa VideoPlayerDesktop direttamente (cast esplicito) perché render()
-// non è esposto nell'interfaccia VideoPlayer di questa versione anonl.
-// render() gestisce internamente decodifica + disegno a schermo tramite shader.
-
 package pablo;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.video.VideoPlayer.CompletionListener;
-import com.badlogic.gdx.video.VideoPlayerCreator;
-import com.badlogic.gdx.video.VideoPlayerDesktop;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import pablo.framework.BaseGame;
 import pablo.framework.BaseScreen;
 
 public class IntroScreen extends BaseScreen
 {
-    // -----------------------------------------------------------------------
-    // TODO: imposta il path del tuo file video
-    // -----------------------------------------------------------------------
-    private static final String VIDEO_PATH = "assets/YOUR_INTRO_VIDEO.mp4";
+    private SpriteBatch batch;
+    private Texture currentFrame; // Solo 1 texture attiva alla volta
+    private Music music;
 
-    private VideoPlayerDesktop videoPlayer;
-    private boolean            done = false;
+    private boolean done = false;
 
-    // -----------------------------------------------------------------------
-    // initialize()
-    // -----------------------------------------------------------------------
+    // Assicurati che totaleFrames corrisponda al numero esatto di file nella tua cartella (es. avevi 424 frame in precedenza)
+    private int totalFrames = 424;
+    private float fps = 30f;
+    private float frameDuration = 1f / fps;
+    private float elapsedTime = 0f;
+    private int currentFrameIndex = -1;
+
     public void initialize()
     {
-        try
-        {
-            videoPlayer = (VideoPlayerDesktop) VideoPlayerCreator.createVideoPlayer();
+        batch = new SpriteBatch();
 
-            videoPlayer.setOnCompletionListener(new CompletionListener()
-            {
-                public void onCompletionListener(FileHandle file)
-                {
-                    done = true;
-                }
-            });
-
-            boolean loaded = videoPlayer.play(Gdx.files.internal(VIDEO_PATH));
-            if (!loaded)
-            {
-                Gdx.app.error("IntroScreen", "Impossibile caricare: " + VIDEO_PATH);
-                done = true;
-            }
-        }
-        catch (Exception e)
-        {
-            Gdx.app.error("IntroScreen", "Errore video: " + e.getMessage());
-            done = true;
-        }
+        music = Gdx.audio.newMusic(Gdx.files.internal("assets/Video/intro.mp3"));
+        music.play();
     }
 
-    // -----------------------------------------------------------------------
-    // render() — override completo, nessuno stage da disegnare
-    // -----------------------------------------------------------------------
+    @Override
+    public void update(float dt) {
+        // Accumuliamo il tempo passato usando il deltaTime di LibGDX (più affidabile di music.getPosition())
+        elapsedTime += dt;
+    }
+
     @Override
     public void render(float dt)
     {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY) || Gdx.input.justTouched())
-            done = true;
+        update(dt);
+        if (music == null) return;
 
-        if (done)
-        {
+        if (Gdx.input.justTouched() || Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)) {
             goToMenu();
             return;
         }
 
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+        // Calcoliamo a quale file / fotogramma corrispondiamo (partendo da 1 come i tuoi nomi file)
+        int frameIndex = (int)(elapsedTime / frameDuration) + 1;
+
+        if (frameIndex > totalFrames) {
+            goToMenu();
+            return;
+        }
+
+        // Se è avvenuto il momento di cambiare fotogramma...
+        if (frameIndex != currentFrameIndex) {
+            currentFrameIndex = frameIndex;
+
+            // 1. Eliminiamo il frame precedente dalla memoria video per evitare OutOfMemoryError
+            if (currentFrame != null) {
+                currentFrame.dispose();
+            }
+
+            // 2. Carichiamo quello nuovo
+            String path = String.format("assets/Video/frame_%04d.png", currentFrameIndex);
+            if (Gdx.files.internal(path).exists()) {
+                currentFrame = new Texture(Gdx.files.internal(path));
+            }
+        }
+
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        if (videoPlayer != null)
-        {
-            // render() decodifica e disegna il frame corrente a schermo
-            videoPlayer.render();
+        if (currentFrame != null) {
+            batch.begin();
+            batch.draw(currentFrame,
+                    0, 0,
+                    Gdx.graphics.getWidth(),
+                    Gdx.graphics.getHeight());
+            batch.end();
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
     private void goToMenu()
     {
-        if (videoPlayer != null)
-        {
-            videoPlayer.dispose();
-            videoPlayer = null;
+        if (done) return;
+        done = true;
+
+        if (music != null) {
+            music.stop();
         }
+
         BaseGame.setActiveScreen(new MenuScreen());
     }
-
-    public void update(float dt) { /* gestito in render() */ }
 
     @Override
     public void dispose()
     {
-        super.dispose();
-        if (videoPlayer != null) videoPlayer.dispose();
+        if (batch != null) batch.dispose();
+
+        // Liberiamo la singola immagine attuale dallo heap
+        if (currentFrame != null) {
+            currentFrame.dispose();
+        }
+
+        if (music != null) music.dispose();
     }
 }

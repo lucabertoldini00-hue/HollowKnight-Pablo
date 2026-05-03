@@ -9,5 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="GdxLibs" level="project" />
     <orderEntry type="library" name="gdx" level="application" />
+    <orderEntry type="library" name="gdx-backend-lwjgl-natives" level="application" />
   </component>
 </module>

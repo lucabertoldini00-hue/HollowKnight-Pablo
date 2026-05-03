@@ -74,6 +74,7 @@ public class IntroScreen extends BaseScreen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         if (currentFrame != null) {
+            mainStage.getViewport().apply();
             float viewportWidth = mainStage.getViewport().getWorldWidth();
             float viewportHeight = mainStage.getViewport().getWorldHeight();
             batch.setProjectionMatrix(mainStage.getCamera().combined);

@@ -130,6 +130,7 @@ public class MenuScreen extends BaseScreen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // Usa le dimensioni della viewport, non quelle dello schermo
+        mainStage.getViewport().apply();
         float viewportWidth = mainStage.getViewport().getWorldWidth();
         float viewportHeight = mainStage.getViewport().getWorldHeight();
 
@@ -141,10 +142,10 @@ public class MenuScreen extends BaseScreen
         uiStage.act(dt);
         uiStage.draw();
 
-
         if (separatorY < 0) computeSeparator();
         if (separatorY >= 0)
         {
+            uiStage.getViewport().apply();
             Gdx.gl.glEnable(GL20.GL_BLEND);
             shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             shapeRenderer.setColor(COL_SEP);
@@ -235,3 +236,4 @@ public class MenuScreen extends BaseScreen
         fontOther.dispose();
     }
 }
+

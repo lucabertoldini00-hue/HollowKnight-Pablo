@@ -23,6 +23,7 @@ import com.badlogic.gdx.graphics.Camera;
 import pablo.entities.enemies.falseKnight.FalseKnight;
 
 import pablo.entities.enemies.huskHornhead.HuskHornhead;
+import pablo.entities.enemies.huskWarrior.HuskWarrior;
 
 public class LevelScreen extends BaseScreen
 {
@@ -113,6 +114,13 @@ public class LevelScreen extends BaseScreen
         {
             MapProperties props = obj.getProperties();
             new HuskHornhead((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
+        }
+
+        // Spawn HuskWarrior
+        for (MapObject obj : tma.getRectangleList("HuskWarrior"))
+        {
+            MapProperties props = obj.getProperties();
+            new HuskWarrior((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
     }
 

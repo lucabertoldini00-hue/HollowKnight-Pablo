@@ -113,6 +113,18 @@ public abstract class BaseGame extends Game
     }
 
     /**
+     *  Override resize to propagate screen resize to the active screen
+     */
+    @Override
+    public void resize(int width, int height)
+    {
+        super.resize(width, height);
+        if (getScreen() != null) {
+            getScreen().resize(width, height);
+        }
+    }
+
+    /**
      *  Used to switch screens while game is running.
      *  Method is static to simplify usage.
      */

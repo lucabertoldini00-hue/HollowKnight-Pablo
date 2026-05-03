@@ -9,6 +9,8 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import com.badlogic.gdx.scenes.scene2d.Event;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -16,14 +18,22 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent.Type;
 
 public abstract class BaseScreen implements Screen, InputProcessor
 {
+    // Dimensioni di riferimento del mondo di gioco
+    private static final int WORLD_WIDTH  = 800;
+    private static final int WORLD_HEIGHT = 640;
+
     protected Stage mainStage;
     protected Stage uiStage;
     protected Table uiTable;
 
     public BaseScreen()
     {
-        mainStage = new Stage();
-        uiStage = new Stage();
+        // StretchViewport: riempie lo schermo senza bande nere (deforma l'aspect ratio).
+        mainStage = new Stage( new StretchViewport(WORLD_WIDTH, WORLD_HEIGHT) );
+
+        // ScreenViewport: 1 unità = 1 pixel reale.
+        // Corretto per la UI — i bottoni e i font si posizionano in coordinate schermo reali.
+        uiStage = new Stage( new ScreenViewport() );
 
         uiTable = new Table();
         uiTable.setFillParent(true);
@@ -33,98 +43,80 @@ public abstract class BaseScreen implements Screen, InputProcessor
     }
 
     public abstract void initialize();
-
     public abstract void update(float dt);
 
-    // Gameloop:
-    // (1) process input (discrete handled by listener; continuous in update)
-    // (2) update game logic
-    // (3) render the graphics
     public void render(float dt)
     {
-        // limit amount of time that can pass while window is being dragged
-        dt = Math.min(dt,1/30f);
+        dt = Math.min(dt, 1 / 30f);
 
-        // act methods
+        mainStage.getViewport().apply();
+        uiStage.getViewport().apply();
+
         uiStage.act(dt);
         mainStage.act(dt);
 
-        // defined by user
         update(dt);
 
-        // clear the screen
-        Gdx.gl.glClearColor(0,0,0,1);
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // draw the graphics
         mainStage.draw();
         uiStage.draw();
     }
 
-    // methods required by Screen interface
-    public void resize(int width, int height) {  }
+    // Propaga le nuove dimensioni ad entrambi i viewport
+    public void resize(int width, int height)
+    {
+        // true = centra la camera (importante per FitViewport)
+        mainStage.getViewport().update(width, height, true);
+        uiStage.getViewport().update(width, height, true);
+    }
 
-    public void pause()   {  }
+    public void pause()   { }
+    public void resume()  { }
+    public void dispose() { }
 
-    public void resume()  {  }
-
-    public void dispose() {  }
-
-    /**
-     *  Called when this becomes the active screen in a Game.
-     *  Set up InputMultiplexer here, in case screen is reactivated at a later time.
-     */
     public void show()
     {
-        InputMultiplexer im = (InputMultiplexer)Gdx.input.getInputProcessor();
+        InputMultiplexer im = (InputMultiplexer) Gdx.input.getInputProcessor();
         im.addProcessor(this);
         im.addProcessor(uiStage);
         im.addProcessor(mainStage);
     }
 
-    /**
-     *  Called when this is no longer the active screen in a Game.
-     *  Screen class and Stages no longer process input.
-     *  Other InputProcessors must be removed manually.
-     */
     public void hide()
     {
-        InputMultiplexer im = (InputMultiplexer)Gdx.input.getInputProcessor();
+        InputMultiplexer im = (InputMultiplexer) Gdx.input.getInputProcessor();
         im.removeProcessor(this);
         im.removeProcessor(uiStage);
         im.removeProcessor(mainStage);
     }
 
-    /**
-     *  Useful for checking for touch-down events.
-     */
     public boolean isTouchDownEvent(Event e)
     {
-        return (e instanceof InputEvent) && ((InputEvent)e).getType().equals(Type.touchDown);
+        return (e instanceof InputEvent) && ((InputEvent) e).getType().equals(Type.touchDown);
     }
 
-    // methods required by InputProcessor interface
-    public boolean keyDown(int keycode)
-    {  return false;  }
+    /**
+     * Ridisegna gli stage senza chiamare act() — usato da OptionsScreen e PauseScreen
+     * come sfondo "congelato" mentre la schermata corrente è aperta sopra.
+     * Le sottoclassi che renderizzano con SpriteBatch diretto (es. MenuScreen)
+     * devono fare override per includere anche il proprio batch draw.
+     */
+    public void drawFrozen()
+    {
+        mainStage.getViewport().apply();
+        mainStage.draw();
+        uiStage.getViewport().apply();
+        uiStage.draw();
+    }
 
-    public boolean keyUp(int keycode)
-    {  return false;  }
-
-    public boolean keyTyped(char c)
-    {  return false;  }
-
-    public boolean mouseMoved(int screenX, int screenY)
-    {  return false;  }
-
-    public boolean scrolled(int amount)
-    {  return false;  }
-
-    public boolean touchDown(int screenX, int screenY, int pointer, int button)
-    {  return false;  }
-
-    public boolean touchDragged(int screenX, int screenY, int pointer)
-    {  return false;  }
-
-    public boolean touchUp(int screenX, int screenY, int pointer, int button)
-    {  return false;  }
+    public boolean keyDown(int keycode)                              { return false; }
+    public boolean keyUp(int keycode)                                { return false; }
+    public boolean keyTyped(char c)                                  { return false; }
+    public boolean mouseMoved(int x, int y)                          { return false; }
+    public boolean scrolled(int amount)                              { return false; }
+    public boolean touchDown(int x, int y, int pointer, int button)  { return false; }
+    public boolean touchDragged(int x, int y, int pointer)           { return false; }
+    public boolean touchUp(int x, int y, int pointer, int button)    { return false; }
 }

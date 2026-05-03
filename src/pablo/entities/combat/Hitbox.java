@@ -12,15 +12,30 @@ import java.util.Set;
 
 public class Hitbox extends BaseActor
 {
-    private final int   damage;
-    private final float lifetime;
-    private float       timer;
+    private final int      damage;
+    private final float    lifetime;
+    private float          timer;
 
-    // prevents the same enemy from being hit more than once by this hitbox
+    // Callback opzionale invocata una volta per ogni nemico colpito (es. gainSoul)
+    private final Runnable onHit;
+
+    // Impedisce di colpire lo stesso nemico più di una volta per hitbox
     private final Set<Enemy> hitEnemies = new HashSet<>();
 
+    // -----------------------------------------------------------------------
+    // Costruttore senza callback (compatibilità con il codice esistente)
+    // -----------------------------------------------------------------------
     public Hitbox(float x, float y, float width, float height,
                   int damage, float lifetime, Stage stage)
+    {
+        this(x, y, width, height, damage, lifetime, stage, null);
+    }
+
+    // -----------------------------------------------------------------------
+    // Costruttore con callback (usato da Pablo.spawnAttackHitbox)
+    // -----------------------------------------------------------------------
+    public Hitbox(float x, float y, float width, float height,
+                  int damage, float lifetime, Stage stage, Runnable onHit)
     {
         super(x, y, stage);
         setSize(width, height);
@@ -29,12 +44,12 @@ public class Hitbox extends BaseActor
         this.damage   = damage;
         this.lifetime = lifetime;
         this.timer    = 0f;
+        this.onHit    = onHit;
 
-        // --- DEBUG VISUAL: semi-transparent red box ---
-        // Comment these two lines out once you're happy with positioning
+        // DEBUG VISUAL: box rossa semitrasparente.
+        // Commentare queste due righe una volta soddisfatti del posizionamento.
         loadTexture("assets/white.png");
         setColor(new Color(1f, 0f, 0f, 0.45f));
-        // -----------------------------------------------
     }
 
     @Override
@@ -42,7 +57,7 @@ public class Hitbox extends BaseActor
     {
         super.act(dt);
 
-        // scan every enemy currently on the Stage
+        // Scansiona tutti i nemici attualmente sulla Stage
         for (BaseActor actor : BaseActor.getList(getStage(), Enemy.class.getName()))
         {
             Enemy enemy = (Enemy) actor;
@@ -50,11 +65,15 @@ public class Hitbox extends BaseActor
             if (!hitEnemies.contains(enemy) && overlaps(enemy))
             {
                 enemy.takeDamage(damage);
-                hitEnemies.add(enemy);   // never hit this enemy again
+                hitEnemies.add(enemy);
+
+                // Notifica il chiamante (es. Pablo.gainSoul) — una volta per impatto
+                if (onHit != null)
+                    onHit.run();
             }
         }
 
-        // self-destruct — removes this actor from the Stage cleanly
+        // Auto-distruzione alla scadenza del lifetime
         timer += dt;
         if (timer >= lifetime)
             remove();

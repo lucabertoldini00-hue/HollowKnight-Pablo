@@ -33,10 +33,15 @@ public class MenuScreen extends BaseScreen
     private static final Color COL_OTHER_NORMAL = new Color(0.78f, 0.78f, 0.78f, 1f);
     private static final Color COL_OTHER_SEL    = Color.WHITE;
     private static final Color COL_SEP          = new Color(1f, 1f, 1f, 0.55f);
+    private static final Color COL_ICON_NORMAL  = Color.WHITE;
+    private static final Color COL_ICON_SEL     = new Color(0.4f, 1f, 0.4f, 1f);
+    private static final String ICON_TEXT       = " \u2767 ";
 
     private static final int MENU_COUNT = 3;
     private int selectedIndex = 0;
     private TextButton[] buttons;
+    private Label[] iconLeft;
+    private Label[] iconRight;
 
     private SpriteBatch   batch;
     private ShapeRenderer shapeRenderer;
@@ -62,7 +67,7 @@ public class MenuScreen extends BaseScreen
                 Gdx.files.internal(FONT_PATH));
 
         FreeTypeFontParameter pStart = new FreeTypeFontParameter();
-        pStart.size = 42; pStart.color = COL_START_NORMAL;
+        pStart.size = 46; pStart.color = COL_START_NORMAL;
         pStart.borderWidth = 1.5f; pStart.borderColor = new Color(0,0,0,0.7f);
         fontStart = gen.generateFont(pStart);
 
@@ -78,7 +83,8 @@ public class MenuScreen extends BaseScreen
         styleStartSel = makeStyle(fontStart, COL_START_SEL,   COL_START_SEL,  COL_START_DOWN);
         styleOtherSel = makeStyle(fontOther, COL_OTHER_SEL,   COL_OTHER_SEL,  COL_OTHER_SEL);
 
-        LabelStyle styleDecor = new LabelStyle(); styleDecor.font = fontStart;
+        LabelStyle styleDecorStart = new LabelStyle(); styleDecorStart.font = fontStart;
+        LabelStyle styleDecorOther = new LabelStyle(); styleDecorOther.font = fontOther;
 
         TextButton startBtn = new TextButton("INIZIA", styleStart);
         startBtn.addListener(new ChangeListener() {
@@ -101,22 +107,38 @@ public class MenuScreen extends BaseScreen
         });
 
         buttons = new TextButton[]{ startBtn, optionsBtn, exitBtn };
+        iconLeft  = new Label[MENU_COUNT];
+        iconRight = new Label[MENU_COUNT];
 
-        Label decorLeft  = new Label(" \u2767 ", styleDecor);
-        Label decorRight = new Label(" \u2767 ", styleDecor);
+        iconLeft[0]  = new Label(ICON_TEXT, styleDecorStart);
+        iconRight[0] = new Label(ICON_TEXT, styleDecorStart);
+        iconLeft[1]  = new Label(ICON_TEXT, styleDecorOther);
+        iconRight[1] = new Label(ICON_TEXT, styleDecorOther);
+        iconLeft[2]  = new Label(ICON_TEXT, styleDecorOther);
+        iconRight[2] = new Label(ICON_TEXT, styleDecorOther);
 
         uiTable.bottom().right();
         uiTable.padBottom(80).padRight(90);
 
         Table startRow = new Table();
-        startRow.add(decorLeft);
+        startRow.add(iconLeft[0]);
         startRow.add(startBtn).padLeft(6).padRight(6);
-        startRow.add(decorRight);
+        startRow.add(iconRight[0]);
         uiTable.add(startRow).right().padBottom(10).row();
 
-        uiTable.add(new Label("", styleDecor)).height(2).padBottom(18).row();
-        uiTable.add(optionsBtn).right().padBottom(12).row();
-        uiTable.add(exitBtn).right().row();
+        uiTable.add(new Label("", styleDecorOther)).height(2).padBottom(18).row();
+
+        Table optionsRow = new Table();
+        optionsRow.add(iconLeft[1]);
+        optionsRow.add(optionsBtn).padLeft(6).padRight(6);
+        optionsRow.add(iconRight[1]);
+        uiTable.add(optionsRow).right().padBottom(12).row();
+
+        Table exitRow = new Table();
+        exitRow.add(iconLeft[2]);
+        exitRow.add(exitBtn).padLeft(6).padRight(6);
+        exitRow.add(iconRight[2]);
+        uiTable.add(exitRow).right().row();
 
         updateSelection();
     }
@@ -194,6 +216,10 @@ public class MenuScreen extends BaseScreen
                 buttons[i].setStyle(i == selectedIndex ? styleStartSel : styleStart);
             else
                 buttons[i].setStyle(i == selectedIndex ? styleOtherSel : styleOther);
+
+            Color iconColor = (i == selectedIndex) ? COL_ICON_SEL : COL_ICON_NORMAL;
+            iconLeft[i].setColor(iconColor);
+            iconRight[i].setColor(iconColor);
         }
     }
 
@@ -235,3 +261,4 @@ public class MenuScreen extends BaseScreen
         fontOther.dispose();
     }
 }
+

@@ -7,6 +7,6 @@ public class PabloGame extends BaseGame
     public void create()
     {
         super.create();
-        setActiveScreen( new MenuScreen() );
+        setActiveScreen( new IntroScreen() );
     }
 }

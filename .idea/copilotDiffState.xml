@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="/PabloGame (snapshot).java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="/PabloGame (snapshot).java" />
+              <option name="originalContent" value="package pablo;&#10;&#10;import pablo.framework.BaseGame;&#10;&#10;public class PabloGame extends BaseGame&#10;{&#10;    public void create()&#10;    {&#10;        super.create();&#10;        setActiveScreen( new MenuScreen() );&#10;    }&#10;}&#10;" />
+              <option name="updatedContent" value="package pablo;&#10;&#10;import pablo.framework.BaseGame;&#10;&#10;public class PabloGame extends BaseGame&#10;{&#10;    public void create()&#10;    {&#10;        super.create();&#10;        setActiveScreen( new IntroScreen() );&#10;    }&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

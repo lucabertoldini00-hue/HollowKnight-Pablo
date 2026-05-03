@@ -96,8 +96,7 @@ public class MenuScreen extends BaseScreen
         TextButton optionsBtn = new TextButton("OPZIONI", styleOther);
         optionsBtn.addListener(new ChangeListener() {
             public void changed(ChangeEvent e, Actor a) {
-                // Passa MenuScreen come schermata precedente per il tasto Back
-                BaseGame.setActiveScreen(new OptionsScreen(MenuScreen.this));
+                BaseGame.setActiveScreen(new OptionsScreen(MenuScreen.this, MenuScreen.this));
             }
         });
 
@@ -151,15 +150,7 @@ public class MenuScreen extends BaseScreen
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // Usa le dimensioni della viewport, non quelle dello schermo
-        mainStage.getViewport().apply();
-        float viewportWidth = mainStage.getViewport().getWorldWidth();
-        float viewportHeight = mainStage.getViewport().getWorldHeight();
-
-        batch.setProjectionMatrix(mainStage.getCamera().combined);
-        batch.begin();
-        batch.draw(background, 0, 0, viewportWidth, viewportHeight);
-        batch.end();
+        drawBackground();
 
         uiStage.act(dt);
         uiStage.draw();
@@ -175,6 +166,31 @@ public class MenuScreen extends BaseScreen
             shapeRenderer.end();
             Gdx.gl.glDisable(GL20.GL_BLEND);
         }
+    }
+
+    /**
+     * Usato da OptionsScreen come sfondo frozen.
+     * Ridisegna il background e la UI senza chiamare act().
+     */
+    @Override
+    public void drawFrozen()
+    {
+        drawBackground();
+        uiStage.getViewport().apply();
+        uiStage.draw();
+    }
+
+    /** Disegna il background con il batch — estratto per evitare duplicazione. */
+    private void drawBackground()
+    {
+        mainStage.getViewport().apply();
+        float viewportWidth  = mainStage.getViewport().getWorldWidth();
+        float viewportHeight = mainStage.getViewport().getWorldHeight();
+
+        batch.setProjectionMatrix(mainStage.getCamera().combined);
+        batch.begin();
+        batch.draw(background, 0, 0, viewportWidth, viewportHeight);
+        batch.end();
     }
 
     public void update(float dt) { }
@@ -229,7 +245,7 @@ public class MenuScreen extends BaseScreen
         switch (selectedIndex)
         {
             case 0: BaseGame.setActiveScreen(new LevelScreen());             break;
-            case 1: BaseGame.setActiveScreen(new OptionsScreen(this));       break;
+            case 1: BaseGame.setActiveScreen(new OptionsScreen(this, this)); break;
             case 2: Gdx.app.exit();                                           break;
         }
     }
@@ -262,4 +278,3 @@ public class MenuScreen extends BaseScreen
         fontOther.dispose();
     }
 }
-

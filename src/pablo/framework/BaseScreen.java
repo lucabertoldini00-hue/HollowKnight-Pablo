@@ -98,6 +98,14 @@ public abstract class BaseScreen implements Screen, InputProcessor
         return (e instanceof InputEvent) && ((InputEvent) e).getType().equals(Type.touchDown);
     }
 
+    public void drawFrozen()
+    {
+        mainStage.getViewport().apply();
+        mainStage.draw();
+        uiStage.getViewport().apply();
+        uiStage.draw();
+    }
+
     public boolean keyDown(int keycode)                              { return false; }
     public boolean keyUp(int keycode)                                { return false; }
     public boolean keyTyped(char c)                                  { return false; }
@@ -106,4 +114,6 @@ public abstract class BaseScreen implements Screen, InputProcessor
     public boolean touchDown(int x, int y, int pointer, int button) { return false; }
     public boolean touchDragged(int x, int y, int pointer)          { return false; }
     public boolean touchUp(int x, int y, int pointer, int button)   { return false; }
+
+
 }

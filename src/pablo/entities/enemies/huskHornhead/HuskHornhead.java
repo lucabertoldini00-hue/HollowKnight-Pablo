@@ -286,7 +286,10 @@ public class HuskHornhead extends Enemy
         }
         else
         {
-            chargeDir = (pablo.getX() > getX()) ? 1f : -1f;
+            if (pablo.getX() > getX())
+                chargeDir = 1f;
+            else
+                chargeDir = -1f;
             direction = chargeDir;
             setScaleX(chargeDir);
 
@@ -391,7 +394,10 @@ public class HuskHornhead extends Enemy
         {
             health = 0;
 
-            deathKnockbackDir = (pablo.getX() < getX()) ? 1f : -1f;
+            if (pablo.getX() < getX())
+                deathKnockbackDir = 1f;
+            else
+                deathKnockbackDir = -1f;
             spinDir = deathKnockbackDir;
             hitStopTimer = HIT_STOP_DURATION;
 
@@ -445,7 +451,10 @@ public class HuskHornhead extends Enemy
 
     private void faceTarget()
     {
-        direction = (pablo.getX() > getX()) ? 1f : -1f;
+        if (pablo.getX() > getX())
+            direction = 1f;
+        else
+            direction = -1f;
         setScaleX(direction);
     }
 

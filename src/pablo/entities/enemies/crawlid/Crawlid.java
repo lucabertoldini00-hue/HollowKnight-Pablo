@@ -29,8 +29,7 @@ public class Crawlid extends Enemy
     // -------------------------------------------------------------------------
     // State
     // -------------------------------------------------------------------------
-    private enum State { PATROL, TURNING, HIT_STOP, DEAD_AIR, DEAD_LAND }
-    private State state;
+    private CrawlidState state;
     private float stateTimer;
 
     // -------------------------------------------------------------------------
@@ -108,7 +107,7 @@ public class Crawlid extends Enemy
         edgeSensor.setBoundaryRectangle();
         edgeSensor.setVisible(false);
 
-        enterState(State.PATROL);
+        enterState(CrawlidState.PATROL);
     }
 
     // =========================================================================
@@ -120,7 +119,7 @@ public class Crawlid extends Enemy
         super.act(dt); // increments elapsedTime, runs BaseActor logic
 
         // Hit-stop: freeze in place, then launch
-        if (state == State.HIT_STOP)
+        if (state == CrawlidState.HIT_STOP)
         {
             hitStopTimer -= dt;
             if (hitStopTimer <= 0f)
@@ -151,7 +150,7 @@ public class Crawlid extends Enemy
         // At a ledge with no ground ahead → start turn
         if (isOnGround() && !edgeAheadHasGround())
         {
-            enterState(State.TURNING);
+            enterState(CrawlidState.TURNING);
             return;
         }
 
@@ -176,7 +175,7 @@ public class Crawlid extends Enemy
         if (animTurn.isAnimationFinished(stateTimer))
         {
             flip();
-            enterState(State.PATROL);
+            enterState(CrawlidState.PATROL);
         }
     }
 
@@ -199,7 +198,7 @@ public class Crawlid extends Enemy
         if (isOnGround())
         {
             velocityVec.set(0, 0);
-            enterState(State.DEAD_LAND);
+            enterState(CrawlidState.DEAD_LAND);
         }
     }
 
@@ -226,9 +225,9 @@ public class Crawlid extends Enemy
     public void takeDamage(int amount)
     {
         // Ignore hits during death sequence
-        if (state == State.HIT_STOP ||
-                state == State.DEAD_AIR ||
-                state == State.DEAD_LAND)
+        if (state == CrawlidState.HIT_STOP ||
+                state == CrawlidState.DEAD_AIR ||
+                state == CrawlidState.DEAD_LAND)
             return;
 
         health -= amount;
@@ -243,7 +242,7 @@ public class Crawlid extends Enemy
                 deathKnockbackDir = -1f;
 
             hitStopTimer = HIT_STOP_DURATION;
-            enterState(State.HIT_STOP);
+            enterState(CrawlidState.HIT_STOP);
         }
         // If health > 0 (future multi-hit scenarios): could add a stun here
     }
@@ -254,7 +253,7 @@ public class Crawlid extends Enemy
         spinDir        = deathKnockbackDir; // spin direction matches knockback side
         velocityVec.x  = deathKnockbackDir * DEATH_KNOCKBACK_X;
         velocityVec.y  = DEATH_KNOCKBACK_Y;
-        enterState(State.DEAD_AIR);
+        enterState(CrawlidState.DEAD_AIR);
     }
 
     // =========================================================================
@@ -265,7 +264,7 @@ public class Crawlid extends Enemy
     public void onWallHit()
     {
         // Only flip direction during normal patrol — ignore walls while flying dead
-        if (state == State.PATROL)
+        if (state == CrawlidState.PATROL)
             flip();
     }
 
@@ -273,7 +272,7 @@ public class Crawlid extends Enemy
     // Helper
     // =========================================================================
 
-    private void enterState(State next)
+    private void enterState(CrawlidState next)
     {
         state       = next;
         stateTimer  = 0f;

@@ -8,6 +8,7 @@ package pablo.entities.enemies.tiktik;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import pablo.entities.enemies.Enemy;
+import pablo.entities.enemies.crawlid.CrawlidState;
 import pablo.entities.player.Pablo;
 import pablo.framework.BaseActor;
 
@@ -30,8 +31,7 @@ public class Tiktik extends Enemy
     // -------------------------------------------------------------------------
     // State
     // -------------------------------------------------------------------------
-    private enum State { PATROL, TURNING, STUNNED, HIT_STOP, DEAD_AIR, DEAD_LAND }
-    private State state;
+    private TiktikState state;
     private float stateTimer;
 
     // -------------------------------------------------------------------------
@@ -107,7 +107,7 @@ public class Tiktik extends Enemy
         edgeSensor.setBoundaryRectangle();
         edgeSensor.setVisible(false);
 
-        enterState(State.PATROL);
+        enterState(TiktikState.PATROL);
     }
 
     // =========================================================================
@@ -119,7 +119,7 @@ public class Tiktik extends Enemy
         super.act(dt);
 
         // Hit-stop: freeze everything, then launch into death
-        if (state == State.HIT_STOP)
+        if (state == TiktikState.HIT_STOP)
         {
             hitStopTimer -= dt;
             if (hitStopTimer <= 0f)
@@ -150,7 +150,7 @@ public class Tiktik extends Enemy
 
         if (isOnGround() && !edgeAheadHasGround())
         {
-            enterState(State.TURNING);
+            enterState(TiktikState.TURNING);
             return;
         }
 
@@ -175,7 +175,7 @@ public class Tiktik extends Enemy
         if (stateTimer >= 0.10f) // very short pause before flipping
         {
             flip();
-            enterState(State.PATROL);
+            enterState(TiktikState.PATROL);
         }
     }
 
@@ -196,7 +196,7 @@ public class Tiktik extends Enemy
         if (stateTimer >= STUN_ANIM_TOTAL)
         {
             flip(); // reverse direction after stun
-            enterState(State.PATROL);
+            enterState(TiktikState.PATROL);
         }
     }
 
@@ -214,7 +214,7 @@ public class Tiktik extends Enemy
         if (isOnGround())
         {
             velocityVec.set(0, 0);
-            enterState(State.DEAD_LAND);
+            enterState(TiktikState.DEAD_LAND);
         }
     }
 
@@ -239,9 +239,9 @@ public class Tiktik extends Enemy
     public void takeDamage(int amount)
     {
         // Ignore hits during death sequence
-        if (state == State.HIT_STOP ||
-                state == State.DEAD_AIR  ||
-                state == State.DEAD_LAND)
+        if (state == TiktikState.HIT_STOP ||
+                state == TiktikState.DEAD_AIR  ||
+                state == TiktikState.DEAD_LAND)
             return;
 
         health -= amount;
@@ -256,12 +256,12 @@ public class Tiktik extends Enemy
                 deathKnockbackDir = -1f;
 
             hitStopTimer = HIT_STOP_DURATION;
-            enterState(State.HIT_STOP);
+            enterState(TiktikState.HIT_STOP);
         }
         else
         {
             // Survived the hit — play stun anim and recoil
-            enterState(State.STUNNED);
+            enterState(TiktikState.STUNNED);
         }
     }
 
@@ -270,7 +270,7 @@ public class Tiktik extends Enemy
     {
         velocityVec.x = deathKnockbackDir * DEATH_KNOCKBACK_X;
         velocityVec.y = DEATH_KNOCKBACK_Y;
-        enterState(State.DEAD_AIR);
+        enterState(TiktikState.DEAD_AIR);
     }
 
     // =========================================================================
@@ -281,7 +281,7 @@ public class Tiktik extends Enemy
     public void onWallHit()
     {
         // Only flip during normal patrol — ignore walls while stunned or dead
-        if (state == State.PATROL)
+        if (state == TiktikState.PATROL)
             flip();
     }
 
@@ -289,7 +289,7 @@ public class Tiktik extends Enemy
     // Helper
     // =========================================================================
 
-    private void enterState(State next)
+    private void enterState(TiktikState next)
     {
         state       = next;
         stateTimer  = 0f;

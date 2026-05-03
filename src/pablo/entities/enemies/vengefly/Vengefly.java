@@ -43,8 +43,7 @@ public class Vengefly extends Enemy
     // -------------------------------------------------------------------------
     // State
     // -------------------------------------------------------------------------
-    private enum State { HOVERING, TURNING, STARTLE, CHASE, HIT_STOP, DEAD_AIR, DEAD_GROUND }
-    private State state;
+    private VengeflyState state;
     private float stateTimer;
 
     // -------------------------------------------------------------------------
@@ -132,7 +131,7 @@ public class Vengefly extends Enemy
         // edgeSensor not needed — Vengefly never walks on surfaces
         edgeSensor = null;
 
-        enterState(State.HOVERING);
+        enterState(VengeflyState.HOVERING);
     }
 
     // =========================================================================
@@ -144,7 +143,7 @@ public class Vengefly extends Enemy
         super.act(dt);
 
         // Hit-stop: freeze, then launch into death arc
-        if (state == State.HIT_STOP)
+        if (state == VengeflyState.HIT_STOP)
         {
             hitStopTimer -= dt;
             if (hitStopTimer <= 0f)
@@ -195,7 +194,7 @@ public class Vengefly extends Enemy
 
         // Aggro check every frame
         if (isInDetectionRange())
-            enterState(State.STARTLE);
+            enterState(VengeflyState.STARTLE);
     }
 
     private void tickTurning()
@@ -208,7 +207,7 @@ public class Vengefly extends Enemy
         {
             direction *= -1f;
             setScaleX(direction);
-            enterState(State.HOVERING);
+            enterState(VengeflyState.HOVERING);
         }
     }
 
@@ -230,7 +229,7 @@ public class Vengefly extends Enemy
         else
         {
             // Phase 3: snap into chase
-            enterState(State.CHASE);
+            enterState(VengeflyState.CHASE);
         }
     }
 
@@ -289,7 +288,7 @@ public class Vengefly extends Enemy
         if (isOnGround())
         {
             velocityVec.set(0, 0);
-            enterState(State.DEAD_GROUND);
+            enterState(VengeflyState.DEAD_GROUND);
         }
     }
 
@@ -309,9 +308,9 @@ public class Vengefly extends Enemy
     @Override
     public void takeDamage(int amount)
     {
-        if (state == State.HIT_STOP ||
-                state == State.DEAD_AIR  ||
-                state == State.DEAD_GROUND)
+        if (state == VengeflyState.HIT_STOP ||
+                state == VengeflyState.DEAD_AIR  ||
+                state == VengeflyState.DEAD_GROUND)
             return;
 
         health -= amount;
@@ -325,7 +324,7 @@ public class Vengefly extends Enemy
                 deathKnockbackDir = -1f;
             spinDir           = deathKnockbackDir;
             hitStopTimer      = HIT_STOP_DURATION;
-            enterState(State.HIT_STOP);
+            enterState(VengeflyState.HIT_STOP);
         }
     }
 
@@ -333,7 +332,7 @@ public class Vengefly extends Enemy
     {
         velocityVec.x = deathKnockbackDir * DEATH_KNOCKBACK_X;
         velocityVec.y = DEATH_KNOCKBACK_Y;
-        enterState(State.DEAD_AIR);
+        enterState(VengeflyState.DEAD_AIR);
     }
 
     // =========================================================================
@@ -343,7 +342,7 @@ public class Vengefly extends Enemy
     @Override
     public void onWallHit()
     {
-        if (state == State.CHASE)
+        if (state == VengeflyState.CHASE)
             velocityVec.x *= -1f;
     }
 
@@ -362,7 +361,7 @@ public class Vengefly extends Enemy
         return (dx * dx + dy * dy) < (DETECTION_RADIUS * DETECTION_RADIUS);
     }
 
-    private void enterState(State next)
+    private void enterState(VengeflyState next)
     {
         state       = next;
         stateTimer  = 0f;

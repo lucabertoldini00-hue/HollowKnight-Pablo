@@ -78,6 +78,7 @@ public class LevelScreen extends BaseScreen
     // -----------------------------------------------------------------------
     public void initialize()
     {
+        // Carica la mappa e popola i solidi dal layer oggetti "solido".
         TilemapActor tma = new TilemapActor("assets/Maps/mapPablo2.tmx", mainStage);
 
         for (MapObject obj : tma.getRectangleList("solido"))
@@ -90,6 +91,7 @@ public class LevelScreen extends BaseScreen
             );
         }
 
+        // Punto di spawn del player dalla mappa (oggetto "start").
         MapObject startPoint = tma.getRectangleList("start").get(0);
         MapProperties startProps = startPoint.getProperties();
         pablo = new Pablo(
@@ -115,6 +117,7 @@ public class LevelScreen extends BaseScreen
         // -----------------------------------------------------------------------
         // UI — ricettacolo anima animato
         // -----------------------------------------------------------------------
+        // Precarica i frame del ricettacolo anima (stati 0-8).
         vesselTextures  = new Texture[VESSEL_STATES][];
         vesselDrawables = new TextureRegionDrawable[VESSEL_STATES][];
 
@@ -154,15 +157,16 @@ public class LevelScreen extends BaseScreen
         // -----------------------------------------------------------------------
         // Nemici
         // -----------------------------------------------------------------------
+        // Spawn nemici dai tile objects della mappa.
         for (MapObject obj : tma.getTileList("Crawlid"))
         {
             MapProperties props = obj.getProperties();
-            new Crawlid((float) props.get("x"), (float) props.get("y"), mainStage);
+            new Crawlid((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
         for (MapObject obj : tma.getTileList("Tiktik"))
         {
             MapProperties props = obj.getProperties();
-            new Tiktik((float) props.get("x"), (float) props.get("y"), mainStage);
+            new Tiktik((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
         for (MapObject obj : tma.getTileList("Vengefly"))
         {
@@ -170,6 +174,7 @@ public class LevelScreen extends BaseScreen
             new Vengefly((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
 
+        // Spawn del boss e callback per screen shake.
         MapObject fkPoint = tma.getRectangleList("FalseKnight").get(0);
         MapProperties fkProps = fkPoint.getProperties();
 
@@ -185,15 +190,15 @@ public class LevelScreen extends BaseScreen
     // -----------------------------------------------------------------------
     public void update(float dt)
     {
-        // --- Maschere HP ---
+        // Aggiorna le maschere in base agli HP attuali.
         int health = pablo.getHealth();
         for (int i = 0; i < maskImages.length; i++)
             maskImages[i].setColor(i < health ? MASK_FULL : MASK_EMPTY);
 
-        // --- Ricettacolo animato ---
+        // Aggiorna l'animazione del ricettacolo in base alla soul.
         updateVessel(dt);
 
-        // --- Collisioni Pablo con solidi ---
+        // Collisioni player <-> solidi con risoluzione tramite MTV.
         for (BaseActor actor : BaseActor.getList(mainStage, Object.class.getName()))
         {
             Object oggetto = (Object) actor;
@@ -210,7 +215,7 @@ public class LevelScreen extends BaseScreen
             }
         }
 
-        // --- Collisioni nemici con solidi ---
+        // Collisioni nemici <-> solidi (wall hit o stop verticale).
         for (BaseActor eActor : BaseActor.getList(mainStage, Enemy.class.getName()))
         {
             Enemy enemy = (Enemy) eActor;
@@ -231,7 +236,7 @@ public class LevelScreen extends BaseScreen
             }
         }
 
-        // --- Screen shake ---
+        // Screen shake leggero dopo gli attacchi del boss.
         if (shakeDuration > 0)
         {
             shakeDuration -= dt;
@@ -240,7 +245,7 @@ public class LevelScreen extends BaseScreen
             cam.update();
         }
 
-        // --- FalseKnight collisioni ---
+        // Collisioni del boss con solidi e gestione atterraggio/parete.
         if (!falseKnight.isDead())
         {
             for (BaseActor sActor : BaseActor.getList(mainStage, Object.class.getName()))
@@ -266,6 +271,7 @@ public class LevelScreen extends BaseScreen
             }
         }
 
+        // Danno diretto se il mace hitbox colpisce Pablo.
         if (!falseKnight.isDead() && falseKnight.maceOverlapsPablo())
             pablo.takeDamage(1);
     }
@@ -318,6 +324,7 @@ public class LevelScreen extends BaseScreen
     // -----------------------------------------------------------------------
     public boolean keyDown(int keyCode)
     {
+        // Pausa e comandi debug rapidi per test.
         if (keyCode == Input.Keys.ESCAPE || keyCode == Input.Keys.P)
         {
             BaseGame.setActiveScreen(new PauseScreen(this));
@@ -338,6 +345,7 @@ public class LevelScreen extends BaseScreen
     // -----------------------------------------------------------------------
     private Texture loadTextureSafe(String path, Color fallback)
     {
+        // Carica la texture; se manca, genera un placeholder colorato per evitare crash.
         try
         {
             return new Texture(Gdx.files.internal(path));
@@ -361,6 +369,7 @@ public class LevelScreen extends BaseScreen
     public void dispose()
     {
         super.dispose();
+        // Libera le texture UI caricate manualmente.
         if (maskTexture != null) maskTexture.dispose();
         if (vesselTextures != null)
             for (Texture[] row : vesselTextures)

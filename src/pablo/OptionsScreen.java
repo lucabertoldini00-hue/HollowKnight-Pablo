@@ -191,8 +191,8 @@ public class OptionsScreen extends BaseScreen
     {
         dt = Math.min(dt, 1 / 30f);
 
-        int w = Gdx.graphics.getWidth();
-        int h = Gdx.graphics.getHeight();
+        float viewportWidth = mainStage.getViewport().getWorldWidth();
+        float viewportHeight = mainStage.getViewport().getWorldHeight();
 
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -200,16 +200,18 @@ public class OptionsScreen extends BaseScreen
         // 1. Sfondo (stessa immagine del menù)
         if (background != null)
         {
+            batch.setProjectionMatrix(mainStage.getCamera().combined);
             batch.begin();
-            batch.draw(background, 0, 0, w, h);
+            batch.draw(background, 0, 0, viewportWidth, viewportHeight);
             batch.end();
         }
 
         // 2. Overlay semitrasparente
         Gdx.gl.glEnable(GL20.GL_BLEND);
+        shapes.setProjectionMatrix(uiStage.getCamera().combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         shapes.setColor(COL_OVERLAY);
-        shapes.rect(0, 0, w, h);
+        shapes.rect(0, 0, uiStage.getViewport().getWorldWidth(), uiStage.getViewport().getWorldHeight());
         shapes.end();
         Gdx.gl.glDisable(GL20.GL_BLEND);
 

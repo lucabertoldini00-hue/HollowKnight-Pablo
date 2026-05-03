@@ -59,17 +59,14 @@ public class IntroScreen extends BaseScreen
 
         // Se è avvenuto il momento di cambiare fotogramma...
         if (frameIndex != currentFrameIndex) {
-            currentFrameIndex = frameIndex;
-
-            // 1. Eliminiamo il frame precedente dalla memoria video per evitare OutOfMemoryError
-            if (currentFrame != null) {
-                currentFrame.dispose();
-            }
-
-            // 2. Carichiamo quello nuovo
-            String path = String.format("assets/Video/frame_%04d.png", currentFrameIndex);
+            String path = String.format("assets/Video/frame_%04d.png", frameIndex);
             if (Gdx.files.internal(path).exists()) {
-                currentFrame = new Texture(Gdx.files.internal(path));
+                Texture nextFrame = new Texture(Gdx.files.internal(path));
+                if (currentFrame != null) {
+                    currentFrame.dispose();
+                }
+                currentFrame = nextFrame;
+                currentFrameIndex = frameIndex;
             }
         }
 
@@ -77,11 +74,11 @@ public class IntroScreen extends BaseScreen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         if (currentFrame != null) {
+            float viewportWidth = mainStage.getViewport().getWorldWidth();
+            float viewportHeight = mainStage.getViewport().getWorldHeight();
+            batch.setProjectionMatrix(mainStage.getCamera().combined);
             batch.begin();
-            batch.draw(currentFrame,
-                    0, 0,
-                    Gdx.graphics.getWidth(),
-                    Gdx.graphics.getHeight());
+            batch.draw(currentFrame, 0, 0, viewportWidth, viewportHeight);
             batch.end();
         }
     }

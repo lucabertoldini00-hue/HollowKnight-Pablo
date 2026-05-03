@@ -67,34 +67,28 @@ public class LevelScreen extends BaseScreen
         uiTable.add(healthBar).width(200).height(20).padLeft(10).left().row();
 
         // Spawn Crawlid
-        MapObject crawlidPoint = tma.getRectangleList("Crawlid").get(0);
-        MapProperties crawlidProps = crawlidPoint.getProperties();
-        new Crawlid(
-                (float) crawlidProps.get("x"),
-                (float) crawlidProps.get("y"),
-                mainStage,
-                pablo
-        );
+        for (MapObject obj : tma.getRectangleList("Crawlid"))
+        {
+            MapProperties props = obj.getProperties();
+            new Crawlid((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
+        }
 
         // Spawn Tiktik
-        MapObject tiktikPoint = tma.getRectangleList("Tiktik").get(0);
-        MapProperties tiktikProps = tiktikPoint.getProperties();
-        new Tiktik(
-                (float) tiktikProps.get("x"),
-                (float) tiktikProps.get("y"),
-                mainStage,
-                pablo
-        );
+        for (MapObject obj : tma.getRectangleList("Tiktik"))
+        {
+            MapProperties props = obj.getProperties();
+            new Tiktik((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
+        }
 
         // Spawn Vengefly
-        MapObject vengeflyPoint = tma.getRectangleList("Vengefly").get(0);
-        MapProperties vengeflyProps = vengeflyPoint.getProperties();
-        new Vengefly(
-                (float) vengeflyProps.get("x"),
-                (float) vengeflyProps.get("y"),
-                mainStage,
-                pablo
-        );
+        for (MapObject obj : tma.getRectangleList("Vengefly"))
+        {
+            MapProperties props = obj.getProperties();
+            new Vengefly((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
+        }
+
+        // DEBUG — force-spawn one Crawlid directly beside Pablo to test rendering
+        new Crawlid(pablo.getX() + 100, pablo.getY(), mainStage, pablo);
 
         // Spawn FalseKnight
         MapObject fkPoint = tma.getRectangleList("FalseKnight").get(0);
@@ -107,6 +101,11 @@ public class LevelScreen extends BaseScreen
                 pablo
         );
         falseKnight.setScreenShakeCallback(() -> shakeDuration = 0.15f);
+
+        // DEBUG — add right before the closing brace of initialize()
+        System.out.println("Crawlid count in stage: " + BaseActor.count(mainStage, Crawlid.class.getName()));
+        System.out.println("Tiktik count in stage: "  + BaseActor.count(mainStage, Tiktik.class.getName()));
+        System.out.println("Vengefly count in stage: " + BaseActor.count(mainStage, Vengefly.class.getName()));
     }
 
     public void update(float dt)

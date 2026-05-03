@@ -19,7 +19,7 @@ public class GameSettings
     // Valori correnti
     private float   sfxVolume   = 1.0f;
     private float   musicVolume = 1.0f;
-    private boolean fullscreen  = false;
+    private boolean fullscreen  = true;  // FORZATO A TRUE
 
     // -----------------------------------------------------------------------
     // Singleton
@@ -49,7 +49,7 @@ public class GameSettings
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
         sfxVolume   = prefs.getFloat  (KEY_SFX,        1.0f);
         musicVolume = prefs.getFloat  (KEY_MUSIC,       1.0f);
-        fullscreen  = prefs.getBoolean(KEY_FULLSCREEN,  false);
+        fullscreen  = true;
     }
 
     // -----------------------------------------------------------------------
@@ -59,10 +59,15 @@ public class GameSettings
     /** Applica la risoluzione corrente (fullscreen o finestra). */
     public void applyResolution()
     {
-        if (fullscreen)
+        if (fullscreen) {
             Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
-        else
+        } else {
             Gdx.graphics.setWindowedMode(800, 640);
+        }
+
+        // Forza il ridimensionamento della viewport
+        // (non è garantito che resize() sia automaticamente chiamato)
+        Gdx.graphics.requestRendering();
     }
 
     // -----------------------------------------------------------------------
@@ -86,7 +91,9 @@ public class GameSettings
 
     public void setFullscreen(boolean fs)
     {
-        fullscreen = fs;
+        // Ignoriamo il parametro — fullscreen è sempre true
+        fullscreen = true;
         applyResolution();
+        save();
     }
 }

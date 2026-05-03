@@ -120,6 +120,7 @@ public class BaseActor extends Actor
      */
     public Animation<TextureRegion> loadAnimationFromFiles(String[] fileNames, float frameDuration, boolean loop)
     {
+        // Carica e prepara le texture per una sequenza animata con filtro lineare.
         int fileCount = fileNames.length;
         Array<TextureRegion> textureArray = new Array<TextureRegion>();
 
@@ -133,6 +134,7 @@ public class BaseActor extends Actor
 
         Animation<TextureRegion> anim = new Animation<TextureRegion>(frameDuration, textureArray);
 
+        // Imposta il play mode in base al loop richiesto.
         if (loop)
             anim.setPlayMode(PlayMode.LOOP);
         else
@@ -150,6 +152,7 @@ public class BaseActor extends Actor
      */
     public Animation<TextureRegion> loadAnimationFromSheet(String fileName, int rows, int cols, float frameDuration, boolean loop)
     {
+        // Divide uno sprite-sheet in griglia e costruisce l'animazione in ordine riga-colonna.
         Texture texture = new Texture(Gdx.files.internal(fileName), true);
         texture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
         int frameWidth = texture.getWidth() / cols;
@@ -165,6 +168,7 @@ public class BaseActor extends Actor
 
         Animation<TextureRegion> anim = new Animation<TextureRegion>(frameDuration, textureArray);
 
+        // Imposta il play mode in base al loop richiesto.
         if (loop)
             anim.setPlayMode(PlayMode.LOOP);
         else
@@ -320,7 +324,7 @@ public class BaseActor extends Actor
      */
     public void applyPhysics(float dt)
     {
-        // aggiunge l'accelerazione
+        // Integra accelerazione->velocita' e applica freno quando non si accelera.
         velocityVec.add( accelerationVec.x * dt, accelerationVec.y * dt );
 
         float speed = getSpeed();
@@ -402,6 +406,7 @@ public class BaseActor extends Actor
      */
     public boolean overlaps(BaseActor other)
     {
+        // Test rapido via bounding box, poi intersezione poligoni convessi.
         Polygon poly1 = this.getBoundaryPolygon();
         Polygon poly2 = other.getBoundaryPolygon();
 
@@ -422,6 +427,7 @@ public class BaseActor extends Actor
      */
     public Vector2 preventOverlap(BaseActor other)
     {
+        // Risolve la compenetrazione con il vettore di traslazione minimo (MTV).
         Polygon poly1 = this.getBoundaryPolygon();
         Polygon poly2 = other.getBoundaryPolygon();
 
@@ -477,6 +483,7 @@ public class BaseActor extends Actor
      */
     public void alignCamera()
     {
+        // Centra la camera sull'attore mantenendola entro i limiti del mondo.
         Camera cam = this.getStage().getCamera();
         Viewport v = this.getStage().getViewport();
 
@@ -504,6 +511,7 @@ public class BaseActor extends Actor
      */
     public static ArrayList<BaseActor> getList(Stage stage, String className)
     {
+        // Recupera tutte le istanze di una classe (o sottoclasse) presenti nello Stage.
         ArrayList<BaseActor> list = new ArrayList<BaseActor>();
 
         Class theClass = null;
@@ -546,6 +554,7 @@ public class BaseActor extends Actor
     {
         super.act( dt );
 
+        // Avanza il tempo animazione solo se non in pausa.
         if (!animationPaused)
             elapsedTime += dt;
     }
@@ -560,7 +569,7 @@ public class BaseActor extends Actor
     {
         super.draw( batch, parentAlpha );
 
-
+        // Applica il colore/trasparenza corrente all'animazione attiva.
         Color c = getColor();
         batch.setColor(c.r, c.g, c.b, c.a);
 

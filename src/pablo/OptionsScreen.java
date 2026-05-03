@@ -52,11 +52,10 @@ public class OptionsScreen extends BaseScreen
 
     private Slider sfxSlider;
     private Slider musicSlider;
-    private TextButton resolutionBtn;
     private TextButton backBtn;
 
-    // Sezione corrente selezionata da tastiera: 0=sfx, 1=music, 2=risoluzione, 3=back
-    private static final int SECTION_COUNT = 4;
+    // Sezione corrente selezionata da tastiera: 0=sfx, 1=music, 2=back
+    private static final int SECTION_COUNT = 3;
     private int selectedSection = 0;
 
     private final BaseScreen previousScreen; // schermata da cui siamo arrivati
@@ -143,16 +142,6 @@ public class OptionsScreen extends BaseScreen
             }
         });
 
-        resolutionBtn = new TextButton(
-                s.isFullscreen() ? "Schermo intero" : "Finestra", styleBtn);
-        resolutionBtn.addListener(new ChangeListener() {
-            public void changed(ChangeEvent e, Actor a) {
-                boolean fs = !GameSettings.get().isFullscreen();
-                GameSettings.get().setFullscreen(fs);
-                resolutionBtn.setText(fs ? "Schermo intero" : "Finestra");
-            }
-        });
-
         backBtn = new TextButton("← Indietro", styleBtn);
         backBtn.addListener(new ChangeListener() {
             public void changed(ChangeEvent e, Actor a) { goBack(); }
@@ -176,10 +165,6 @@ public class OptionsScreen extends BaseScreen
         // Musica
         uiTable.add(new Label("Volume Musica", styleLabel)).left().padBottom(6).row();
         uiTable.add(musicSlider).width(340).padBottom(22).row();
-
-        // Risoluzione
-        uiTable.add(new Label("Risoluzione", styleLabel)).left().padBottom(6).row();
-        uiTable.add(resolutionBtn).left().padBottom(30).row();
 
         // Separatore
         addSeparator();
@@ -276,8 +261,7 @@ public class OptionsScreen extends BaseScreen
         // Invio/Spazio attivano il pulsante selezionato
         if (keycode == Input.Keys.ENTER || keycode == Input.Keys.SPACE)
         {
-            if      (selectedSection == 2) resolutionBtn.toggle();
-            else if (selectedSection == 3) goBack();
+            if (selectedSection == 2) goBack();
             return true;
         }
 

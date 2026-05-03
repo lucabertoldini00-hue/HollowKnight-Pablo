@@ -125,18 +125,22 @@ public class MenuScreen extends BaseScreen
     public void render(float dt)
     {
         dt = Math.min(dt, 1 / 30f);
-        int w = Gdx.graphics.getWidth();
-        int h = Gdx.graphics.getHeight();
 
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // Usa le dimensioni della viewport, non quelle dello schermo
+        float viewportWidth = mainStage.getViewport().getWorldWidth();
+        float viewportHeight = mainStage.getViewport().getWorldHeight();
+
+        batch.setProjectionMatrix(mainStage.getCamera().combined);
         batch.begin();
-        batch.draw(background, 0, 0, w, h);
+        batch.draw(background, 0, 0, viewportWidth, viewportHeight);
         batch.end();
 
         uiStage.act(dt);
         uiStage.draw();
+
 
         if (separatorY < 0) computeSeparator();
         if (separatorY >= 0)

@@ -11,5 +11,6 @@ public class Launcher
     {
         Game myGame = new PabloGame();
         LwjglApplication launcher = new LwjglApplication( myGame, "HollowKnight-Pablo", 800, 640 );
+        GameSettings.get().setFullscreen(true);
     }
 }

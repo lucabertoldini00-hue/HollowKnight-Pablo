@@ -155,8 +155,25 @@ public class Pablo extends BaseActor
                 "assets/Pablo/Dash/dash3.png","assets/Pablo/Dash/dash4.png",
                 "assets/Pablo/Dash/dash5.png"
         };
-        dashAnim = loadAnimationFromFiles(dashFiles, DASH_DURATION / 5f, false);
-        dashAnim.setPlayMode(Animation.PlayMode.NORMAL);
+        boolean dashAssetsDisponibili = true;
+        for (String fileName : dashFiles)
+        {
+            if (!Gdx.files.internal(fileName).exists())
+            {
+                dashAssetsDisponibili = false;
+                break;
+            }
+        }
+        if (dashAssetsDisponibili)
+        {
+            dashAnim = loadAnimationFromFiles(dashFiles, DASH_DURATION / 5f, false);
+            dashAnim.setPlayMode(Animation.PlayMode.NORMAL);
+        }
+        else
+        {
+            // Fallback: evita il crash usando l'animazione di stand se il dash non ha asset.
+            dashAnim = stand;
+        }
     }
 
     // -----------------------------------------------------------------------

@@ -84,7 +84,7 @@ public class LevelScreen extends BaseScreen
     // -----------------------------------------------------------------------
     // UI — scaling HUD (maschere + ricettacolo)
     // -----------------------------------------------------------------------
-    private static final float HUD_SCALE = 1.00f;
+    private static final float HUD_SCALE = 1.75f;
     private static final float MASK_W = 40f * HUD_SCALE;
     private static final float MASK_H = 32f * HUD_SCALE;
     private static final float MASK_PAD_RIGHT = 6f * HUD_SCALE;

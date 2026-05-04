@@ -47,6 +47,14 @@ public class MenuScreen extends BaseScreen
     private Label[] iconLeft;
     private Label[] iconRight;
 
+    private static final int TITLE_FRAMES = 240;
+    private static final float TITLE_FPS = 30f;
+    private static final float TITLE_FRAME_DURATION = 1f / TITLE_FPS;
+
+    private float titleElapsedTime = 0f;
+    private int titleFrameIndex = -1;
+    private Texture titleFrame;
+
     private SpriteBatch   batch;
     private ShapeRenderer shapeRenderer;
     private Texture       background;
@@ -158,6 +166,7 @@ public class MenuScreen extends BaseScreen
     public void render(float dt)
     {
         dt = Math.min(dt, 1 / 30f);
+        titleElapsedTime += dt;
 
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -194,9 +203,24 @@ public class MenuScreen extends BaseScreen
         float viewportWidth  = mainStage.getViewport().getWorldWidth();
         float viewportHeight = mainStage.getViewport().getWorldHeight();
 
+        int frameIndex = ((int)(titleElapsedTime / TITLE_FRAME_DURATION) % TITLE_FRAMES) + 1;
+        if (frameIndex != titleFrameIndex)
+        {
+            String path = String.format("assets/Titolo/frame_%04d.png", frameIndex);
+            if (Gdx.files.internal(path).exists())
+            {
+                Texture next = new Texture(Gdx.files.internal(path));
+                if (titleFrame != null) titleFrame.dispose();
+                titleFrame = next;
+                titleFrameIndex = frameIndex;
+            }
+        }
+
+        Texture toDraw = (titleFrame != null) ? titleFrame : background;
+
         batch.setProjectionMatrix(mainStage.getCamera().combined);
         batch.begin();
-        batch.draw(background, 0, 0, viewportWidth, viewportHeight);
+        batch.draw(toDraw, 0, 0, viewportWidth, viewportHeight);
         batch.end();
     }
 
@@ -284,7 +308,9 @@ public class MenuScreen extends BaseScreen
         batch.dispose();
         shapeRenderer.dispose();
         background.dispose();
+        if (titleFrame != null) titleFrame.dispose();
         fontStart.dispose();
         fontOther.dispose();
     }
 }
+

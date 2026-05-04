@@ -121,9 +121,9 @@ public class SoundManager
 
     private void loadMusic()
     {
-        tryLoadMusic(Track.MENU,  "assets/audio/music/menu.mp3");
-        tryLoadMusic(Track.LEVEL, "assets/audio/music/level.mp3");
-        tryLoadMusic(Track.BOSS,  "assets/audio/music/boss.mp3");
+        tryLoadMusic(Track.MENU,  "assets/audio/music/menu.ogg");
+        tryLoadMusic(Track.LEVEL, "assets/audio/music/level.ogg");
+        tryLoadMusic(Track.BOSS,  "assets/audio/music/boss.ogg");
     }
 
     private void loadSfx()

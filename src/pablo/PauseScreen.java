@@ -266,7 +266,10 @@ public class PauseScreen extends BaseScreen
         }
     }
 
-    public void update(float dt) { }
+    public void update(float dt)
+    {
+        SoundManager.get().update(dt);
+    }
 
     // -----------------------------------------------------------------------
     // Factory texture

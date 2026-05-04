@@ -78,6 +78,8 @@ public class LevelScreen extends BaseScreen
     private FalseKnight falseKnight;
     private float shakeDuration  = 0f;
     private float shakeIntensity = 5f;
+    private float enemyRuntimeLogTimer = 0f;
+    private int enemyRuntimeLogCount = 0;
 
     // -----------------------------------------------------------------------
     // initialize()
@@ -184,6 +186,17 @@ public class LevelScreen extends BaseScreen
         System.out.println("[EnemySpawn] Added FalseKnight to Stage at " + fkX + "," + fkY
                 + " staged=" + (falseKnight.getStage() == mainStage));
         falseKnight.setScreenShakeCallback(() -> shakeDuration = 0.15f);
+
+        // Keep the map behind actors and make enemy visibility easy to verify.
+        tma.toBack();
+        for (BaseActor eActor : BaseActor.getList(mainStage, Enemy.class.getName()))
+            eActor.toFront();
+        falseKnight.toFront();
+        pablo.toFront();
+
+        System.out.println("[EnemySpawn] Render order fixed: tilemapZ=" + tma.getZIndex()
+                + " pabloZ=" + pablo.getZIndex()
+                + " falseKnightZ=" + falseKnight.getZIndex());
     }
 
     private void spawnEnemiesFromMap(TilemapActor tma)
@@ -216,9 +229,13 @@ public class LevelScreen extends BaseScreen
             System.out.println("[EnemySpawn] Spawning enemy: " + type + " at " + x + "," + y);
 
             Enemy enemy = createEnemy(type, x, y);
+            enemy.toFront();
 
             System.out.println("[EnemySpawn] Added " + type + " to Stage at " + x + "," + y
                     + " staged=" + (enemy.getStage() == mainStage)
+                    + " visible=" + enemy.isVisible()
+                    + " size=" + enemy.getWidth() + "x" + enemy.getHeight()
+                    + " z=" + enemy.getZIndex()
                     + " stageEnemies=" + BaseActor.count(mainStage, Enemy.class.getName()));
         }
     }
@@ -340,6 +357,38 @@ public class LevelScreen extends BaseScreen
         // Danno diretto se il mace hitbox colpisce Pablo.
         if (!falseKnight.isDead() && falseKnight.maceOverlapsPablo())
             pablo.takeDamage(1);
+
+        logEnemyRuntimeState(dt);
+    }
+
+    private void logEnemyRuntimeState(float dt)
+    {
+        if (enemyRuntimeLogCount >= 5)
+            return;
+
+        enemyRuntimeLogTimer += dt;
+        if (enemyRuntimeLogTimer < 1f)
+            return;
+
+        enemyRuntimeLogTimer = 0f;
+        enemyRuntimeLogCount++;
+
+        Camera cam = mainStage.getCamera();
+        System.out.println("[EnemyRuntime] sample=" + enemyRuntimeLogCount
+                + " camera=" + cam.position.x + "," + cam.position.y
+                + " enemies=" + BaseActor.count(mainStage, Enemy.class.getName()));
+
+        for (BaseActor actor : BaseActor.getList(mainStage, Enemy.class.getName()))
+        {
+            Enemy enemy = (Enemy) actor;
+            System.out.println("[EnemyRuntime] " + enemy.getClass().getSimpleName()
+                    + " pos=" + enemy.getX() + "," + enemy.getY()
+                    + " size=" + enemy.getWidth() + "x" + enemy.getHeight()
+                    + " visible=" + enemy.isVisible()
+                    + " activeNearCamera=" + enemy.isActiveNearCamera()
+                    + " z=" + enemy.getZIndex()
+                    + " staged=" + (enemy.getStage() == mainStage));
+        }
     }
 
     // -----------------------------------------------------------------------

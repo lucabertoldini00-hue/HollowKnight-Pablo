@@ -162,32 +162,32 @@ public class LevelScreen extends BaseScreen
         // Nemici
         // -----------------------------------------------------------------------
         // Spawn nemici dai tile objects della mappa.
-        for (MapObject obj : tma.getTileList("Crawlid"))
+        for (MapObject obj : tma.getRectangleList("Crawlid"))
         {
             MapProperties props = obj.getProperties();
             new Crawlid((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
-        for (MapObject obj : tma.getTileList("Tiktik"))
+        for (MapObject obj : tma.getRectangleList("Tiktik"))
         {
             MapProperties props = obj.getProperties();
             new Tiktik((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
-        for (MapObject obj : tma.getTileList("Vengefly"))
+        for (MapObject obj : tma.getRectangleList("Vengefly"))
         {
             MapProperties props = obj.getProperties();
             new Vengefly((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
-        for (MapObject obj : tma.getTileList("HuskBully"))
+        for (MapObject obj : tma.getRectangleList("HuskBully"))
         {
             MapProperties props = obj.getProperties();
             new HuskBully((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
-        for (MapObject obj : tma.getTileList("HuskHornhead"))
+        for (MapObject obj : tma.getRectangleList("HuskHornhead"))
         {
             MapProperties props = obj.getProperties();
             new HuskHornhead((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
-        for (MapObject obj : tma.getTileList("HuskWarrior"))
+        for (MapObject obj : tma.getRectangleList("HuskWarrior"))
         {
             MapProperties props = obj.getProperties();
             new HuskWarrior((float) props.get("x"), (float) props.get("y"), mainStage, pablo);

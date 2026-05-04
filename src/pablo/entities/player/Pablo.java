@@ -1,4 +1,6 @@
-// Pablo.java
+// Pablo.java — modificato per integrare SoundManager
+// DIFF rispetto all'originale: aggiunte chiamate SoundManager.get().playSfx(...)
+// nei punti chiave della state machine e dei metodi helper.
 
 package pablo.entities.player;
 
@@ -9,6 +11,8 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import pablo.Object;
+import pablo.SoundManager;
+import pablo.SoundManager.Sfx;
 import pablo.framework.BaseActor;
 import pablo.entities.combat.Hitbox;
 
@@ -44,7 +48,7 @@ public class Pablo extends BaseActor
     private boolean flashVisible = true;
 
     // -----------------------------------------------------------------------
-    // Hitstop — congela Pablo per un istante quando viene colpito
+    // Hitstop
     // -----------------------------------------------------------------------
     private static final float HITSTOP_DURATION = 0.12f;
     private float   hitstopTimer = 0f;
@@ -53,21 +57,20 @@ public class Pablo extends BaseActor
     // -----------------------------------------------------------------------
     // Dash
     // -----------------------------------------------------------------------
-    private static final float DASH_SPEED     = 520f;  // velocità orizzontale durante il dash
-    private static final float DASH_DURATION  = 0.18f; // secondi di durata del dash
-    private static final float DASH_COOLDOWN  = 0.6f;  // secondi prima di poter rifare dash
+    private static final float DASH_SPEED     = 520f;
+    private static final float DASH_DURATION  = 0.18f;
+    private static final float DASH_COOLDOWN  = 0.6f;
     private float dashTimer    = 0f;
     private float dashCooldown = 0f;
-    private float dashDir      = 1f; // direzione al momento del dash
+    private float dashDir      = 1f;
     private Animation dashAnim;
 
     // -----------------------------------------------------------------------
     // Doppio salto
     // -----------------------------------------------------------------------
-    private boolean canDoubleJump  = false; // diventa true dopo il primo salto
-    private boolean doubleJumpUsed = false; // resettato all'atterraggio
+    private boolean canDoubleJump  = false;
+    private boolean doubleJumpUsed = false;
 
-    // Animazioni salto
     private Animation jumpUp;
     private Animation jumpLand;
     private Animation frameRise1, frameRise2, frameAltezzaMax, frameDrop1, frameDrop2;
@@ -86,6 +89,12 @@ public class Pablo extends BaseActor
     // Animazione cura
     private Animation healAnim;
     private boolean   healApplied = false;
+
+    // -----------------------------------------------------------------------
+    // SFX: flag per evitare ripetizioni
+    // -----------------------------------------------------------------------
+    private boolean landSoundPlayed   = false; // suono atterraggio già emesso
+    private boolean attackSoundPlayed = false; // suono attacco già emesso
 
     // -----------------------------------------------------------------------
     // Costruttore
@@ -149,7 +158,6 @@ public class Pablo extends BaseActor
         healAnim = loadAnimationFromFiles(healFiles, 0.10f, false);
         healAnim.setPlayMode(Animation.PlayMode.NORMAL);
 
-        // Dash: 5 frame — durata calcolata per coprire DASH_DURATION
         String[] dashFiles = {
                 "assets/Pablo/dash1.png","assets/Pablo/dash2.png",
                 "assets/Pablo/dash3.png","assets/Pablo/dash4.png",
@@ -171,7 +179,6 @@ public class Pablo extends BaseActor
         }
         else
         {
-            // Fallback: evita il crash usando l'animazione di stand se il dash non ha asset.
             dashAnim = stand;
         }
     }
@@ -183,14 +190,17 @@ public class Pablo extends BaseActor
     {
         super.act(dt);
 
-        // --- Hitstop: congela tutto finché il timer è attivo ---
+        // Aggiorna i cooldown SFX
+        SoundManager.get().update(dt);
+
+        // --- Hitstop ---
         if (hitstopActive)
         {
             hitstopTimer -= dt;
             if (hitstopTimer <= 0f)
                 hitstopActive = false;
             else
-                return; // salta physics e state machine
+                return;
         }
 
         boolean onSolid = isOnSolid();
@@ -218,9 +228,18 @@ public class Pablo extends BaseActor
 
         // --- Atterraggio: resetta doppio salto ---
         if (onSolid && !wasOnSolid)
+        {
             doubleJumpUsed = false;
+            // SFX atterraggio (emesso solo al momento del contatto)
+            if (!landSoundPlayed)
+            {
+                SoundManager.get().playSfx(Sfx.PLAYER_LAND);
+                landSoundPlayed = true;
+            }
+        }
+        if (!onSolid) landSoundPlayed = false;
 
-        // 1. FISICA (bloccata durante dash, attacco e cura)
+        // 1. FISICA
         if (currentState != Playerstate.ATTACKING
                 && currentState != Playerstate.HEALING
                 && currentState != Playerstate.DASHING)
@@ -258,14 +277,14 @@ public class Pablo extends BaseActor
             case IDLE:
             case WALKING:
 
-                // Dash — priorità massima a terra
+                attackSoundPlayed = false;
+
                 if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f)
                 {
                     startDash();
                     break;
                 }
 
-                // Cura
                 if (Gdx.input.isKeyJustPressed(Input.Keys.F)
                         && soul >= SOUL_PER_HEAL && health < maxHealth)
                 {
@@ -273,30 +292,31 @@ public class Pablo extends BaseActor
                     currentState = Playerstate.HEALING;
                     elapsedTime  = 0;
                     healApplied  = false;
+                    // SFX: inizio cura
+                    SoundManager.get().playSfx(Sfx.PLAYER_HEAL_START);
                     break;
                 }
 
-                // Attacco
                 if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.J))
                 {
                     currentState = Playerstate.ATTACKING;
                     elapsedTime  = 0;
                     spawnAttackHitbox();
+                    // SFX: attacco (whoosh)
+                    SoundManager.get().playSfx(Sfx.PLAYER_ATTACK);
                     break;
                 }
 
-                // Salto
                 if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W))
                 {
                     if (onSolid) { jump(false); break; }
                 }
 
-                // Cammina oltre un dirupo
                 if (wasOnSolid && !onSolid)
                 {
                     currentState   = Playerstate.FALLING;
                     jumpTimer      = totalJumpTime * 0.55f;
-                    canDoubleJump  = true; // permetti doppio salto anche cadendo da un bordo
+                    canDoubleJump  = true;
                     break;
                 }
 
@@ -309,11 +329,10 @@ public class Pablo extends BaseActor
                 dashTimer -= dt;
                 setAnimation(dashAnim);
                 velocityVec.x = DASH_SPEED * dashDir;
-                velocityVec.y = 0; // niente gravità durante il dash
+                velocityVec.y = 0;
 
                 if (dashTimer <= 0f)
                 {
-                    // Fine dash: velocità ridotta, torna allo stato appropriato
                     velocityVec.x = maxHorizontalSpeed * dashDir * 0.5f;
                     currentState  = onSolid ? Playerstate.IDLE : Playerstate.FALLING;
                     dashCooldown  = DASH_COOLDOWN;
@@ -327,6 +346,8 @@ public class Pablo extends BaseActor
                 {
                     heal(1);
                     healApplied = true;
+                    // SFX: cura completata
+                    SoundManager.get().playSfx(Sfx.PLAYER_HEAL_END);
                 }
                 if (healAnim.isAnimationFinished(elapsedTime))
                     currentState = !onSolid ? Playerstate.FALLING
@@ -337,14 +358,12 @@ public class Pablo extends BaseActor
 
                 jumpTimer += dt;
 
-                // Dash in aria
                 if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f)
                 {
                     startDash();
                     break;
                 }
 
-                // Doppio salto
                 if ((Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W))
                         && canDoubleJump && !doubleJumpUsed)
                 {
@@ -367,14 +386,12 @@ public class Pablo extends BaseActor
 
                 jumpTimer += dt;
 
-                // Dash in aria
                 if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f)
                 {
                     startDash();
                     break;
                 }
 
-                // Doppio salto
                 if ((Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W))
                         && canDoubleJump && !doubleJumpUsed)
                 {
@@ -406,7 +423,7 @@ public class Pablo extends BaseActor
                 break;
         }
 
-        // 3. DIREZIONE (bloccata durante dash, attacco e cura)
+        // 3. DIREZIONE
         if (currentState != Playerstate.ATTACKING
                 && currentState != Playerstate.HEALING
                 && currentState != Playerstate.DASHING)
@@ -427,24 +444,20 @@ public class Pablo extends BaseActor
     // Helpers
     // -----------------------------------------------------------------------
 
-    /** Avvia il dash nella direzione corrente del personaggio. */
     private void startDash()
     {
         dashDir      = getScaleX() > 0 ? 1f : -1f;
         dashTimer    = DASH_DURATION;
         currentState = Playerstate.DASHING;
         elapsedTime  = 0;
-        // Il dash concede invulnerabilità per tutta la sua durata (come HK)
         invulnerable = true;
         invulnTimer  = DASH_DURATION;
         flashTimer   = FLASH_INTERVAL;
         flashVisible = true;
+        // SFX: dash
+        SoundManager.get().playSfx(Sfx.PLAYER_DASH);
     }
 
-    /**
-     * Salto normale (isDoubleJump=false) o doppio salto (isDoubleJump=true).
-     * Il doppio salto usa la stessa animazione e la stessa velocità.
-     */
     private void jump(boolean isDoubleJump)
     {
         velocityVec.y = jumpSpeed;
@@ -461,9 +474,11 @@ public class Pablo extends BaseActor
         {
             doubleJumpUsed = true;
         }
+
+        // SFX: salto (pitch leggermente più acuto per il doppio salto)
+        SoundManager.get().playSfx(Sfx.PLAYER_JUMP, isDoubleJump ? 1.15f : 1.0f);
     }
 
-    /** Mantiene compatibilità con le chiamate esterne (es. LevelScreen). */
     public void jump()
     {
         jump(false);
@@ -528,11 +543,15 @@ public class Pablo extends BaseActor
             health = 0;
             isDead = true;
             setVisible(true);
+            // SFX: morte
+            SoundManager.get().playSfx(Sfx.PLAYER_DEATH);
             System.out.println("Pablo died!");
         }
         else
         {
-            // Hitstop + invulnerabilità
+            // SFX: danno ricevuto
+            SoundManager.get().playSfx(Sfx.PLAYER_HURT);
+
             hitstopActive = true;
             hitstopTimer  = HITSTOP_DURATION;
             invulnerable  = true;
@@ -553,7 +572,11 @@ public class Pablo extends BaseActor
     // -----------------------------------------------------------------------
     public void gainSoul(int amount)
     {
+        int prev = soul;
         soul = Math.min(soul + amount, MAX_SOUL);
+        // SFX: guadagno anima (solo se effettivamente aumentata)
+        if (soul > prev)
+            SoundManager.get().playSfx(Sfx.PLAYER_SOUL_GAIN);
     }
 
     public void setSoul(int amount)
@@ -561,10 +584,10 @@ public class Pablo extends BaseActor
         soul = MathUtils.clamp(amount, 0, MAX_SOUL);
     }
 
-    public int     getSoul()          { return soul; }
-    public int     getMaxSoul()       { return MAX_SOUL; }
-    public boolean isInvulnerable()   { return invulnerable; }
-    public boolean isDead()           { return isDead; }
-    public int     getHealth()        { return health; }
-    public int     getMaxHealth()     { return maxHealth; }
+    public int     getSoul()        { return soul; }
+    public int     getMaxSoul()     { return MAX_SOUL; }
+    public boolean isInvulnerable() { return invulnerable; }
+    public boolean isDead()         { return isDead; }
+    public int     getHealth()      { return health; }
+    public int     getMaxHealth()   { return maxHealth; }
 }

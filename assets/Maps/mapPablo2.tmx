@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="240" height="20" tilewidth="64" tileheight="64" infinite="0" nextlayerid="4" nextobjectid="139">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="240" height="20" tilewidth="64" tileheight="64" infinite="0" nextlayerid="4" nextobjectid="138">
  <tileset firstgid="1" name="Cave_Floor" tilewidth="64" tileheight="64" tilecount="1024" columns="32">
   <image source="Cave_-_Floor.png" width="2048" height="2048"/>
  </tileset>
@@ -20,7 +20,7 @@
  </tileset>
  <layer id="1" name="Struttura" width="240" height="20">
   <data encoding="base64" compression="zlib">
-   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
+   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
   </data>
  </layer>
  <objectgroup id="2" name="Oggetti">
@@ -159,12 +159,12 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="8" name="solido" x="10430" y="128" width="834" height="64">
+  <object id="8" name="solido" x="10450" y="128" width="746" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="9" name="solido" x="15296" y="128" width="64" height="64">
+  <object id="9" name="solido" x="15229.3" y="128" width="130.667" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -184,12 +184,12 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="13" name="solido" x="10428" y="192" width="836" height="64">
+  <object id="13" name="solido" x="10464" y="192" width="714" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="14" name="solido" x="15296" y="192" width="64" height="64">
+  <object id="14" name="solido" x="15229.3" y="192" width="130.667" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -209,12 +209,12 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="18" name="solido" x="10496" y="256" width="706" height="64">
+  <object id="18" name="solido" x="10496" y="256" width="644" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="19" name="solido" x="15296" y="256" width="64" height="64">
+  <object id="19" name="solido" x="15230.7" y="256" width="129.333" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -234,7 +234,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="23" name="solido" x="15296" y="320" width="64" height="64">
+  <object id="23" name="solido" x="15230.7" y="320" width="129.333" height="81.3333">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -249,17 +249,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="26" name="solido" x="15296" y="384" width="64" height="64">
-   <properties>
-    <property name="name" value="solido"/>
-   </properties>
-  </object>
   <object id="27" name="solido" x="0" y="448" width="64" height="64">
-   <properties>
-    <property name="name" value="solido"/>
-   </properties>
-  </object>
-  <object id="28" name="solido" x="15296" y="448" width="64" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -270,11 +260,6 @@
    </properties>
   </object>
   <object id="30" name="solido" x="12800" y="512" width="320" height="64">
-   <properties>
-    <property name="name" value="solido"/>
-   </properties>
-  </object>
-  <object id="31" name="solido" x="15296" y="512" width="64" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -294,12 +279,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="35" name="solido" x="12672" y="571" width="64" height="65">
-   <properties>
-    <property name="name" value="solido"/>
-   </properties>
-  </object>
-  <object id="36" name="solido" x="15296" y="576" width="64" height="64">
+  <object id="35" name="solido" x="12684" y="575" width="66.6667" height="65">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -309,22 +289,22 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="38" name="solido" x="8578" y="640" width="320" height="64">
+  <object id="38" name="solido" x="8512" y="700" width="320" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="39" name="solido" x="12672" y="640" width="64" height="64">
+  <object id="39" name="solido" x="12672" y="640" width="84.6667" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="40" name="solido" x="14976" y="640" width="256" height="64">
+  <object id="40" name="solido" x="14914.7" y="640" width="256" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="41" name="solido" x="15296" y="640" width="64" height="64">
+  <object id="41" name="solido" x="15297.3" y="602.667" width="62.6667" height="101.333">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -339,7 +319,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="44" name="solido" x="5438" y="704" width="322" height="64">
+  <object id="44" name="solido" x="5568" y="578" width="322" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -354,12 +334,12 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="47" name="solido" x="12672" y="704" width="64" height="64">
+  <object id="47" name="solido" x="12663.3" y="704" width="104.667" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="48" name="solido" x="15296" y="704" width="64" height="64">
+  <object id="48" name="solido" x="15297.3" y="704" width="62.667" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -384,7 +364,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="53" name="solido" x="12672" y="768" width="64" height="64">
+  <object id="53" name="solido" x="12654.7" y="768" width="122.667" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -399,7 +379,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="56" name="solido" x="15296" y="768" width="64" height="64">
+  <object id="56" name="solido" x="15294" y="768" width="66" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -424,7 +404,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="61" name="solido" x="12672" y="832" width="64" height="64">
+  <object id="61" name="solido" x="12644.7" y="832" width="142.667" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -459,7 +439,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="68" name="solido" x="5120" y="896" width="256" height="64">
+  <object id="68" name="solido" x="5250" y="770" width="256" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -474,12 +454,12 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="71" name="solido" x="12672" y="896" width="64" height="64">
+  <object id="71" name="solido" x="12632.7" y="896" width="164" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="72" name="solido" x="15296" y="896" width="64" height="64">
+  <object id="72" name="solido" x="15295.4" y="896" width="64.6663" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -499,7 +479,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="76" name="solido" x="4544" y="960" width="192" height="64">
+  <object id="76" name="solido" x="4544" y="514" width="192" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -514,12 +494,12 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="79" name="solido" x="12672" y="960" width="64" height="64">
+  <object id="79" name="solido" x="12626.7" y="960" width="176.667" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="80" name="solido" x="15296" y="960" width="64" height="64">
+  <object id="80" name="solido" x="15294" y="960" width="66" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -544,7 +524,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="85" name="solido" x="12672" y="1024" width="64" height="64">
+  <object id="85" name="solido" x="12622" y="1024" width="202" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -554,7 +534,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="87" name="solido" x="15296" y="1024" width="64" height="64">
+  <object id="87" name="solido" x="15293.4" y="1024" width="66.6663" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -579,7 +559,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="92" name="solido" x="4736" y="1088" width="256" height="64">
+  <object id="92" name="solido" x="4802" y="706" width="256" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -699,14 +679,14 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="136" name="solido" x="12674" y="509.5" width="64" height="65">
+  <object id="136" name="solido" x="12697" y="509.5" width="41" height="65">
    <properties>
     <property name="name" value="solido"/>
    </properties>
   </object>
   <object id="137" name="FalseKnight" x="384" y="294" width="400" height="600">
    <properties>
-    <property name="name" value="FalseKnight"/>
+    <property name="name" value="start"/>
    </properties>
   </object>
  </objectgroup>

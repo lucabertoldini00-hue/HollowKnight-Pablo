@@ -1,4 +1,8 @@
-// MenuScreen.java
+// MenuScreen.java — modificato per integrare SoundManager
+// DIFF:
+//   initialize()  → avvia la musica del menu
+//   keyDown()     → SFX selezione e conferma
+//   updateSelection() → SFX select ad ogni cambio voce
 
 package pablo;
 
@@ -89,6 +93,7 @@ public class MenuScreen extends BaseScreen
         TextButton startBtn = new TextButton("INIZIA", styleStart);
         startBtn.addListener(new ChangeListener() {
             public void changed(ChangeEvent e, Actor a) {
+                SoundManager.get().playSfx(SoundManager.Sfx.UI_CONFIRM);
                 BaseGame.setActiveScreen(new LevelScreen());
             }
         });
@@ -96,13 +101,17 @@ public class MenuScreen extends BaseScreen
         TextButton optionsBtn = new TextButton("OPZIONI", styleOther);
         optionsBtn.addListener(new ChangeListener() {
             public void changed(ChangeEvent e, Actor a) {
+                SoundManager.get().playSfx(SoundManager.Sfx.UI_CONFIRM);
                 BaseGame.setActiveScreen(new OptionsScreen(MenuScreen.this, MenuScreen.this));
             }
         });
 
         TextButton exitBtn = new TextButton("ESCI", styleOther);
         exitBtn.addListener(new ChangeListener() {
-            public void changed(ChangeEvent e, Actor a) { Gdx.app.exit(); }
+            public void changed(ChangeEvent e, Actor a) {
+                SoundManager.get().playSfx(SoundManager.Sfx.UI_BACK);
+                Gdx.app.exit();
+            }
         });
 
         buttons = new TextButton[]{ startBtn, optionsBtn, exitBtn };
@@ -140,6 +149,9 @@ public class MenuScreen extends BaseScreen
         uiTable.add(exitRow).right().row();
 
         updateSelection();
+
+        // ── OST: avvia la musica del menu ──────────────────────────────────
+        SoundManager.get().playMusic(SoundManager.Track.MENU);
     }
 
     @Override
@@ -168,10 +180,6 @@ public class MenuScreen extends BaseScreen
         }
     }
 
-    /**
-     * Usato da OptionsScreen come sfondo frozen.
-     * Ridisegna il background e la UI senza chiamare act().
-     */
     @Override
     public void drawFrozen()
     {
@@ -180,7 +188,6 @@ public class MenuScreen extends BaseScreen
         uiStage.draw();
     }
 
-    /** Disegna il background con il batch — estratto per evitare duplicazione. */
     private void drawBackground()
     {
         mainStage.getViewport().apply();
@@ -212,6 +219,7 @@ public class MenuScreen extends BaseScreen
         }
         if (keycode == Input.Keys.ENTER || keycode == Input.Keys.SPACE)
         {
+            SoundManager.get().playSfx(SoundManager.Sfx.UI_CONFIRM);
             activateSelected();
             return true;
         }
@@ -238,6 +246,8 @@ public class MenuScreen extends BaseScreen
             iconLeft[i].setColor(iconColor);
             iconRight[i].setColor(iconColor);
         }
+        // SFX: cambio selezione
+        SoundManager.get().playSfx(SoundManager.Sfx.UI_SELECT);
     }
 
     private void activateSelected()

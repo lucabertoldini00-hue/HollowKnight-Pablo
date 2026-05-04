@@ -19,7 +19,7 @@ public class GameSettings
     // Valori correnti
     private float   sfxVolume   = 1.0f;
     private float   musicVolume = 1.0f;
-    private boolean fullscreen  = true;  // FORZATO A TRUE
+    private boolean fullscreen  = true;
 
     // -----------------------------------------------------------------------
     // Singleton
@@ -47,9 +47,9 @@ public class GameSettings
     public void load()
     {
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
-        sfxVolume   = prefs.getFloat  (KEY_SFX,        1.0f);
-        musicVolume = prefs.getFloat  (KEY_MUSIC,       1.0f);
-        fullscreen  = true;
+        sfxVolume   = prefs.getFloat  (KEY_SFX,   1.0f);
+        musicVolume = prefs.getFloat  (KEY_MUSIC,  1.0f);
+        fullscreen  = true; // forzato
     }
 
     // -----------------------------------------------------------------------
@@ -64,8 +64,6 @@ public class GameSettings
         } else {
             Gdx.graphics.setWindowedMode(800, 640);
         }
-
-        // Su Windows il resize non è sempre notificato dopo il cambio modalità.
         Gdx.app.getApplicationListener().resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         Gdx.graphics.requestRendering();
     }
@@ -73,26 +71,29 @@ public class GameSettings
     // -----------------------------------------------------------------------
     // Getter / Setter
     // -----------------------------------------------------------------------
-    public float getSfxVolume()       { return sfxVolume; }
-    public float getMusicVolume()     { return musicVolume; }
-    public boolean isFullscreen()     { return fullscreen; }
+    public float getSfxVolume()   { return sfxVolume; }
+    public float getMusicVolume() { return musicVolume; }
+    public boolean isFullscreen() { return fullscreen; }
 
     public void setSfxVolume(float v)
     {
-        sfxVolume = v;
-        // Applica immediatamente al SoundManager se esiste
+        sfxVolume = Math.max(0f, Math.min(1f, v));
+        // Propaga immediatamente al SoundManager (se già inizializzato)
+        try { SoundManager.get().setSfxVolume(sfxVolume); }
+        catch (Exception ignored) { }
     }
 
     public void setMusicVolume(float v)
     {
-        musicVolume = v;
-        // Applica immediatamente alla musica corrente se esiste
+        musicVolume = Math.max(0f, Math.min(1f, v));
+        // Propaga immediatamente al SoundManager
+        try { SoundManager.get().setMusicVolume(musicVolume); }
+        catch (Exception ignored) { }
     }
 
     public void setFullscreen(boolean fs)
     {
-        // Ignoriamo il parametro — fullscreen è sempre true
-        fullscreen = true;
+        fullscreen = true; // forzato
         applyResolution();
         save();
     }

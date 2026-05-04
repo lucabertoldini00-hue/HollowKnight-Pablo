@@ -27,6 +27,10 @@ import pablo.framework.TilemapActor;
 
 import com.badlogic.gdx.graphics.Camera;
 
+import pablo.entities.enemies.huskBully.HuskBully;
+import pablo.entities.enemies.huskHornhead.HuskHornhead;
+import pablo.entities.enemies.huskWarrior.HuskWarrior;
+
 public class LevelScreen extends BaseScreen
 {
     // -----------------------------------------------------------------------
@@ -173,6 +177,21 @@ public class LevelScreen extends BaseScreen
             MapProperties props = obj.getProperties();
             new Vengefly((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
         }
+        for (MapObject obj : tma.getTileList("HuskBully"))
+        {
+            MapProperties props = obj.getProperties();
+            new HuskBully((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
+        }
+        for (MapObject obj : tma.getTileList("HuskHornhead"))
+        {
+            MapProperties props = obj.getProperties();
+            new HuskHornhead((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
+        }
+        for (MapObject obj : tma.getTileList("HuskWarrior"))
+        {
+            MapProperties props = obj.getProperties();
+            new HuskWarrior((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
+        }
 
         // Spawn del boss e callback per screen shake.
         MapObject fkPoint = tma.getRectangleList("FalseKnight").get(0);
@@ -197,6 +216,13 @@ public class LevelScreen extends BaseScreen
 
         // Aggiorna l'animazione del ricettacolo in base alla soul.
         updateVessel(dt);
+
+        // Void fall: respawn Pablo if he falls below the map
+        if (pablo.isInVoid())
+        {
+            pablo.respawn();
+            return; // skip collision resolution this frame
+        }
 
         // Collisioni player <-> solidi con risoluzione tramite MTV.
         for (BaseActor actor : BaseActor.getList(mainStage, Object.class.getName()))

@@ -96,12 +96,21 @@ public class Pablo extends BaseActor
     private boolean landSoundPlayed   = false; // suono atterraggio già emesso
     private boolean attackSoundPlayed = false; // suono attacco già emesso
 
+    // Spawn / respawn position
+    private float spawnX;
+    private float spawnY;
+    // Y threshold below which Pablo is considered in the void
+    private static final float VOID_Y = -300f;
+
     // -----------------------------------------------------------------------
     // Costruttore
     // -----------------------------------------------------------------------
     public Pablo(float x, float y, Stage s)
     {
         super(x, y, s);
+
+        this.spawnX = x;
+        this.spawnY = y;
 
         currentState = Playerstate.IDLE;
 
@@ -565,6 +574,40 @@ public class Pablo extends BaseActor
     {
         health += amount;
         if (health > maxHealth) health = maxHealth;
+    }
+
+    /**
+     * Teleports Pablo back to his spawn position and resets all state.
+     * Call this when he falls into the void or dies (future death screen excluded).
+     */
+    public void respawn()
+    {
+        setPosition(spawnX, spawnY);
+        velocityVec.set(0, 0);
+        accelerationVec.set(0, 0);
+
+        currentState   = Playerstate.FALLING;
+        jumpTimer      = 0;
+        elapsedTime    = 0;
+        wasOnSolid     = false;
+
+        // Reset combat and defensive state
+        invulnerable   = false;
+        hitstopActive  = false;
+        invulnTimer    = 0;
+        flashTimer     = 0;
+        flashVisible   = true;
+        setVisible(true);
+
+        // Reset health on void fall (remove this line if you want void = no HP loss)
+        health         = maxHealth;
+        isDead         = false;
+    }
+
+    /** Returns true when Pablo has fallen below the void threshold. */
+    public boolean isInVoid()
+    {
+        return getY() < VOID_Y;
     }
 
     // -----------------------------------------------------------------------

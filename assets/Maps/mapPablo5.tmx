@@ -1,18 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down"
-     width="240" height="20" tilewidth="64" tileheight="64" infinite="0"
-     nextlayerid="4" nextobjectid="123">
- <!--
-  mappa5.tmx — The Squeeze
-  240 x 20 tile @ 64px = 15360 x 1280 px
-  Entry row17 → Exit row16. Alternating tight corridors and open gaps.
-  Tilesets (same folder): Cave_-_Floor.png | Cave_-_Platforms.png
-    Cave_-_RockCombinations1.png | Cave_-_SmallRocks.png
-    Cave_-_BigRocks1.png | Square_-_Black.jpg
-  Tile GIDs: 0=empty  11=SOLID  267=FILL  2497=STALA
-  Spawns: start x1 | Crawlid x9 | Tiktik x5 | Vengefly x5
- -->
-
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="240" height="20" tilewidth="64" tileheight="64" infinite="0" nextlayerid="4" nextobjectid="128">
  <tileset firstgid="1" name="Cave_Floor" tilewidth="64" tileheight="64" tilecount="1024" columns="32">
   <image source="Cave_-_Floor.png" width="2048" height="2048"/>
  </tileset>
@@ -31,380 +18,591 @@
  <tileset firstgid="3841" name="Square_Black" tilewidth="64" tileheight="64" tilecount="64" columns="8">
   <image source="Square_-_Black.jpg" width="512" height="512"/>
  </tileset>
-
  <layer id="1" name="Struttura" width="240" height="20">
   <data encoding="base64" compression="zlib">
-   eNrtm9EKwjAMReuj9P8/yD+TwYSBMjfaJM3NuRAGdmi75CStmt5a6xiG5bUHhmHpbOd30+vZvvTrtbMxq3mOzuvKuMfzHpmfx7jHM4hc3zb2seO9x6vFuNX64Bd+4VeX37vy4tdCHueUK5rhh9X8d4dfS51xN+v6j1+LmJ3Gb2DcqyiUXweLXJ+a/yrygZCK4FfDfx1fwi9C5DH4RfAjFlerrq0Kv1lja2TefBeoH7f4VHdPNut3t1WeA7kopv5W21d1MX7J0zbvM+NzyWP5YqdP4rdCPauyvqo5NKNvr9bVjPWXPTL1V95nhvyu8h9SBL+qsWvKr1MPh7KPsZic7dmvOdyrPfO+5tsHHnkuVe3/XX2eHmcj+sEL1F/4lfU5bMFvRn7fnJaUHQ==
+   eJztnGlzFEUYxztLNksuIshlEgggoiKXVqkveJEvAHJUgVSFKr8CAgqYVMUPoHhBUInIG1SqlFMSIEDwPbcawIDJG+XyrpIrHP6m4lS1a8/0zE7Pzu7O/Kt+1Tv99Mw+093/nkl2duvrhGiESTAZHoN6aMihfjSMgUdhLIyD8TAhQGxi1mtd26DxMI9tqp8bfe6Tj/HNHie3dkHPPakfrrfqesuoG0EdNMIkmKzZzo41wRRYlVa/b5NLTrrYlDr/+cnb2fVOba3c/a4xbu1V+65LBzsXub9zHS+nsXM7l1zO3y1mog/C2LYUdH6ZmqeWdPstx7sDZcNtv6kU/5Oqzi32LvPzPXgfPoBNsFlRJ2+r2ttlB2xJB8/LS9wp9w6X/N3aq15b55JrfmHGd6XF4KvkthrWwFp4LR18/XJaw6I6fytmI7eVyzDipvLPjg/h3YcG/buHsdkL+2A/fA0HFHXytqq9XXZBd578a0mVS5dL/m7tVa+7C9S/TmtX0PXLaQ1TjWk+zr/U/NuQEqI55W0/LzrDuJyFc/AtfAffK+rkbVV7u+yD85r12pSqhTqXPpf83dqrXns5FxPj4FdO627Q9ctpDcvXmGbLzXemSp1/TWo+3n3FoH+rQyJOisK/Tutu0PUr1zWsmJXP8WvBu+2p/L1fokSJzKk1Fb/rWylpR7kQn8Hn8AXsLI86o0T5VBzvTxOVnuK6jlne7S2LOotExS7ZP6XooUJdH3qkz38LMT9TKtT+18lP3m9lhHgbNsI7mdL3VBxkXV/d5kC/9Plvov+q2Dz/JZ79CnbBbtgDe2FfJthxC6UfCiWPQpLl36aQ//9cyv0exTXuUqU43g/Z9Sfw6Uk4BafhDJyFcw7+LeVx8SNT/eD3OLprqxdZz181x/jzo6jnbi7jdwTv9ij8+ws+/RV+g9/hD/gT/oLXK4RYB+thA7wBrVLZBu3wZkUIJxmhSn19apCe3yhm5bqOFeMzIp14dyuMqxJiPEyoGq6vGSlELYyCOngERsMY6MCXW+BD+Ag+hq1S2QmfwDb4FLZH5GMT16Q4yXr+Kuz750Rm1YZ3W+F5fPsCvPivf2fh09kwB+bCPHgWnoMu/NgNB+EQHIYeqTwCR+EY9MJxGMG9WTmkoQIyUA01EiOhEqoUbeWYvV+t4f+1/IS3f4YrcBWuwXW4ERPPt6Ticf/sZU1XzVenOei1bRhzdyXebYFl+HY5vAwrYAE+XQgvwSJYDEtgKfThx/NwAS7CD9AvlZfgMvwIAzBY4f/7zXZM9x1hWyausX+z3024BbfhDtyFIYfjeR23qNrV+mg3qmz4+Svr/jkVUi5+2oY973XSfQfZS1zXRu4Pp9e6fvL7Pb7V+PcmfrwFt+EO3IUhqbwH9+EBPLTunTP++8CO6frAUlTPt+vWljB+syHsuIl5G/a8txT230VTeZ9p8DhMhydgBjwJT3mYu1Pr9Mfw+tsFfn/rQNd/Xn8rQZe/W9yO6Y4RpXT9FNX8DxIPMmam4oUw5ibmrql9w+xzt9jTMBOegVkwG+bAXJinidsx3TGilK7fopr/QeL/AJzaZa0=
   </data>
  </layer>
-
  <objectgroup id="2" name="Oggetti">
-  <object id="1" name="start" x="128" y="1024" width="64" height="64">
-   <properties><property name="name" value="start"/></properties>
+  <object id="1" name="start" x="0.666667" y="536.5" width="64" height="64">
+   <properties>
+    <property name="name" value="start"/>
+   </properties>
   </object>
   <object id="2" name="Crawlid" x="640" y="1024" width="64" height="64">
-   <properties><property name="name" value="Crawlid"/></properties>
+   <properties>
+    <property name="name" value="Crawlid"/>
+   </properties>
   </object>
   <object id="3" name="Crawlid" x="1600" y="1024" width="64" height="64">
-   <properties><property name="name" value="Crawlid"/></properties>
+   <properties>
+    <property name="name" value="Crawlid"/>
+   </properties>
   </object>
   <object id="4" name="Crawlid" x="3200" y="832" width="64" height="64">
-   <properties><property name="name" value="Crawlid"/></properties>
+   <properties>
+    <property name="name" value="Crawlid"/>
+   </properties>
   </object>
   <object id="5" name="Crawlid" x="5120" y="960" width="64" height="64">
-   <properties><property name="name" value="Crawlid"/></properties>
+   <properties>
+    <property name="name" value="Crawlid"/>
+   </properties>
   </object>
   <object id="6" name="Crawlid" x="6720" y="1024" width="64" height="64">
-   <properties><property name="name" value="Crawlid"/></properties>
+   <properties>
+    <property name="name" value="Crawlid"/>
+   </properties>
   </object>
   <object id="7" name="Crawlid" x="8640" y="896" width="64" height="64">
-   <properties><property name="name" value="Crawlid"/></properties>
+   <properties>
+    <property name="name" value="Crawlid"/>
+   </properties>
   </object>
   <object id="8" name="Crawlid" x="10560" y="832" width="64" height="64">
-   <properties><property name="name" value="Crawlid"/></properties>
+   <properties>
+    <property name="name" value="Crawlid"/>
+   </properties>
   </object>
   <object id="9" name="Crawlid" x="12480" y="960" width="64" height="64">
-   <properties><property name="name" value="Crawlid"/></properties>
+   <properties>
+    <property name="name" value="Crawlid"/>
+   </properties>
   </object>
   <object id="10" name="Crawlid" x="14400" y="960" width="64" height="64">
-   <properties><property name="name" value="Crawlid"/></properties>
+   <properties>
+    <property name="name" value="Crawlid"/>
+   </properties>
   </object>
   <object id="11" name="Tiktik" x="1920" y="320" width="64" height="64">
-   <properties><property name="name" value="Tiktik"/></properties>
+   <properties>
+    <property name="name" value="Tiktik"/>
+   </properties>
   </object>
   <object id="12" name="Tiktik" x="4800" y="256" width="64" height="64">
-   <properties><property name="name" value="Tiktik"/></properties>
+   <properties>
+    <property name="name" value="Tiktik"/>
+   </properties>
   </object>
   <object id="13" name="Tiktik" x="8640" y="320" width="64" height="64">
-   <properties><property name="name" value="Tiktik"/></properties>
+   <properties>
+    <property name="name" value="Tiktik"/>
+   </properties>
   </object>
   <object id="14" name="Tiktik" x="12480" y="64" width="64" height="64">
-   <properties><property name="name" value="Tiktik"/></properties>
+   <properties>
+    <property name="name" value="Tiktik"/>
+   </properties>
   </object>
   <object id="15" name="Tiktik" x="14720" y="64" width="64" height="64">
-   <properties><property name="name" value="Tiktik"/></properties>
+   <properties>
+    <property name="name" value="Tiktik"/>
+   </properties>
   </object>
   <object id="16" name="Vengefly" x="3520" y="512" width="64" height="64">
-   <properties><property name="name" value="Vengefly"/></properties>
+   <properties>
+    <property name="name" value="Vengefly"/>
+   </properties>
   </object>
   <object id="17" name="Vengefly" x="6400" y="320" width="64" height="64">
-   <properties><property name="name" value="Vengefly"/></properties>
+   <properties>
+    <property name="name" value="Vengefly"/>
+   </properties>
   </object>
   <object id="18" name="Vengefly" x="9920" y="384" width="64" height="64">
-   <properties><property name="name" value="Vengefly"/></properties>
+   <properties>
+    <property name="name" value="Vengefly"/>
+   </properties>
   </object>
   <object id="19" name="Vengefly" x="11200" y="384" width="64" height="64">
-   <properties><property name="name" value="Vengefly"/></properties>
+   <properties>
+    <property name="name" value="Vengefly"/>
+   </properties>
   </object>
   <object id="20" name="Vengefly" x="13440" y="448" width="64" height="64">
-   <properties><property name="name" value="Vengefly"/></properties>
+   <properties>
+    <property name="name" value="Vengefly"/>
+   </properties>
   </object>
   <object id="21" name="solido" x="0" y="0" width="15360" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="22" name="solido" x="0" y="64" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="23" name="solido" x="64" y="64" width="15232" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="24" name="solido" x="15296" y="64" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="25" name="solido" x="0" y="128" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="26" name="solido" x="1216" y="128" width="1408" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="27" name="solido" x="4224" y="128" width="1600" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="28" name="solido" x="8384" y="128" width="1600" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="28" name="solido" x="8288" y="128" width="1754" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="29" name="solido" x="15296" y="128" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="30" name="solido" x="0" y="192" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="31" name="solido" x="1216" y="192" width="1408" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="31" name="solido" x="1216" y="192" width="1350" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="32" name="solido" x="4224" y="192" width="1600" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="33" name="solido" x="8384" y="192" width="1600" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="33" name="solido" x="8292" y="192" width="1736" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="34" name="solido" x="15296" y="192" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="35" name="solido" x="0" y="256" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="36" name="solido" x="1216" y="256" width="1408" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="36" name="solido" x="1216" y="256" width="1292" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="37" name="solido" x="4224" y="256" width="1600" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="38" name="solido" x="8384" y="256" width="1600" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="38" name="solido" x="8332" y="256" width="1652" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="39" name="solido" x="15296" y="256" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="40" name="solido" x="0" y="320" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="40" name="solido" x="0" y="320" width="64" height="80">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="41" name="solido" x="1216" y="320" width="1408" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="42" name="solido" x="8354" y="320" width="1578" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="42" name="solido" x="8384" y="320" width="1600" height="64">
-   <properties><property name="name" value="solido"/></properties>
-  </object>
-  <object id="43" name="solido" x="15296" y="320" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
-  </object>
-  <object id="44" name="solido" x="0" y="384" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
-  </object>
-  <object id="45" name="solido" x="15296" y="384" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
-  </object>
-  <object id="46" name="solido" x="0" y="448" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="43" name="solido" x="15296" y="320" width="64" height="81.3333">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="47" name="solido" x="7104" y="448" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
-  </object>
-  <object id="48" name="solido" x="15296" y="448" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
-  </object>
-  <object id="49" name="solido" x="0" y="512" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="50" name="solido" x="11328" y="512" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
-  </object>
-  <object id="51" name="solido" x="15296" y="512" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
-  </object>
-  <object id="52" name="solido" x="0" y="576" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="53" name="solido" x="9280" y="576" width="384" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="54" name="solido" x="12864" y="576" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="55" name="solido" x="15296" y="576" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
-  </object>
-  <object id="56" name="solido" x="0" y="640" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="56" name="solido" x="0" y="602.667" width="64" height="101.333">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="57" name="solido" x="3648" y="640" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="58" name="solido" x="6592" y="640" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="59" name="solido" x="7552" y="640" width="384" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="60" name="solido" x="14784" y="640" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="60" name="solido" x="14846.7" y="638.667" width="320" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="61" name="solido" x="15296" y="640" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="61" name="solido" x="15296" y="618.667" width="64" height="85.3333">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="62" name="solido" x="0" y="704" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="63" name="solido" x="4480" y="704" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="64" name="solido" x="7552" y="704" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="64" name="solido" x="7422.67" y="640" width="64" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="65" name="solido" x="8704" y="704" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="66" name="solido" x="10880" y="704" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="67" name="solido" x="15296" y="704" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="68" name="solido" x="0" y="768" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="69" name="solido" x="1536" y="768" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="70" name="solido" x="5056" y="768" width="384" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="71" name="solido" x="7552" y="768" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="71" name="solido" x="7423" y="702" width="64" height="39">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="72" name="solido" x="12288" y="768" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="73" name="solido" x="13440" y="768" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="74" name="solido" x="14208" y="768" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="74" name="solido" x="14271.8" y="767.667" width="320" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="75" name="solido" x="15296" y="768" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="76" name="solido" x="0" y="832" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="77" name="solido" x="6080" y="832" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="78" name="solido" x="6912" y="832" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="78" name="solido" x="6953" y="795" width="64" height="101">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="79" name="solido" x="7552" y="832" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="79" name="solido" x="7405" y="742" width="176" height="86">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="80" name="solido" x="8064" y="832" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="80" name="solido" x="8062" y="764" width="320" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="81" name="solido" x="11712" y="832" width="256" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="82" name="solido" x="15296" y="832" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="83" name="solido" x="0" y="896" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="84" name="solido" x="3136" y="896" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="85" name="solido" x="4032" y="896" width="192" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="85" name="solido" x="4030.67" y="829.333" width="192" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="86" name="solido" x="6912" y="896" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="86" name="solido" x="6936" y="896" width="222" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="87" name="solido" x="7552" y="896" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="87" name="solido" x="7295" y="889" width="413" height="201">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="88" name="solido" x="10432" y="896" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="88" name="solido" x="10496" y="894.667" width="320" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="89" name="solido" x="15296" y="896" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="90" name="solido" x="0" y="960" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="91" name="solido" x="6912" y="960" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="91" name="solido" x="6931" y="960" width="287" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="92" name="solido" x="7552" y="960" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="92" name="solido" x="7405" y="830" width="260" height="58.6667">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="93" name="solido" x="8384" y="960" width="1600" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="93" name="solido" x="8576" y="960" width="1408" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="94" name="solido" x="15296" y="960" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="95" name="solido" x="0" y="1024" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="96" name="solido" x="4224" y="1024" width="1600" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="97" name="solido" x="6912" y="1024" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="97" name="solido" x="6912" y="1024" width="352" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="98" name="solido" x="7552" y="1024" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
-  </object>
-  <object id="99" name="solido" x="8384" y="1024" width="1600" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="99" name="solido" x="8576.67" y="1024" width="1407" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="100" name="solido" x="11968" y="1024" width="3392" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="101" name="solido" x="0" y="1088" width="2624" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="102" name="solido" x="4224" y="1088" width="1600" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="103" name="solido" x="5824" y="1088" width="1088" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="104" name="solido" x="6912" y="1088" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="105" name="solido" x="6976" y="1088" width="576" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="105" name="solido" x="6976" y="1088" width="738.667" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="106" name="solido" x="7552" y="1088" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="107" name="solido" x="7739.33" y="1022.67" width="834" height="128">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="107" name="solido" x="7616" y="1088" width="768" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="108" name="solido" x="8574.67" y="1088" width="1409.66" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="108" name="solido" x="8384" y="1088" width="1600" height="64">
-   <properties><property name="name" value="solido"/></properties>
-  </object>
-  <object id="109" name="solido" x="10048" y="1088" width="256" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="109" name="solido" x="10113.3" y="1024" width="256" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="110" name="solido" x="11968" y="1088" width="3328" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="111" name="solido" x="15296" y="1088" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="112" name="solido" x="0" y="1152" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="113" name="solido" x="64" y="1152" width="2560" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="114" name="solido" x="2688" y="1152" width="320" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="115" name="solido" x="4224" y="1152" width="5760" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="115" name="solido" x="4224" y="1152" width="5760.33" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="116" name="solido" x="11968" y="1152" width="3328" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="117" name="solido" x="15296" y="1152" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="118" name="solido" x="0" y="1216" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="119" name="solido" x="64" y="1216" width="2560" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
-  <object id="120" name="solido" x="4224" y="1216" width="5760" height="64">
-   <properties><property name="name" value="solido"/></properties>
+  <object id="120" name="solido" x="4224" y="1216" width="5760.33" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="121" name="solido" x="11968" y="1216" width="3328" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
   <object id="122" name="solido" x="15296" y="1216" width="64" height="64">
-   <properties><property name="name" value="solido"/></properties>
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="123" name="solido" x="11202" y="960" width="408" height="120">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="124" name="solido" x="127" y="639" width="257" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="125" name="solido" x="7758.67" y="960.5" width="768" height="62">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="126" name="solido" x="7960" y="874" width="453" height="87">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="127" name="solido" x="3650" y="1024" width="320" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
   </object>
  </objectgroup>
-
 </map>

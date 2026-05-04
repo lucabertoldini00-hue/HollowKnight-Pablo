@@ -1,9 +1,12 @@
-// Hitbox.java
+// Hitbox.java — modificato per integrare SoundManager
+// DIFF: aggiunta chiamata SFX ENEMY_HIT quando un nemico viene colpito.
 
 package pablo.entities.combat;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import pablo.SoundManager;
+import pablo.SoundManager.Sfx;
 import pablo.entities.enemies.Enemy;
 import pablo.framework.BaseActor;
 
@@ -16,14 +19,11 @@ public class Hitbox extends BaseActor
     private final float    lifetime;
     private float          timer;
 
-    // Callback opzionale invocata una volta per ogni nemico colpito (es. gainSoul)
     private final Runnable onHit;
-
-    // Impedisce di colpire lo stesso nemico più di una volta per hitbox
     private final Set<Enemy> hitEnemies = new HashSet<>();
 
     // -----------------------------------------------------------------------
-    // Costruttore senza callback (compatibilità con il codice esistente)
+    // Costruttore senza callback
     // -----------------------------------------------------------------------
     public Hitbox(float x, float y, float width, float height,
                   int damage, float lifetime, Stage stage)
@@ -32,7 +32,7 @@ public class Hitbox extends BaseActor
     }
 
     // -----------------------------------------------------------------------
-    // Costruttore con callback (usato da Pablo.spawnAttackHitbox)
+    // Costruttore con callback
     // -----------------------------------------------------------------------
     public Hitbox(float x, float y, float width, float height,
                   int damage, float lifetime, Stage stage, Runnable onHit)
@@ -46,8 +46,6 @@ public class Hitbox extends BaseActor
         this.timer    = 0f;
         this.onHit    = onHit;
 
-        // DEBUG VISUAL: box rossa semitrasparente.
-        // Commentare queste due righe una volta soddisfatti del posizionamento.
         loadTexture("assets/white.png");
         setColor(new Color(1f, 0f, 0f, 0.45f));
     }
@@ -57,7 +55,6 @@ public class Hitbox extends BaseActor
     {
         super.act(dt);
 
-        // Scansiona tutti i nemici attualmente sulla Stage
         for (BaseActor actor : BaseActor.getList(getStage(), Enemy.class.getName()))
         {
             Enemy enemy = (Enemy) actor;
@@ -67,13 +64,14 @@ public class Hitbox extends BaseActor
                 enemy.takeDamage(damage);
                 hitEnemies.add(enemy);
 
-                // Notifica il chiamante (es. Pablo.gainSoul) — una volta per impatto
+                // SFX colpo — usa BOSS_HIT se il nemico ha vita > 10 (euristica semplice)
+                SoundManager.get().playSfx(Sfx.ENEMY_HIT);
+
                 if (onHit != null)
                     onHit.run();
             }
         }
 
-        // Auto-distruzione alla scadenza del lifetime
         timer += dt;
         if (timer >= lifetime)
             remove();

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="240" height="20" tilewidth="64" tileheight="64" infinite="0" nextlayerid="4" nextobjectid="115">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="240" height="20" tilewidth="64" tileheight="64" infinite="0" nextlayerid="4" nextobjectid="116">
  <tileset firstgid="1" name="Cave_Floor" tilewidth="64" tileheight="64" tilecount="1024" columns="32">
   <image source="Cave_-_Floor.png" width="2048" height="2048"/>
  </tileset>
@@ -20,7 +20,7 @@
  </tileset>
  <layer id="1" name="Struttura" width="240" height="20">
   <data encoding="base64" compression="zlib">
-   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
+   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
   </data>
  </layer>
  <objectgroup id="2" name="Oggetti">
@@ -169,7 +169,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="30" name="solido" x="2112" y="192" width="1472" height="64">
+  <object id="30" name="solido" x="2112" y="192" width="1451" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -189,7 +189,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="34" name="solido" x="2112" y="256" width="1472" height="64">
+  <object id="34" name="solido" x="2112" y="256" width="1405" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -214,7 +214,7 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="39" name="solido" x="2112" y="320" width="1472" height="64">
+  <object id="39" name="solido" x="2112" y="320" width="1349" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -545,6 +545,11 @@
    </properties>
   </object>
   <object id="114" name="solido" x="15101.3" y="574.667" width="130.667" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="115" name="solido" x="3584" y="128" width="1918.67" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>

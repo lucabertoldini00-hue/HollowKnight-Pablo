@@ -686,7 +686,7 @@
   </object>
   <object id="137" name="FalseKnight" x="384" y="294" width="400" height="600">
    <properties>
-    <property name="name" value="start"/>
+    <property name="name" value="FalseKnight"/>
    </properties>
   </object>
  </objectgroup>

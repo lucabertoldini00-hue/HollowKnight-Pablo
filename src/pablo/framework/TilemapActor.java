@@ -79,7 +79,7 @@ public class TilemapActor extends Actor
 
                 MapProperties props = obj.getProperties();
 
-                if ( props.containsKey("name") && props.get("name").equals(propertyName) )
+                if ( matchesObjectType(obj, props, propertyName) )
                     list.add(obj);
             }
         }
@@ -111,9 +111,6 @@ public class TilemapActor extends Actor
                 TiledMapTile t = tmtmo.getTile();
                 MapProperties defaultProps = t.getProperties();
 
-                if ( defaultProps.containsKey("name") && defaultProps.get("name").equals(propertyName) )
-                    list.add(obj);
-
                 // get list of default property keys
                 Iterator<String> propertyKeys = defaultProps.getKeys();
 
@@ -131,9 +128,32 @@ public class TilemapActor extends Actor
                         props.put( key, value );
                     }
                 }
+
+                if ( matchesObjectType(obj, props, propertyName) )
+                    list.add(obj);
             }
         }
         return list;
+    }
+
+    /**
+     * Tiled can store the useful enemy identifier in different places:
+     * object name, custom "name" property, or custom "type" property.
+     */
+    private boolean matchesObjectType(MapObject obj, MapProperties props, String expectedType)
+    {
+        if (expectedType.equals(obj.getName()))
+            return true;
+
+        if (matchesProperty(props, "name", expectedType))
+            return true;
+
+        return matchesProperty(props, "type", expectedType);
+    }
+
+    private boolean matchesProperty(MapProperties props, String key, String expectedValue)
+    {
+        return props.containsKey(key) && expectedValue.equals(String.valueOf(props.get(key)));
     }
 
     public void act(float dt)

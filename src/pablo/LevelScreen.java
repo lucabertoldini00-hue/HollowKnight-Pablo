@@ -31,6 +31,8 @@ import pablo.entities.enemies.huskBully.HuskBully;
 import pablo.entities.enemies.huskHornhead.HuskHornhead;
 import pablo.entities.enemies.huskWarrior.HuskWarrior;
 
+import java.util.ArrayList;
+
 public class LevelScreen extends BaseScreen
 {
     // -----------------------------------------------------------------------
@@ -161,47 +163,85 @@ public class LevelScreen extends BaseScreen
         // -----------------------------------------------------------------------
         // Nemici
         // -----------------------------------------------------------------------
-        // Spawn nemici dai tile objects della mappa.
-        for (MapObject obj : tma.getRectangleList("Crawlid"))
-        {
-            MapProperties props = obj.getProperties();
-            new Crawlid((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
-        }
-        for (MapObject obj : tma.getRectangleList("Tiktik"))
-        {
-            MapProperties props = obj.getProperties();
-            new Tiktik((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
-        }
-        for (MapObject obj : tma.getRectangleList("Vengefly"))
-        {
-            MapProperties props = obj.getProperties();
-            new Vengefly((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
-        }
-        for (MapObject obj : tma.getRectangleList("HuskBully"))
-        {
-            MapProperties props = obj.getProperties();
-            new HuskBully((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
-        }
-        for (MapObject obj : tma.getRectangleList("HuskHornhead"))
-        {
-            MapProperties props = obj.getProperties();
-            new HuskHornhead((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
-        }
-        for (MapObject obj : tma.getRectangleList("HuskWarrior"))
-        {
-            MapProperties props = obj.getProperties();
-            new HuskWarrior((float) props.get("x"), (float) props.get("y"), mainStage, pablo);
-        }
+        spawnEnemiesFromMap(tma);
 
         // Spawn del boss e callback per screen shake.
-        MapObject fkPoint = tma.getRectangleList("FalseKnight").get(0);
+        ArrayList<MapObject> falseKnightPoints = tma.getRectangleList("FalseKnight");
+        System.out.println("[EnemySpawn] FalseKnight objects found: " + falseKnightPoints.size());
+
+        if (falseKnightPoints.isEmpty())
+            throw new IllegalStateException("Missing FalseKnight spawn object in map.");
+
+        MapObject fkPoint = falseKnightPoints.get(0);
         MapProperties fkProps = fkPoint.getProperties();
+        float fkX = (float) fkProps.get("x");
+        float fkY = (float) fkProps.get("y");
 
         falseKnight = new FalseKnight(
-                (float) fkProps.get("x"), (float) fkProps.get("y"),
+                fkX, fkY,
                 mainStage, pablo
         );
+        System.out.println("[EnemySpawn] Added FalseKnight to Stage at " + fkX + "," + fkY
+                + " staged=" + (falseKnight.getStage() == mainStage));
         falseKnight.setScreenShakeCallback(() -> shakeDuration = 0.15f);
+    }
+
+    private void spawnEnemiesFromMap(TilemapActor tma)
+    {
+        System.out.println("[EnemySpawn] Enemy actors before spawn: "
+                + BaseActor.count(mainStage, Enemy.class.getName()));
+
+        spawnEnemyType(tma, "Crawlid");
+        spawnEnemyType(tma, "Tiktik");
+        spawnEnemyType(tma, "Vengefly");
+        spawnEnemyType(tma, "HuskBully");
+        spawnEnemyType(tma, "HuskHornhead");
+        spawnEnemyType(tma, "HuskWarrior");
+
+        System.out.println("[EnemySpawn] Enemy actors after spawn: "
+                + BaseActor.count(mainStage, Enemy.class.getName()));
+    }
+
+    private void spawnEnemyType(TilemapActor tma, String type)
+    {
+        ArrayList<MapObject> objects = tma.getRectangleList(type);
+        System.out.println("[EnemySpawn] " + type + " objects found: " + objects.size());
+
+        for (MapObject obj : objects)
+        {
+            MapProperties props = obj.getProperties();
+            float x = (float) props.get("x");
+            float y = (float) props.get("y");
+
+            System.out.println("[EnemySpawn] Spawning enemy: " + type + " at " + x + "," + y);
+
+            Enemy enemy = createEnemy(type, x, y);
+
+            System.out.println("[EnemySpawn] Added " + type + " to Stage at " + x + "," + y
+                    + " staged=" + (enemy.getStage() == mainStage)
+                    + " stageEnemies=" + BaseActor.count(mainStage, Enemy.class.getName()));
+        }
+    }
+
+    private Enemy createEnemy(String type, float x, float y)
+    {
+        switch (type)
+        {
+            case "Crawlid":
+                return new Crawlid(x, y, mainStage, pablo);
+            case "Tiktik":
+                return new Tiktik(x, y, mainStage, pablo);
+            case "Vengefly":
+                return new Vengefly(x, y, mainStage, pablo);
+            case "HuskBully":
+                return new HuskBully(x, y, mainStage, pablo);
+            case "HuskHornhead":
+                return new HuskHornhead(x, y, mainStage, pablo);
+            case "HuskWarrior":
+                return new HuskWarrior(x, y, mainStage, pablo);
+            default:
+                throw new IllegalArgumentException("Unknown enemy type: " + type);
+        }
     }
 
     // -----------------------------------------------------------------------

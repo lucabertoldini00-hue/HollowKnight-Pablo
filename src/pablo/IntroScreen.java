@@ -35,6 +35,7 @@ public class IntroScreen extends BaseScreen
 
     @Override
     public void update(float dt) {
+        SoundManager.get().update(dt);
         // Accumuliamo il tempo passato usando il deltaTime di LibGDX (più affidabile di music.getPosition())
         elapsedTime += dt;
     }

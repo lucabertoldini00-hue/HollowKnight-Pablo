@@ -82,6 +82,18 @@ public class LevelScreen extends BaseScreen
     private int enemyRuntimeLogCount = 0;
 
     // -----------------------------------------------------------------------
+    // UI — scaling HUD (maschere + ricettacolo)
+    // -----------------------------------------------------------------------
+    private static final float HUD_SCALE = 1.00f;
+    private static final float MASK_W = 40f * HUD_SCALE;
+    private static final float MASK_H = 32f * HUD_SCALE;
+    private static final float MASK_PAD_RIGHT = 6f * HUD_SCALE;
+    private static final float VESSEL_SIZE = 48f * HUD_SCALE;
+    private static final float HUD_PAD_TOP = 14f * HUD_SCALE;
+    private static final float VESSEL_PAD_TOP = 10f * HUD_SCALE;
+    private static final float VESSEL_PAD_LEFT = 20f * HUD_SCALE;
+
+    // -----------------------------------------------------------------------
     // initialize()
     // -----------------------------------------------------------------------
     public void initialize()
@@ -120,7 +132,7 @@ public class LevelScreen extends BaseScreen
         {
             maskImages[i] = new Image(maskTexture);
             maskImages[i].setColor(MASK_FULL);
-            maskRow.add(maskImages[i]).size(40, 32).padRight(6);
+            maskRow.add(maskImages[i]).size(MASK_W, MASK_H).padRight(MASK_PAD_RIGHT);
         }
 
         // -----------------------------------------------------------------------
@@ -133,7 +145,7 @@ public class LevelScreen extends BaseScreen
         // Stato 0: texture generata (vuoto) — 1 frame
         vesselTextures[0]  = new Texture[1];
         vesselDrawables[0] = new TextureRegionDrawable[1];
-        vesselTextures[0][0]  = createEmptyVesselTexture(48);
+        vesselTextures[0][0]  = createEmptyVesselTexture((int) VESSEL_SIZE);
         vesselDrawables[0][0] = new TextureRegionDrawable(
                 new TextureRegion(vesselTextures[0][0]));
 
@@ -159,8 +171,9 @@ public class LevelScreen extends BaseScreen
         // Layout UI — in alto a sinistra
         // -----------------------------------------------------------------------
         uiTable.top().left();
-        uiTable.add(maskRow).left().padTop(14).padLeft(14).row();
-        uiTable.add(vesselImage).size(48, 48).left().padTop(10).padLeft(20).row();
+        uiTable.add(maskRow).left().padTop(HUD_PAD_TOP).padLeft(14).row();
+        uiTable.add(vesselImage).size(VESSEL_SIZE, VESSEL_SIZE)
+                .left().padTop(VESSEL_PAD_TOP).padLeft(VESSEL_PAD_LEFT).row();
 
         // -----------------------------------------------------------------------
         // Nemici
@@ -266,6 +279,8 @@ public class LevelScreen extends BaseScreen
     // -----------------------------------------------------------------------
     public void update(float dt)
     {
+        SoundManager.get().update(dt);
+
         // Aggiorna le maschere in base agli HP attuali.
         int health = pablo.getHealth();
         for (int i = 0; i < maskImages.length; i++)

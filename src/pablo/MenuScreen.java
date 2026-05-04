@@ -102,6 +102,7 @@ public class MenuScreen extends BaseScreen
         startBtn.addListener(new ChangeListener() {
             public void changed(ChangeEvent e, Actor a) {
                 SoundManager.get().playSfx(SoundManager.Sfx.UI_CONFIRM);
+                SoundManager.get().playMusic(SoundManager.Track.LEVEL);
                 BaseGame.setActiveScreen(new LevelScreen());
             }
         });
@@ -224,7 +225,10 @@ public class MenuScreen extends BaseScreen
         batch.end();
     }
 
-    public void update(float dt) { }
+    public void update(float dt)
+    {
+        SoundManager.get().update(dt);
+    }
 
     @Override
     public boolean keyDown(int keycode)
@@ -278,7 +282,10 @@ public class MenuScreen extends BaseScreen
     {
         switch (selectedIndex)
         {
-            case 0: BaseGame.setActiveScreen(new LevelScreen());             break;
+            case 0:
+                SoundManager.get().playMusic(SoundManager.Track.LEVEL);
+                BaseGame.setActiveScreen(new LevelScreen());
+                break;
             case 1: BaseGame.setActiveScreen(new OptionsScreen(this, this)); break;
             case 2: Gdx.app.exit();                                           break;
         }

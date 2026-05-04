@@ -216,7 +216,10 @@ public class OptionsScreen extends BaseScreen
     // update()
     // -----------------------------------------------------------------------
     @Override
-    public void update(float dt) { }
+    public void update(float dt)
+    {
+        SoundManager.get().update(dt);
+    }
 
     // -----------------------------------------------------------------------
     // keyDown()

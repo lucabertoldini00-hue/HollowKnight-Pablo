@@ -7,6 +7,7 @@
 
 package pablo.entities.enemies;
 
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import pablo.Object;
@@ -14,6 +15,8 @@ import pablo.framework.BaseActor;
 
 public abstract class Enemy extends BaseActor
 {
+    private static final float CAMERA_ACTIVATION_MARGIN = 320f;
+
     // --- shared physics constants (subclasses can override by setting these in their constructor) ---
     protected float gravity          = 700f;
     protected float maxVerticalSpeed = 700f;
@@ -30,6 +33,40 @@ public abstract class Enemy extends BaseActor
     {
         super(x, y, stage);
         direction = 1f; // default: start moving right
+    }
+
+    /**
+     * Enemies are spawned for the whole map at level load. Keep them frozen
+     * while far outside the camera so ground enemies do not walk/fall away
+     * before Pablo reaches their part of the level.
+     */
+    public boolean isActiveNearCamera()
+    {
+        if (getStage() == null)
+            return false;
+
+        Camera cam = getStage().getCamera();
+        float left   = cam.position.x - cam.viewportWidth  / 2f - CAMERA_ACTIVATION_MARGIN;
+        float right  = cam.position.x + cam.viewportWidth  / 2f + CAMERA_ACTIVATION_MARGIN;
+        float bottom = cam.position.y - cam.viewportHeight / 2f - CAMERA_ACTIVATION_MARGIN;
+        float top    = cam.position.y + cam.viewportHeight / 2f + CAMERA_ACTIVATION_MARGIN;
+
+        return getX() + getWidth() >= left
+                && getX() <= right
+                && getY() + getHeight() >= bottom
+                && getY() <= top;
+    }
+
+    @Override
+    public void moveBy(float x, float y)
+    {
+        if (!isActiveNearCamera())
+        {
+            velocityVec.set(0, 0);
+            return;
+        }
+
+        super.moveBy(x, y);
     }
 
     // ------------------------------------------------------------------

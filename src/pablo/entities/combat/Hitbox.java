@@ -1,5 +1,4 @@
-// Hitbox.java — modificato per integrare SoundManager
-// DIFF: aggiunta chiamata SFX ENEMY_HIT quando un nemico viene colpito.
+// Hitbox.java
 
 package pablo.entities.combat;
 
@@ -15,6 +14,9 @@ import java.util.Set;
 
 public class Hitbox extends BaseActor
 {
+    // Set to true to see the hitbox rectangle during development
+    private static final boolean DEBUG_DRAW = false;
+
     private final int      damage;
     private final float    lifetime;
     private float          timer;
@@ -22,22 +24,18 @@ public class Hitbox extends BaseActor
     private final Runnable onHit;
     private final Set<Enemy> hitEnemies = new HashSet<>();
 
-    // -----------------------------------------------------------------------
-    // Costruttore senza callback
-    // -----------------------------------------------------------------------
     public Hitbox(float x, float y, float width, float height,
                   int damage, float lifetime, Stage stage)
     {
         this(x, y, width, height, damage, lifetime, stage, null);
     }
 
-    // -----------------------------------------------------------------------
-    // Costruttore con callback
-    // -----------------------------------------------------------------------
     public Hitbox(float x, float y, float width, float height,
                   int damage, float lifetime, Stage stage, Runnable onHit)
     {
         super(x, y, stage);
+
+        // Set the physical collision area first
         setSize(width, height);
         setBoundaryRectangle();
 
@@ -46,8 +44,15 @@ public class Hitbox extends BaseActor
         this.timer    = 0f;
         this.onHit    = onHit;
 
+        // loadTexture calls setAnimation which resets actor size to the texture dimensions.
+        // Re-apply width/height immediately after so the visual matches the collision area.
         loadTexture("assets/white.png");
-        setColor(new Color(1f, 0f, 0f, 0.45f));
+        setSize(width, height);  // ← the actual fix: restore correct size after loadTexture
+
+        if (DEBUG_DRAW)
+            setColor(new Color(1f, 0f, 0f, 0.45f));
+        else
+            setVisible(false);
     }
 
     @Override
@@ -63,12 +68,8 @@ public class Hitbox extends BaseActor
             {
                 enemy.takeDamage(damage);
                 hitEnemies.add(enemy);
-
-                // SFX colpo — usa BOSS_HIT se il nemico ha vita > 10 (euristica semplice)
                 SoundManager.get().playSfx(Sfx.ENEMY_HIT);
-
-                if (onHit != null)
-                    onHit.run();
+                if (onHit != null) onHit.run();
             }
         }
 

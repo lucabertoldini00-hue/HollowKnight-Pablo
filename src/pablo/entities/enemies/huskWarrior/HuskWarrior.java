@@ -221,7 +221,7 @@ public class HuskWarrior extends Enemy
         updateSensorPositions();
 
         setAnimation(animIdle);
-        setScaleX(direction);
+        faceDirection(direction);
 
         if (stateTimer >= IDLE_DURATION)
             enterState(HuskWarriorState.PATROL);
@@ -243,7 +243,7 @@ public class HuskWarrior extends Enemy
         updateSensorPositions();
 
         setAnimation(animWalk);
-        setScaleX(direction);
+        syncFacingToHorizontalMovement();
     }
 
     private void tickTurning(float dt)
@@ -270,7 +270,7 @@ public class HuskWarrior extends Enemy
         updateSensorPositions();
 
         setAnimation(animShieldAnticipate);
-        setScaleX(direction);
+        faceDirection(direction);
 
         if (stateTimer >= SHIELD_ANTICIPATE_DUR)
             enterState(HuskWarriorState.SHIELD_FRONT);
@@ -303,7 +303,7 @@ public class HuskWarrior extends Enemy
         }
 
         moveBy(velocityVec.x * dt, velocityVec.y * dt);
-        setScaleX(direction);
+        syncFacingToHorizontalMovement();
 
         if (stateTimer >= total)
             enterState(HuskWarriorState.ATTACK_WINDUP);
@@ -317,7 +317,7 @@ public class HuskWarrior extends Enemy
         updateSensorPositions();
 
         setAnimation(animShieldTop);
-        setScaleX(direction);
+        faceDirection(direction);
 
         if (stateTimer >= SHIELD_TOP_DUR)
             enterState(HuskWarriorState.SHIELD_TOP_BUMP);
@@ -337,7 +337,7 @@ public class HuskWarrior extends Enemy
         else
             setAnimation(animShieldTopHold);
 
-        setScaleX(direction);
+        faceDirection(direction);
 
         if (stateTimer >= total)
             enterState(HuskWarriorState.PATROL);
@@ -355,7 +355,7 @@ public class HuskWarrior extends Enemy
         else
             setAnimation(animWindupHold);  // attack4 held for 150ms
 
-        setScaleX(direction);
+        faceDirection(direction);
 
         if (stateTimer >= WINDUP_TOTAL_DUR)
             enterState(HuskWarriorState.ATTACKING);
@@ -369,7 +369,7 @@ public class HuskWarrior extends Enemy
         updateSensorPositions();
 
         setAnimation(animAttackStrikes);
-        setScaleX(direction);
+        faceDirection(direction);
 
         // Strike 1 — attack5+6 window (~0-80ms)
         if (!hit1Landed)
@@ -405,7 +405,7 @@ public class HuskWarrior extends Enemy
         updateSensorPositions();
 
         setAnimation(animIdle);
-        setScaleX(direction);
+        faceDirection(direction);
 
         if (stateTimer >= ATTACK_COOLDOWN_DUR)
             enterState(HuskWarriorState.IDLE);
@@ -421,6 +421,7 @@ public class HuskWarrior extends Enemy
 
         setAnimation(animDeathAir);
         setRotation(getRotation() + spinDir * SPIN_SPEED * dt);
+        syncFacingToHorizontalMovement();
 
         if (isOnGround())
         {
@@ -437,7 +438,9 @@ public class HuskWarrior extends Enemy
             // Frames 1-7: tumble with decelerating slide
             float progress   = stateTimer / LAND_TUMBLE_DURATION;
             float slideSpeed = 60f * (1f - progress);
-            moveBy(deathKnockbackDir * slideSpeed * dt, 0);
+            velocityVec.x = deathKnockbackDir * slideSpeed;
+            moveBy(velocityVec.x * dt, 0);
+            syncFacingToHorizontalMovement();
             setAnimation(animDeathLand);
         }
         else

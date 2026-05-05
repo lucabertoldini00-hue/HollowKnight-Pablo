@@ -16,6 +16,7 @@ import pablo.framework.BaseActor;
 public abstract class Enemy extends BaseActor
 {
     private static final float CAMERA_ACTIVATION_MARGIN = 320f;
+    protected static final float VOID_Y = -300f;
 
     // --- shared physics constants (subclasses can override by setting these in their constructor) ---
     protected float gravity          = 700f;
@@ -89,7 +90,38 @@ public abstract class Enemy extends BaseActor
     protected void flip()
     {
         direction *= -1f;
-        setScaleX(direction);
+        faceDirection(direction);
+    }
+
+    protected void faceDirection(float horizontalDirection)
+    {
+        if (horizontalDirection > 0f)
+            setScaleX(-1f);
+        else if (horizontalDirection < 0f)
+            setScaleX(1f);
+    }
+
+    /**
+     * Keeps the visible sprite facing the same way the enemy is moving.
+     * The direction field can still be used by AI as its planned patrol side.
+     */
+    protected void syncFacingToHorizontalMovement()
+    {
+        faceDirection(velocityVec.x);
+    }
+
+    /**
+     * Removes enemies that fall below the same void threshold used by Pablo.
+     */
+    protected boolean removeIfBelowVoid()
+    {
+        if (getY() < VOID_Y)
+        {
+            remove();
+            return true;
+        }
+
+        return false;
     }
 
     /**

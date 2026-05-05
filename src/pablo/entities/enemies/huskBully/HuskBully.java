@@ -217,7 +217,7 @@ public class HuskBully extends Enemy
         updateSensorPositions();
 
         setAnimation(animIdle);
-        setScaleX(direction);
+        faceDirection(direction);
 
         // Aggro check — face and leap
         if (isInDetectionRange())
@@ -252,7 +252,7 @@ public class HuskBully extends Enemy
         updateSensorPositions();
 
         setAnimation(animWalk);
-        setScaleX(direction);
+        syncFacingToHorizontalMovement();
     }
 
     private void tickTurning(float dt)
@@ -300,7 +300,7 @@ public class HuskBully extends Enemy
             else
                 leapDir = -1f;
             direction = leapDir;
-            setScaleX(leapDir);
+            faceDirection(leapDir);
 
             velocityVec.x = leapDir * LEAP_SPEED_X;
             velocityVec.y = LEAP_SPEED_Y;
@@ -308,7 +308,7 @@ public class HuskBully extends Enemy
             enterState(HuskBullyState.ATTACK_LUNGE);
         }
 
-        setScaleX(direction);
+        faceDirection(direction);
     }
 
     private void tickLunge(float dt)
@@ -326,7 +326,7 @@ public class HuskBully extends Enemy
         else
             setAnimation(animLunge2);
 
-        setScaleX(leapDir);
+        syncFacingToHorizontalMovement();
 
         // Land detection: only when descending and sensor hits ground
         // Small grace period (0.08s) so we don't snap to cooldown on launch frame
@@ -346,7 +346,7 @@ public class HuskBully extends Enemy
         updateSensorPositions();
 
         setAnimation(animCooldown);
-        setScaleX(direction);
+        faceDirection(direction);
 
         if (stateTimer >= COOLDOWN_DURATION)
         {
@@ -374,6 +374,7 @@ public class HuskBully extends Enemy
 
         setAnimation(animDeathAir);
         setRotation(getRotation() + spinDir * SPIN_SPEED * dt);
+        syncFacingToHorizontalMovement();
 
         if (isOnGround())
         {
@@ -390,7 +391,9 @@ public class HuskBully extends Enemy
             // Frames 1-7: tumble with decelerating slide friction
             float progress   = stateTimer / LAND_TUMBLE_DURATION;
             float slideSpeed = 70f * (1f - progress);
-            moveBy(deathKnockbackDir * slideSpeed * dt, 0);
+            velocityVec.x = deathKnockbackDir * slideSpeed;
+            moveBy(velocityVec.x * dt, 0);
+            syncFacingToHorizontalMovement();
             setAnimation(animDeathLand);
         }
         else
@@ -481,7 +484,7 @@ public class HuskBully extends Enemy
             direction = 1f;
         else
             direction = -1f;
-        setScaleX(direction);
+        faceDirection(direction);
     }
 
     private void enterState(HuskBullyState next)

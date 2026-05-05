@@ -607,7 +607,7 @@ public class Pablo extends BaseActor
     /** Returns true when Pablo has fallen below the void threshold. */
     public boolean isInVoid()
     {
-        return getY() < VOID_Y;
+        return getY() < VOID_Y || (getY() <= 0f && velocityVec.y < 0f && !isOnSolid());
     }
 
     // -----------------------------------------------------------------------

@@ -96,9 +96,9 @@ public abstract class Enemy extends BaseActor
     protected void faceDirection(float horizontalDirection)
     {
         if (horizontalDirection > 0f)
-            setScaleX(-1f);
-        else if (horizontalDirection < 0f)
             setScaleX(1f);
+        else if (horizontalDirection < 0f)
+            setScaleX(-1f);
     }
 
     /**

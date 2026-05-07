@@ -93,12 +93,13 @@ public abstract class Enemy extends BaseActor
         faceDirection(direction);
     }
 
+    // Enemy.java — FIXED faceDirection()
     protected void faceDirection(float horizontalDirection)
     {
         if (horizontalDirection > 0f)
-            setScaleX(-1f);
+            setScaleX(1f);       // moving RIGHT → face right (normal, unflipped)
         else if (horizontalDirection < 0f)
-            setScaleX(1f);
+            setScaleX(-1f);      // moving LEFT  → face left (flipped)
     }
 
     /**
@@ -107,7 +108,18 @@ public abstract class Enemy extends BaseActor
      */
     protected void syncFacingToHorizontalMovement()
     {
+        // Skip when stationary: faceDirection(0) is a no-op anyway,
+        // and logging it produces misleading "expected" output.
+        if (Math.abs(velocityVec.x) < 0.1f)
+            return;
+
         faceDirection(velocityVec.x);
+
+        // Debug — only fires when enemy is genuinely moving
+        System.out.println("[FacingDebug] " + getClass().getSimpleName()
+                + " vel.x=" + velocityVec.x
+                + " scaleX=" + getScaleX()
+                + " expected=" + (velocityVec.x > 0 ? "+1 (right)" : "-1 (left)"));
     }
 
     /**

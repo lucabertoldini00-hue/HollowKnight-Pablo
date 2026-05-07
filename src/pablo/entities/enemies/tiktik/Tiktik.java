@@ -118,6 +118,9 @@ public class Tiktik extends Enemy
     {
         super.act(dt);
 
+        if (!canUpdateAI())
+            return;
+
         if (removeIfBelowVoid())
             return;
 
@@ -140,8 +143,6 @@ public class Tiktik extends Enemy
             case DEAD_AIR:  tickDeadAir(dt);  break;
             case DEAD_LAND: tickDeadLand();   break;
         }
-
-        removeIfBelowVoid();
     }
 
     // =========================================================================

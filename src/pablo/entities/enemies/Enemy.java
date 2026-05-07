@@ -36,6 +36,28 @@ public abstract class Enemy extends BaseActor
         direction = 1f; // default: start moving right
     }
 
+    @Override
+    public void act(float dt)
+    {
+        super.act(dt);
+
+        if (!isActiveNearCamera())
+        {
+            velocityVec.set(0, 0);
+        }
+
+        removeIfBelowVoid();
+    }
+
+    /**
+     * Checks if the enemy should update its AI/logic based on camera proximity.
+     * Deprecated: Centralized in Enemy.act() to prevent physics issues.
+     */
+    protected boolean canUpdateAI()
+    {
+        return isActiveNearCamera();
+    }
+
     /**
      * Enemies are spawned for the whole map at level load. Keep them frozen
      * while far outside the camera so ground enemies do not walk/fall away
@@ -56,18 +78,6 @@ public abstract class Enemy extends BaseActor
                 && getX() <= right
                 && getY() + getHeight() >= bottom
                 && getY() <= top;
-    }
-
-    @Override
-    public void moveBy(float x, float y)
-    {
-        if (!isActiveNearCamera())
-        {
-            velocityVec.set(0, 0);
-            return;
-        }
-
-        super.moveBy(x, y);
     }
 
     // ------------------------------------------------------------------

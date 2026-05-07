@@ -181,6 +181,9 @@ public class HuskBully extends Enemy
     {
         super.act(dt);
 
+        if (!canUpdateAI())
+            return;
+
         // Hit-stop: freeze completely, then launch into death arc
         if (state == HuskBullyState.HIT_STOP)
         {

@@ -150,6 +150,9 @@ public class HuskHornhead extends Enemy
     {
         super.act(dt);
 
+        if (!canUpdateAI())
+            return;
+
         if (state == HuskHornheadState.HIT_STOP)
         {
             hitStopTimer -= dt;

@@ -142,6 +142,9 @@ public class Vengefly extends Enemy
     {
         super.act(dt);
 
+        if (!canUpdateAI())
+            return;
+
         // Hit-stop: freeze, then launch into death arc
         if (state == VengeflyState.HIT_STOP)
         {

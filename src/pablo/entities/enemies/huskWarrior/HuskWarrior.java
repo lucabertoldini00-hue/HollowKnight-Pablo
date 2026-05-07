@@ -187,6 +187,9 @@ public class HuskWarrior extends Enemy
     {
         super.act(dt);
 
+        if (!canUpdateAI())
+            return;
+
         if (state == HuskWarriorState.HIT_STOP)
         {
             hitStopTimer -= dt;

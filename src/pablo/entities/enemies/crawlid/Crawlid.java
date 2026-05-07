@@ -116,9 +116,9 @@ public class Crawlid extends Enemy
     @Override
     public void act(float dt)
     {
-        super.act(dt); // increments elapsedTime, runs BaseActor logic
+        super.act(dt);
 
-        if (removeIfBelowVoid())
+        if (!canUpdateAI())
             return;
 
         // Hit-stop: freeze in place, then launch
@@ -139,8 +139,6 @@ public class Crawlid extends Enemy
             case DEAD_AIR:  tickDeadAir(dt);  break;
             case DEAD_LAND: tickDeadLand();   break;
         }
-
-        removeIfBelowVoid();
     }
 
     // =========================================================================

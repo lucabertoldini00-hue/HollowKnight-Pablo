@@ -93,6 +93,9 @@ public class LevelScreen extends BaseScreen
     private static final float VESSEL_PAD_TOP = 10f * HUD_SCALE;
     private static final float VESSEL_PAD_LEFT = 20f * HUD_SCALE;
 
+    private float voidTimer = 0f;
+    private static final float VOID_RESPAWN_DELAY = 0.2f;
+
     // -----------------------------------------------------------------------
     // initialize()
     // -----------------------------------------------------------------------
@@ -290,10 +293,20 @@ public class LevelScreen extends BaseScreen
         updateVessel(dt);
 
         // Void fall: respawn Pablo if he falls below the map
-        if (pablo.isInVoid())
+        if (pablo.getY() <= 2f && !pablo.isOnSolid())  // reliable: below map floor and no ground
         {
-            pablo.respawn();
-            return; // skip collision resolution this frame
+            voidTimer += dt;
+            if (voidTimer >= VOID_RESPAWN_DELAY)
+            {
+                System.out.println("[VoidDebug] Pablo respawning after " + voidTimer + "s in void");
+                pablo.respawn();
+                voidTimer = 0f;
+            }
+            return; // skip collision resolution while waiting
+        }
+        else
+        {
+            voidTimer = 0f; // reset if Pablo gets back onto ground
         }
 
         // Collisioni player <-> solidi con risoluzione tramite MTV.
@@ -326,9 +339,14 @@ public class LevelScreen extends BaseScreen
                     if (offset != null)
                     {
                         if (Math.abs(offset.x) > Math.abs(offset.y))
+                        {
+                            enemy.velocityVec.x = 0;   // ← ADD: mirrors Pablo exactly, stops wall penetration
                             enemy.onWallHit();
+                        }
                         else
+                        {
                             enemy.velocityVec.y = 0;
+                        }
                     }
                 }
             }

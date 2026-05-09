@@ -16,6 +16,7 @@ import pablo.framework.BaseActor;
 public abstract class Enemy extends BaseActor
 {
     private static final float CAMERA_ACTIVATION_MARGIN = 320f;
+    protected static final float VOID_Y = -300f;
 
     // --- shared physics constants (subclasses can override by setting these in their constructor) ---
     protected float gravity          = 700f;
@@ -33,6 +34,28 @@ public abstract class Enemy extends BaseActor
     {
         super(x, y, stage);
         direction = 1f; // default: start moving right
+    }
+
+    @Override
+    public void act(float dt)
+    {
+        super.act(dt);
+
+        if (!isActiveNearCamera())
+        {
+            velocityVec.set(0, 0);
+        }
+
+        removeIfBelowVoid();
+    }
+
+    /**
+     * Checks if the enemy should update its AI/logic based on camera proximity.
+     * Deprecated: Centralized in Enemy.act() to prevent physics issues.
+     */
+    protected boolean canUpdateAI()
+    {
+        return isActiveNearCamera();
     }
 
     /**
@@ -57,18 +80,6 @@ public abstract class Enemy extends BaseActor
                 && getY() <= top;
     }
 
-    @Override
-    public void moveBy(float x, float y)
-    {
-        if (!isActiveNearCamera())
-        {
-            velocityVec.set(0, 0);
-            return;
-        }
-
-        super.moveBy(x, y);
-    }
-
     // ------------------------------------------------------------------
     // Shared helpers — called by subclasses from their own act() methods
     // ------------------------------------------------------------------
@@ -89,7 +100,50 @@ public abstract class Enemy extends BaseActor
     protected void flip()
     {
         direction *= -1f;
-        setScaleX(direction);
+        faceDirection(direction);
+    }
+
+    // Enemy.java — FIXED faceDirection()
+    protected void faceDirection(float horizontalDirection)
+    {
+        if (horizontalDirection > 0f)
+            setScaleX(1f);       // moving RIGHT → face right (normal, unflipped)
+        else if (horizontalDirection < 0f)
+            setScaleX(-1f);      // moving LEFT  → face left (flipped)
+    }
+
+    /**
+     * Keeps the visible sprite facing the same way the enemy is moving.
+     * The direction field can still be used by AI as its planned patrol side.
+     */
+    protected void syncFacingToHorizontalMovement()
+    {
+        // Skip when stationary: faceDirection(0) is a no-op anyway,
+        // and logging it produces misleading "expected" output.
+        if (Math.abs(velocityVec.x) < 0.1f)
+            return;
+
+        faceDirection(velocityVec.x);
+
+        // Debug — only fires when enemy is genuinely moving
+        System.out.println("[FacingDebug] " + getClass().getSimpleName()
+                + " vel.x=" + velocityVec.x
+                + " scaleX=" + getScaleX()
+                + " expected=" + (velocityVec.x > 0 ? "+1 (right)" : "-1 (left)"));
+    }
+
+    /**
+     * Removes enemies that fall below the same void threshold used by Pablo.
+     */
+    protected boolean removeIfBelowVoid()
+    {
+        if (getY() < VOID_Y)
+        {
+            remove();
+            return true;
+        }
+
+        return false;
     }
 
     /**

@@ -228,7 +228,23 @@ public class FalseKnight extends BaseActor {
         syncMaceHitbox();
 
         // Sprite flip to match facing direction
-        setScaleX(facingDir);
+        syncFacingToHorizontalMovement();
+    }
+
+    private void syncFacingToHorizontalMovement() {
+        if (velocityVec.x > 0)
+            setScaleX(1f);
+        else if (velocityVec.x < 0)
+            setScaleX(-1f);
+        else
+            faceDirection(facingDir);
+    }
+
+    private void faceDirection(float horizontalDirection) {
+        if (horizontalDirection > 0f)
+            setScaleX(1f);
+        else if (horizontalDirection < 0f)
+            setScaleX(-1f);
     }
 
     // =========================================================================

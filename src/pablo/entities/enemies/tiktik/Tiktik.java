@@ -118,6 +118,12 @@ public class Tiktik extends Enemy
     {
         super.act(dt);
 
+        if (!canUpdateAI())
+            return;
+
+        if (removeIfBelowVoid())
+            return;
+
         // Hit-stop: freeze everything, then launch into death
         if (state == TiktikState.HIT_STOP)
         {
@@ -159,7 +165,7 @@ public class Tiktik extends Enemy
         updateSensorPositions();
 
         setAnimation(animWalk);
-        setScaleX(direction);
+        syncFacingToHorizontalMovement();
     }
 
     private void tickTurning(float dt)
@@ -192,6 +198,7 @@ public class Tiktik extends Enemy
         updateSensorPositions();
 
         setAnimation(animStun);
+        syncFacingToHorizontalMovement();
 
         if (stateTimer >= STUN_ANIM_TOTAL)
         {
@@ -210,6 +217,7 @@ public class Tiktik extends Enemy
 
         // Looping 7-frame tumble — sprite art handles the visual spin, no setRotation needed
         setAnimation(animDeathAir);
+        syncFacingToHorizontalMovement();
 
         if (isOnGround())
         {

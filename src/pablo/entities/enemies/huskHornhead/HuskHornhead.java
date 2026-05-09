@@ -150,6 +150,9 @@ public class HuskHornhead extends Enemy
     {
         super.act(dt);
 
+        if (!canUpdateAI())
+            return;
+
         if (state == HuskHornheadState.HIT_STOP)
         {
             hitStopTimer -= dt;
@@ -211,7 +214,7 @@ public class HuskHornhead extends Enemy
         updateSensorPositions();
 
         setAnimation(animIdle);
-        setScaleX(direction);
+        faceDirection(direction);
 
         if (isInDetectionRange())
         {
@@ -244,7 +247,7 @@ public class HuskHornhead extends Enemy
         updateSensorPositions();
 
         setAnimation(animWalk);
-        setScaleX(direction);
+        syncFacingToHorizontalMovement();
     }
 
     private void tickTurning(float dt)
@@ -291,7 +294,7 @@ public class HuskHornhead extends Enemy
             else
                 chargeDir = -1f;
             direction = chargeDir;
-            setScaleX(chargeDir);
+            faceDirection(chargeDir);
 
             enterState(HuskHornheadState.LUNGE);
         }
@@ -307,7 +310,7 @@ public class HuskHornhead extends Enemy
         updateSensorPositions();
 
         setAnimation(animLunge);
-        setScaleX(chargeDir);
+        syncFacingToHorizontalMovement();
 
         if (stateTimer >= LUNGE_MAX_DURATION)
             enterState(HuskHornheadState.COOLDOWN);
@@ -323,7 +326,7 @@ public class HuskHornhead extends Enemy
         updateSensorPositions();
 
         setAnimation(animCooldown);
-        setScaleX(direction);
+        faceDirection(direction);
 
         if (stateTimer >= COOLDOWN_DURATION)
         {
@@ -350,6 +353,7 @@ public class HuskHornhead extends Enemy
 
         setAnimation(animDeathAir);
         setRotation(getRotation() + spinDir * SPIN_SPEED * dt);
+        syncFacingToHorizontalMovement();
 
         if (isOnGround())
         {
@@ -367,7 +371,9 @@ public class HuskHornhead extends Enemy
             float progress = stateTimer / LAND_TUMBLE_DURATION;
             float slideSpeed = 70f * (1f - progress);
 
-            moveBy(deathKnockbackDir * slideSpeed * dt, 0);
+            velocityVec.x = deathKnockbackDir * slideSpeed;
+            moveBy(velocityVec.x * dt, 0);
+            syncFacingToHorizontalMovement();
             setAnimation(animDeathLand);
         }
         else
@@ -455,7 +461,7 @@ public class HuskHornhead extends Enemy
             direction = 1f;
         else
             direction = -1f;
-        setScaleX(direction);
+        faceDirection(direction);
     }
 
     private void enterState(HuskHornheadState next)

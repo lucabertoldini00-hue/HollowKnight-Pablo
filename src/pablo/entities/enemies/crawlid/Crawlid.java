@@ -116,7 +116,10 @@ public class Crawlid extends Enemy
     @Override
     public void act(float dt)
     {
-        super.act(dt); // increments elapsedTime, runs BaseActor logic
+        super.act(dt);
+
+        if (!canUpdateAI())
+            return;
 
         // Hit-stop: freeze in place, then launch
         if (state == CrawlidState.HIT_STOP)
@@ -159,7 +162,7 @@ public class Crawlid extends Enemy
         updateSensorPositions();
 
         setAnimation(animWalk);
-        setScaleX(direction);
+        syncFacingToHorizontalMovement();
     }
 
     private void tickTurning(float dt)
@@ -193,6 +196,7 @@ public class Crawlid extends Enemy
 
         // Animation: plays through frames 1→2→3, then holds on 3 automatically
         setAnimation(animDeathAir);
+        syncFacingToHorizontalMovement();
 
         // Land detection via below sensor
         if (isOnGround())

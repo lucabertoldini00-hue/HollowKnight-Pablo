@@ -142,6 +142,9 @@ public class Vengefly extends Enemy
     {
         super.act(dt);
 
+        if (!canUpdateAI())
+            return;
+
         // Hit-stop: freeze, then launch into death arc
         if (state == VengeflyState.HIT_STOP)
         {
@@ -185,12 +188,7 @@ public class Vengefly extends Enemy
         // Face direction of current horizontal drift
         float dx = targetX - getX();
         if (Math.abs(dx) > 0.5f)
-        {
-            if (dx >= 0)
-                setScaleX(1f);
-            else
-                setScaleX(-1f);
-        }
+            faceDirection(dx);
 
         // Aggro check every frame
         if (isInDetectionRange())
@@ -206,7 +204,7 @@ public class Vengefly extends Enemy
         if (stateTimer >= TURN_DURATION)
         {
             direction *= -1f;
-            setScaleX(direction);
+            faceDirection(direction);
             enterState(VengeflyState.HOVERING);
         }
     }
@@ -264,12 +262,7 @@ public class Vengefly extends Enemy
 
         // Face direction of travel
         if (Math.abs(velocityVec.x) > 0.5f)
-        {
-            if (velocityVec.x >= 0)
-                setScaleX(1f);
-            else
-                setScaleX(-1f);
-        }
+            faceDirection(velocityVec.x);
     }
 
     private void tickDeadAir(float dt)

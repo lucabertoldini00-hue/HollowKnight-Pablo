@@ -2,6 +2,7 @@
 
 package pablo.framework;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.graphics.Camera;
@@ -15,163 +16,203 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.TiledMapTile;
 import com.badlogic.gdx.maps.tiled.objects.TiledMapTileMapObject;
-import com.badlogic.gdx.maps.tiled.renderers.OrthoCachedTiledMapRenderer;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
- *  Loads a Tiled map file (*.tmx), extends Actor to automatically render.
+ * Loads a Tiled map file (*.tmx), extends Actor to automatically render.
  */
 public class TilemapActor extends Actor
 {
-    // window dimensions
     public static int windowWidth  = 800;
     public static int windowHeight = 640;
 
     private TiledMap tiledMap;
     private OrthographicCamera tiledCamera;
-    private OrthoCachedTiledMapRenderer tiledMapRenderer;
+    private OrthogonalTiledMapRenderer tiledMapRenderer;
 
-    /**
-     *  Initialize Tilemap created with the Tiled Map Editor.
-     */
+    // Path del file caricato — usato nei messaggi di errore
+    private String loadedPath;
+
     public TilemapActor(String filename, Stage theStage)
     {
-        // set up tile map, renderer, and camera
+        this.loadedPath = filename;
+
         tiledMap = new TmxMapLoader().load(filename);
 
-        int tileWidth          = (int)tiledMap.getProperties().get("tilewidth");
-        int tileHeight         = (int)tiledMap.getProperties().get("tileheight");
-        int numTilesHorizontal = (int)tiledMap.getProperties().get("width");
-        int numTilesVertical   = (int)tiledMap.getProperties().get("height");
+        int tileWidth          = (int) tiledMap.getProperties().get("tilewidth");
+        int tileHeight         = (int) tiledMap.getProperties().get("tileheight");
+        int numTilesHorizontal = (int) tiledMap.getProperties().get("width");
+        int numTilesVertical   = (int) tiledMap.getProperties().get("height");
         int mapWidth  = tileWidth  * numTilesHorizontal;
         int mapHeight = tileHeight * numTilesVertical;
 
-        tiledMapRenderer = new OrthoCachedTiledMapRenderer(tiledMap);
-        tiledMapRenderer.setBlending(true);
+        Gdx.app.log("TilemapActor", "Mappa caricata: " + filename
+                + " (" + mapWidth + "x" + mapHeight + " px)");
+
+        tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap);
         tiledCamera = new OrthographicCamera();
         tiledCamera.setToOrtho(false, windowWidth, windowHeight);
         tiledCamera.update();
 
-        // by adding object to Stage, can be drawn automatically
         theStage.addActor(this);
-
-        // in theory, a solid boundary should be placed around the edge of the screen,
-        //  but just in case, this map can be used to set boundaries
         BaseActor.setWorldBounds(mapWidth, mapHeight);
+
+        // Log di tutti gli oggetti trovati nei layer per facilitare il debug
+        logAllObjects();
     }
 
-    /**
-     *  Search the map layers for Rectangle Objects that contain a property (key) called "name" with associated value propertyName.
-     *  Typically used to store non-actor information such as SpawnPoint locations or dimensions of Solid objects.
-     *  Retrieve data as object, then cast to desired type: for example, float w = (float)obj.getProperties().get("width").
-     */
+    // -----------------------------------------------------------------------
+    // getRectangleList — cerca oggetti rettangolari per tipo/nome
+    // -----------------------------------------------------------------------
+
     public ArrayList<MapObject> getRectangleList(String propertyName)
     {
         ArrayList<MapObject> list = new ArrayList<MapObject>();
 
-        for ( MapLayer layer : tiledMap.getLayers() )
+        for (MapLayer layer : tiledMap.getLayers())
         {
-            for ( MapObject obj : layer.getObjects() )
+            for (MapObject obj : layer.getObjects())
             {
-                if ( !(obj instanceof RectangleMapObject) )
+                if (!(obj instanceof RectangleMapObject))
                     continue;
 
                 MapProperties props = obj.getProperties();
 
-                if ( matchesObjectType(obj, props, propertyName) )
+                if (matchesObjectType(obj, props, propertyName))
                     list.add(obj);
             }
         }
+
+        if (list.isEmpty())
+            Gdx.app.log("TilemapActor", "ATTENZIONE: nessun oggetto '" + propertyName
+                    + "' trovato in " + loadedPath);
+
         return list;
     }
 
-    /**
-     *  Search the map layers for Tile Objects (tile-like elements of object layers)
-     *  that contain a property (key) called "name" with associated value propertyName.
-     *  Typically used to store actor information and will be used to create instances.
-     */
+    // -----------------------------------------------------------------------
+    // getTileList — cerca tile-objects per tipo/nome
+    // -----------------------------------------------------------------------
+
     public ArrayList<MapObject> getTileList(String propertyName)
     {
         ArrayList<MapObject> list = new ArrayList<MapObject>();
 
-        for ( MapLayer layer : tiledMap.getLayers() )
+        for (MapLayer layer : tiledMap.getLayers())
         {
-            for ( MapObject obj : layer.getObjects() )
+            for (MapObject obj : layer.getObjects())
             {
-                if ( !(obj instanceof TiledMapTileMapObject) )
+                if (!(obj instanceof TiledMapTileMapObject))
                     continue;
 
                 MapProperties props = obj.getProperties();
 
-                // Default MapProperties are stored within associated Tile object
-                // Instance-specific overrides are stored in MapObject
-
-                TiledMapTileMapObject tmtmo = (TiledMapTileMapObject)obj;
+                TiledMapTileMapObject tmtmo = (TiledMapTileMapObject) obj;
                 TiledMapTile t = tmtmo.getTile();
                 MapProperties defaultProps = t.getProperties();
 
-                // get list of default property keys
                 Iterator<String> propertyKeys = defaultProps.getKeys();
-
-                // iterate over keys; copy default values into props if needed
-                while ( propertyKeys.hasNext() )
+                while (propertyKeys.hasNext())
                 {
                     String key = propertyKeys.next();
-
-                    // check if value already exists; if not, create property with default value
-                    if ( props.containsKey(key) )
-                        continue;
-                    else
-                    {
-                        Object value = defaultProps.get(key);
-                        props.put( key, value );
-                    }
+                    if (!props.containsKey(key))
+                        props.put(key, defaultProps.get(key));
                 }
 
-                if ( matchesObjectType(obj, props, propertyName) )
+                if (matchesObjectType(obj, props, propertyName))
                     list.add(obj);
             }
         }
+
         return list;
     }
 
+    // -----------------------------------------------------------------------
+    // matchesObjectType — controlla nome oggetto, property "name" o "type"
+    // -----------------------------------------------------------------------
+
     /**
-     * Tiled can store the useful enemy identifier in different places:
-     * object name, custom "name" property, or custom "type" property.
+     * Confronta il tipo atteso con:
+     *   1. Il nome XML dell'oggetto (attributo "name" del tag <object>)
+     *   2. La custom property "name"
+     *   3. La custom property "type"
+     *
+     * Case-insensitive per robustezza.
      */
     private boolean matchesObjectType(MapObject obj, MapProperties props, String expectedType)
     {
-        if (expectedType.equals(obj.getName()))
+        // 1. Nome XML dell'oggetto
+        String objName = obj.getName();
+        if (objName != null && objName.equalsIgnoreCase(expectedType))
             return true;
 
+        // 2. Custom property "name"
         if (matchesProperty(props, "name", expectedType))
             return true;
 
-        return matchesProperty(props, "type", expectedType);
+        // 3. Custom property "type"
+        if (matchesProperty(props, "type", expectedType))
+            return true;
+
+        return false;
     }
 
     private boolean matchesProperty(MapProperties props, String key, String expectedValue)
     {
-        return props.containsKey(key) && expectedValue.equals(String.valueOf(props.get(key)));
+        if (!props.containsKey(key))
+            return false;
+        Object val = props.get(key);
+        return val != null && expectedValue.equalsIgnoreCase(String.valueOf(val));
     }
+
+    // -----------------------------------------------------------------------
+    // logAllObjects — stampa tutti gli oggetti in console al caricamento
+    // -----------------------------------------------------------------------
+
+    private void logAllObjects()
+    {
+        Gdx.app.log("TilemapActor", "--- Oggetti nella mappa " + loadedPath + " ---");
+        for (MapLayer layer : tiledMap.getLayers())
+        {
+            int count = 0;
+            for (MapObject obj : layer.getObjects()) count++;
+
+            Gdx.app.log("TilemapActor", "Layer '" + layer.getName()
+                    + "' (" + count + " oggetti):");
+
+            for (MapObject obj : layer.getObjects())
+            {
+                String tipo   = obj.getClass().getSimpleName();
+                String nome   = obj.getName();
+                Object nameProp = obj.getProperties().containsKey("name")
+                        ? obj.getProperties().get("name") : "(assente)";
+
+                Gdx.app.log("TilemapActor", "  [" + tipo + "] nome='"
+                        + nome + "' prop.name='" + nameProp + "'");
+            }
+        }
+        Gdx.app.log("TilemapActor", "-------------------------------------------");
+    }
+
+    // -----------------------------------------------------------------------
+    // act / draw
+    // -----------------------------------------------------------------------
 
     public void act(float dt)
     {
-        super.act( dt );
+        super.act(dt);
     }
 
     public void draw(Batch batch, float parentAlpha)
     {
-        // adjust tilemap camera to stay in sync with main camera
         Camera mainCamera = getStage().getCamera();
         tiledCamera.position.x = mainCamera.position.x;
         tiledCamera.position.y = mainCamera.position.y;
         tiledCamera.update();
         tiledMapRenderer.setView(tiledCamera);
 
-        // need the following code to force batch order,
-        //  otherwise it is batched and rendered last
         batch.end();
         tiledMapRenderer.render();
         batch.begin();

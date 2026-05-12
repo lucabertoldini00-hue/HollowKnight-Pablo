@@ -23,6 +23,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import pablo.entities.player.Pablo;
 import pablo.framework.BaseGame;
 import pablo.framework.BaseScreen;
 
@@ -318,6 +319,58 @@ public class MenuScreen extends BaseScreen
         if (titleFrame != null) titleFrame.dispose();
         fontStart.dispose();
         fontOther.dispose();
+    }
+
+    public static class PlayerState
+    {
+        private static PlayerState instance;
+
+        private int     health = -1;  // -1 = non inizializzato → usa il default di Pablo
+        private int     soul   = 0;
+
+        // -----------------------------------------------------------------------
+        // Singleton
+        // -----------------------------------------------------------------------
+        private PlayerState() {}
+
+        public static PlayerState get()
+        {
+            if (instance == null)
+                instance = new PlayerState();
+            return instance;
+        }
+
+        // -----------------------------------------------------------------------
+        // Salva / Ripristina
+        // -----------------------------------------------------------------------
+
+        /** Copia salute e anima da un Pablo esistente prima della transizione. */
+        public void saveFrom(Pablo pablo)
+        {
+            health = pablo.getHealth();
+            soul   = pablo.getSoul();
+        }
+
+        /**
+         * Applica salute e anima al nuovo Pablo spawanto nella mappa successiva.
+         * Se non è mai stato chiamato saveFrom(), non fa nulla (Pablo usa i suoi default).
+         */
+        public void restoreTo(Pablo pablo)
+        {
+            if (health >= 0)
+                // pablo.setHealth(health);
+            pablo.setSoul(soul);
+        }
+
+        /** True se contiene uno stato salvato da una transizione precedente. */
+        public boolean hasSavedState() { return health >= 0; }
+
+        /** Azzera lo stato (usato per "nuova partita" o game-over). */
+        public void reset()
+        {
+            health = -1;
+            soul   = 0;
+        }
     }
 }
 

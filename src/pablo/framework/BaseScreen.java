@@ -9,7 +9,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.utils.viewport.StretchViewport;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import com.badlogic.gdx.scenes.scene2d.Event;
@@ -18,7 +18,9 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent.Type;
 
 public abstract class BaseScreen implements Screen, InputProcessor
 {
-    // Dimensioni di riferimento del mondo di gioco
+    // Dimensioni minime garantite del mondo visibile.
+    // ExtendViewport le usa come base e aggiunge spazio extra
+    // in orizzontale o verticale per riempire lo schermo senza deformare.
     private static final int WORLD_WIDTH  = 800;
     private static final int WORLD_HEIGHT = 640;
 
@@ -28,11 +30,13 @@ public abstract class BaseScreen implements Screen, InputProcessor
 
     public BaseScreen()
     {
-        // StretchViewport: riempie lo schermo senza bande nere (deforma l'aspect ratio).
-        mainStage = new Stage( new StretchViewport(WORLD_WIDTH, WORLD_HEIGHT) );
+        // ExtendViewport: preserva le proporzioni degli sprite.
+        // Se lo schermo è più largo di 800:640, estende la visuale
+        // orizzontalmente invece di stretchare — niente bande nere,
+        // niente distorsione.
+        mainStage = new Stage( new ExtendViewport(WORLD_WIDTH, WORLD_HEIGHT) );
 
-        // ScreenViewport: 1 unità = 1 pixel reale.
-        // Corretto per la UI — i bottoni e i font si posizionano in coordinate schermo reali.
+        // ScreenViewport per la UI: 1 unità = 1 pixel reale.
         uiStage = new Stage( new ScreenViewport() );
 
         uiTable = new Table();
@@ -64,10 +68,9 @@ public abstract class BaseScreen implements Screen, InputProcessor
         uiStage.draw();
     }
 
-    // Propaga le nuove dimensioni ad entrambi i viewport
     public void resize(int width, int height)
     {
-        // true = centra la camera (importante per FitViewport)
+        // true = centra la camera
         mainStage.getViewport().update(width, height, true);
         uiStage.getViewport().update(width, height, true);
     }
@@ -97,12 +100,6 @@ public abstract class BaseScreen implements Screen, InputProcessor
         return (e instanceof InputEvent) && ((InputEvent) e).getType().equals(Type.touchDown);
     }
 
-    /**
-     * Ridisegna gli stage senza chiamare act() — usato da OptionsScreen e PauseScreen
-     * come sfondo "congelato" mentre la schermata corrente è aperta sopra.
-     * Le sottoclassi che renderizzano con SpriteBatch diretto (es. MenuScreen)
-     * devono fare override per includere anche il proprio batch draw.
-     */
     public void drawFrozen()
     {
         mainStage.getViewport().apply();

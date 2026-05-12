@@ -508,18 +508,31 @@ public class Pablo extends BaseActor
     private void updateJumpAnimation()
     {
         float p = jumpTimer / totalJumpTime;
-        if      (p < 0.10f) setAnimation(jumpUp);
+
+        if (p < 0.10f)
+        {
+            setAnimation(jumpUp);
+        }
         else if (p < 0.50f)
         {
             float r = (p - 0.10f) / 0.40f;
-            setAnimation(r < 0.40f ? frameRise1 : r < 0.80f ? frameRise2 : frameAltezzaMax);
+
+            if      (r < 0.40f) setAnimation(frameRise1);
+            else if (r < 0.80f) setAnimation(frameRise2);
+            else                setAnimation(frameAltezzaMax);
         }
         else if (p < 0.90f)
         {
             float d = (p - 0.50f) / 0.40f;
-            setAnimation(d < 0.20f ? frameAltezzaMax : d < 0.60f ? frameDrop1 : frameDrop2);
+
+            if      (d < 0.20f) setAnimation(frameAltezzaMax);
+            else if (d < 0.60f) setAnimation(frameDrop1);
+            else                setAnimation(frameDrop2);
         }
-        else setAnimation(frameDrop2);
+        else
+        {
+            setAnimation(frameDrop2);
+        }
     }
 
     private void spawnAttackHitbox()

@@ -25,6 +25,12 @@ public class FalseKnight extends BaseActor {
     private static final float IDLE_DURATION    = 1.5f;   // seconds before patrolling
     private static final float PATROL_DURATION  = 3.0f;   // seconds before attacking
     private static final float JUMP_ATTACK_DIST = 250f;   // px: trigger jump attack instead of ground smash
+    private static final float AGGRO_RANGE      = 700f;
+    private static final float STOP_RANGE       = 60f;
+    private static final float ATTACK_COOLDOWN  = 1.2f;
+    private static final float FALL_ACCEL       = 200f;
+    private static final float TURN_COOLDOWN    = 0.25f;
+    private static final float WALL_HIT_JUMP_WINDOW = 0.25f;
 
     // -------------------------------------------------------------------------
     // State
@@ -37,6 +43,11 @@ public class FalseKnight extends BaseActor {
     // -------------------------------------------------------------------------
     private int   facingDir    = 1;   // 1 = right, -1 = left
     private boolean onGround   = false;
+
+    private float attackCooldown = 0f;
+    private float lastDt = 0f;
+    private float turnCooldown = 0f;
+    private float wallHitTimer = 0f;
 
     // -------------------------------------------------------------------------
     // Combat
@@ -203,6 +214,11 @@ public class FalseKnight extends BaseActor {
             return;
         }
 
+        lastDt = dt;
+        attackCooldown = Math.max(0f, attackCooldown - dt);
+        turnCooldown = Math.max(0f, turnCooldown - dt);
+        wallHitTimer = Math.max(0f, wallHitTimer - dt);
+
         applyGravity(dt);
         stateTimer += dt;
 
@@ -231,13 +247,17 @@ public class FalseKnight extends BaseActor {
         syncFacingToHorizontalMovement();
     }
 
+    // ✅ Fix: aggiorna facingDir insieme allo scaleX
     private void syncFacingToHorizontalMovement() {
-        if (velocityVec.x > 0)
+        if (velocityVec.x > 0) {
             setScaleX(1f);
-        else if (velocityVec.x < 0)
+            facingDir = 1;
+        } else if (velocityVec.x < 0) {
             setScaleX(-1f);
-        else
+            facingDir = -1;
+        } else {
             faceDirection(facingDir);
+        }
     }
 
     private void faceDirection(float horizontalDirection) {
@@ -259,22 +279,40 @@ public class FalseKnight extends BaseActor {
     }
 
     private void tickPatrol() {
+        updateFacingTowardPablo();
+
+        float dist = Math.abs(pablo.getX() - getX());
+        boolean inAggro = dist <= AGGRO_RANGE;
+
         // Short run-anticipation at the very start of patrol
         if (stateTimer < animRunAnticipate.getAnimationDuration()) {
             setAnimation(animRunAnticipate);
             velocityVec.x = 0;
         } else {
             setAnimation(animRun);
-            velocityVec.x = PATROL_SPEED * facingDir;
+            if (inAggro && dist > STOP_RANGE)
+                velocityVec.x = PATROL_SPEED * facingDir;
+            else
+                velocityVec.x = 0f;
         }
 
         // Decide which attack to use based on distance to Pablo
-        if (stateTimer > PATROL_DURATION) {
-            float dist = Math.abs(pablo.getX() - getX());
-            if (dist > JUMP_ATTACK_DIST)
-                enterState(FalseKnightState.JUMP_ANTICIPATE);
-            else
+        if (inAggro && attackCooldown <= 0f && stateTimer > 0.5f) {
+            if (dist <= JUMP_ATTACK_DIST) {
                 enterState(FalseKnightState.ANTICIPATE_ATTACK);
+            }
+            else
+            {
+                enterState(FalseKnightState.JUMP_ANTICIPATE);
+            }
+            attackCooldown = ATTACK_COOLDOWN;
+        }
+
+        // Se siamo bloccati contro un muro, proviamo un salto per superarlo
+        if (inAggro && wallHitTimer > 0f && attackCooldown <= 0f) {
+            wallHitTimer = 0f;
+            enterState(FalseKnightState.JUMP_ANTICIPATE);
+            attackCooldown = ATTACK_COOLDOWN;
         }
     }
 
@@ -288,6 +326,7 @@ public class FalseKnight extends BaseActor {
     }
 
     private void tickAnticipateAttack() {
+        updateFacingTowardPablo();
         setAnimation(animAttackAnticipate);
         velocityVec.x = 0;
         if (animAttackAnticipate.isAnimationFinished(stateTimer))
@@ -328,10 +367,7 @@ public class FalseKnight extends BaseActor {
 
         if (animJumpAnticipate.isAnimationFinished(stateTimer)) {
             // Face Pablo before jumping
-            if (pablo.getX() > getX())
-                facingDir = 1;
-            else
-                facingDir = -1;
+            updateFacingTowardPablo();
             jumpTargetX = pablo.getX();
             velocityVec.y = JUMP_SPEED_Y;
             velocityVec.x = JUMP_SPEED_X * facingDir;
@@ -350,7 +386,7 @@ public class FalseKnight extends BaseActor {
         setAnimation(animJumpAttackFall);
 
         // Accelerate downward faster for dramatic slam feel
-        velocityVec.y = Math.max(velocityVec.y - 200f * 0.016f, -MAX_FALL_SPEED);
+        velocityVec.y = Math.max(velocityVec.y - FALL_ACCEL * lastDt, -MAX_FALL_SPEED);
 
         // Enable mace during fall (hitbox below boss)
         maceActive = true;
@@ -374,13 +410,17 @@ public class FalseKnight extends BaseActor {
             enterState(FalseKnightState.IDLE);
     }
 
+    private float staggerRollEndTime = -1f;
+
     private void tickStagger() {
         setAnimation(animStunRoll);
         velocityVec.x = -facingDir * STAGGER_SPEED;
         if (animStunRoll.isAnimationFinished(stateTimer)) {
             velocityVec.x = 0;
+            if (staggerRollEndTime < 0f) staggerRollEndTime = stateTimer;
+            float endElapsed = stateTimer - staggerRollEndTime;
             setAnimation(animStunEnd);
-            if (animStunEnd.isAnimationFinished(stateTimer))
+            if (animStunEnd.isAnimationFinished(endElapsed))
                 enterState(FalseKnightState.IDLE);
         }
     }
@@ -398,7 +438,9 @@ public class FalseKnight extends BaseActor {
     // Physics
     // =========================================================================
 
+    // ✅ Fix: salta applyGravity se la gestisci manualmente nello stato
     private void applyGravity(float dt) {
+        if (state == FalseKnightState.JUMP_ATTACK_FALL) return; // già gestita nel tick
         velocityVec.y = MathUtils.clamp(
                 velocityVec.y - GRAVITY * dt,
                 -MAX_FALL_SPEED,
@@ -408,8 +450,11 @@ public class FalseKnight extends BaseActor {
 
     // Called by LevelScreen when a horizontal wall collision is resolved
     public void onWallHit() {
-        if (state == FalseKnightState.PATROL)
+        wallHitTimer = WALL_HIT_JUMP_WINDOW;
+        if (state == FalseKnightState.PATROL && turnCooldown <= 0f) {
+            turnCooldown = TURN_COOLDOWN;
             enterState(FalseKnightState.TURN);
+        }
     }
 
     // Called by LevelScreen when vertical collision stops the boss (landing)
@@ -487,5 +532,10 @@ public class FalseKnight extends BaseActor {
         hitStopFired  = false;
         elapsedTime   = 0f;    // reset BaseActor animation clock
         maceActive    = false;
+    }
+
+    private void updateFacingTowardPablo() {
+        if (pablo == null) return;
+        facingDir = (pablo.getX() >= getX()) ? 1 : -1;
     }
 }

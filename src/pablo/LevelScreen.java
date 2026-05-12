@@ -7,6 +7,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapProperties;
@@ -17,9 +18,16 @@ import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ShortArray;
+import com.badlogic.gdx.utils.Align;
 
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import pablo.entities.enemies.crawlid.Crawlid;
 import pablo.entities.enemies.Enemy;
@@ -83,6 +91,22 @@ public class LevelScreen extends BaseScreen
 
     // FalseKnight è opzionale: null se la mappa non lo contiene
     private FalseKnight falseKnight = null;
+
+    private BaseActor bossTrigger = null;
+    private Vector2 bossTeleportPoint = null;
+    private Vector2 bossSpawnPoint = null;
+    private boolean bossDialogOpen = false;
+    private boolean bossFightStarted = false;
+
+    private Table bossDialog;
+    private Texture dialogTexture;
+    private BitmapFont dialogFont;
+    private Texture dialogBtnUpTexture;
+    private Texture dialogBtnDownTexture;
+
+    private Table bossPromptTable;
+    private Label bossPromptLabel;
+    private BitmapFont promptFont;
 
     private float shakeDuration  = 0f;
     private float shakeIntensity = 5f;
@@ -239,31 +263,28 @@ public class LevelScreen extends BaseScreen
         uiTable.add(vesselImage).size(VESSEL_SIZE, VESSEL_SIZE)
                 .left().padTop(VESSEL_PAD_TOP).padLeft(VESSEL_PAD_LEFT).row();
 
+        buildBossPrompt();
+
         // -----------------------------------------------------------------------
         // Nemici comuni
         // -----------------------------------------------------------------------
         spawnEnemiesFromMap(tma);
 
         // -----------------------------------------------------------------------
+        // Trigger boss e spawn point
+        // -----------------------------------------------------------------------
+        setupBossTrigger(tma);
+
+        // -----------------------------------------------------------------------
         // FalseKnight — opzionale
         // -----------------------------------------------------------------------
-        ArrayList<MapObject> falseKnightPoints = tma.getRectangleList("FalseKnight");
-
-        if (!falseKnightPoints.isEmpty())
+        if (bossTrigger == null)
         {
-            MapObject fkPoint = falseKnightPoints.get(0);
-            MapProperties fkProps = fkPoint.getProperties();
-            float fkX = (float) fkProps.get("x");
-            float fkY = (float) fkProps.get("y");
-
-            falseKnight = new FalseKnight(fkX, fkY, mainStage, pablo);
-            falseKnight.setScreenShakeCallback(() -> shakeDuration = 0.15f);
-
-            Gdx.app.log("LevelScreen", "FalseKnight spawned at " + fkX + "," + fkY);
+            spawnFalseKnightIfPresent();
         }
         else
         {
-            Gdx.app.log("LevelScreen", "FalseKnight non presente in questa mappa — skip.");
+            Gdx.app.log("LevelScreen", "FalseKnight in attesa di conferma dialogo.");
         }
 
         // Z-order
@@ -399,6 +420,25 @@ public class LevelScreen extends BaseScreen
             cam.update();
         }
 
+        // Trigger dialogo boss
+        if (bossTrigger != null && !bossFightStarted && !bossDialogOpen)
+        {
+            if (pablo.overlaps(bossTrigger))
+            {
+                bossPromptLabel.setVisible(true);
+                if (Gdx.input.isKeyJustPressed(Input.Keys.E))
+                    openBossDialog();
+            }
+            else
+            {
+                bossPromptLabel.setVisible(false);
+            }
+        }
+        else if (bossPromptLabel != null)
+        {
+            bossPromptLabel.setVisible(false);
+        }
+
         // FalseKnight — solo se presente nella mappa
         if (falseKnight != null && !falseKnight.isDead())
         {
@@ -498,6 +538,26 @@ public class LevelScreen extends BaseScreen
     // -----------------------------------------------------------------------
     public boolean keyDown(int keyCode)
     {
+        if (bossDialogOpen)
+        {
+            if (keyCode == Input.Keys.ENTER)
+            {
+                closeBossDialog();
+                if (bossTeleportPoint != null)
+                {
+                    pablo.setPosition(bossTeleportPoint.x, bossTeleportPoint.y);
+                    pablo.velocityVec.set(0, 0);
+                }
+                spawnFalseKnightIfPresent();
+                return true;
+            }
+            if (keyCode == Input.Keys.ESCAPE)
+            {
+                closeBossDialog();
+                return true;
+            }
+        }
+
         if (keyCode == Input.Keys.ESCAPE || keyCode == Input.Keys.P)
         {
             BaseGame.setActiveScreen(new PauseScreen(this));
@@ -515,6 +575,200 @@ public class LevelScreen extends BaseScreen
             if (pablo.isOnSolid()) pablo.jump();
 
         return false;
+    }
+
+    // -----------------------------------------------------------------------
+    // Boss dialog / trigger
+    // -----------------------------------------------------------------------
+    private void setupBossTrigger(TilemapActor tma)
+    {
+        MapObject tpObj = getFirstMapObject(tma, "tp");
+        if (tpObj != null)
+        {
+            if (tpObj instanceof RectangleMapObject)
+            {
+                Rectangle rect = ((RectangleMapObject) tpObj).getRectangle();
+                bossTrigger = new BaseActor(rect.x, rect.y, mainStage);
+                bossTrigger.setSize(rect.width, rect.height);
+            }
+            else
+            {
+                MapProperties props = tpObj.getProperties();
+                float x = (float) props.get("x");
+                float y = (float) props.get("y");
+                float w = props.containsKey("width") ? (float) props.get("width") : 32f;
+                float h = props.containsKey("height") ? (float) props.get("height") : 32f;
+                bossTrigger = new BaseActor(x, y, mainStage);
+                bossTrigger.setSize(w, h);
+            }
+            bossTrigger.setBoundaryRectangle();
+            bossTrigger.setVisible(false);
+        }
+
+        MapObject sp = getFirstMapObject(tma, "spawntp");
+        if (sp != null)
+        {
+            MapProperties props = sp.getProperties();
+            bossTeleportPoint = new Vector2((float) props.get("x"), (float) props.get("y"));
+        }
+
+        MapObject fkPoint = getFirstMapObject(tma, "FalseKnight");
+        if (fkPoint != null)
+        {
+            MapProperties fkProps = fkPoint.getProperties();
+            bossSpawnPoint = new Vector2((float) fkProps.get("x"), (float) fkProps.get("y"));
+        }
+    }
+
+    private MapObject getFirstMapObject(TilemapActor tma, String name)
+    {
+        ArrayList<MapObject> rects = tma.getRectangleList(name);
+        if (!rects.isEmpty()) return rects.get(0);
+
+        ArrayList<MapObject> tiles = tma.getTileList(name);
+        if (!tiles.isEmpty()) return tiles.get(0);
+
+        return null;
+    }
+
+    private void spawnFalseKnightIfPresent()
+    {
+        if (bossSpawnPoint == null)
+        {
+            Gdx.app.log("LevelScreen", "FalseKnight non presente in questa mappa — skip.");
+            return;
+        }
+
+        if (falseKnight != null) return;
+        falseKnight = new FalseKnight(bossSpawnPoint.x, bossSpawnPoint.y, mainStage, pablo);
+        falseKnight.setScreenShakeCallback(() -> shakeDuration = 0.15f);
+        falseKnight.toFront();
+        bossFightStarted = true;
+        Gdx.app.log("LevelScreen", "FalseKnight spawned at " + bossSpawnPoint.x + "," + bossSpawnPoint.y);
+    }
+
+    private void openBossDialog()
+    {
+        if (bossDialog == null) buildBossDialog();
+        bossDialog.setVisible(true);
+        bossDialogOpen = true;
+    }
+
+    private void closeBossDialog()
+    {
+        if (bossDialog != null) bossDialog.setVisible(false);
+        bossDialogOpen = false;
+    }
+
+    private void buildBossDialog()
+    {
+        dialogTexture = loadTextureSafe("assets/dialog.png", new Color(0f, 0f, 0f, 0.75f));
+        dialogFont = new BitmapFont();
+        dialogFont.getData().setScale(1.1f);
+
+        Pixmap upPix = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        upPix.setColor(new Color(0.25f, 0.25f, 0.25f, 0.9f));
+        upPix.fill();
+        dialogBtnUpTexture = new Texture(upPix);
+        upPix.dispose();
+
+        Pixmap downPix = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        downPix.setColor(new Color(0.4f, 0.4f, 0.4f, 0.95f));
+        downPix.fill();
+        dialogBtnDownTexture = new Texture(downPix);
+        downPix.dispose();
+
+        TextButtonStyle btnStyle = new TextButtonStyle();
+        btnStyle.font = dialogFont;
+        btnStyle.up = new TextureRegionDrawable(new TextureRegion(dialogBtnUpTexture));
+        btnStyle.down = new TextureRegionDrawable(new TextureRegion(dialogBtnDownTexture));
+        btnStyle.over = btnStyle.down;
+
+        LabelStyle labelStyle = new LabelStyle(dialogFont, Color.WHITE);
+
+        Label message = new Label(
+                "Questa è la tua prova finale, vuoi affrontare il boss?",
+                labelStyle);
+        message.setWrap(true);
+        message.setAlignment(Align.center);
+
+        TextButton yesBtn = new TextButton("SI", btnStyle);
+        TextButton noBtn  = new TextButton("NO", btnStyle);
+
+        yesBtn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor)
+            {
+                closeBossDialog();
+                if (bossTeleportPoint != null)
+                {
+                    pablo.setPosition(bossTeleportPoint.x, bossTeleportPoint.y);
+                    pablo.velocityVec.set(0, 0);
+                }
+                spawnFalseKnightIfPresent();
+            }
+        });
+
+        noBtn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor)
+            {
+                closeBossDialog();
+            }
+        });
+
+        Table box = new Table();
+        box.setBackground(new TextureRegionDrawable(new TextureRegion(dialogTexture)));
+        box.pad(24f);
+        box.add(message).width(520).center().row();
+
+        Table buttons = new Table();
+        buttons.add(yesBtn).width(120).height(36).padRight(20);
+        buttons.add(noBtn).width(120).height(36);
+        box.add(buttons).padTop(16).center();
+
+        bossDialog = new Table();
+        bossDialog.setFillParent(true);
+        bossDialog.center();
+        bossDialog.add(box).center();
+        bossDialog.setVisible(false);
+        uiStage.addActor(bossDialog);
+    }
+
+    private void buildBossPrompt()
+    {
+        promptFont = new BitmapFont();
+        promptFont.getData().setScale(1.1f);
+        LabelStyle style = new LabelStyle(promptFont, Color.WHITE);
+
+        bossPromptLabel = new Label("Premi E", style);
+        bossPromptLabel.setVisible(false);
+
+        bossPromptTable = new Table();
+        bossPromptTable.setFillParent(true);
+        bossPromptTable.bottom();
+        bossPromptTable.add(bossPromptLabel).padBottom(24f);
+        uiStage.addActor(bossPromptTable);
+    }
+
+    // -----------------------------------------------------------------------
+    // dispose()
+    // -----------------------------------------------------------------------
+    @Override
+    public void dispose()
+    {
+        super.dispose();
+        if (maskTexture != null) maskTexture.dispose();
+        if (vesselTextures != null)
+            for (Texture[] row : vesselTextures)
+                if (row != null)
+                    for (Texture t : row)
+                        if (t != null) t.dispose();
+        if (dialogTexture != null) dialogTexture.dispose();
+        if (dialogFont != null) dialogFont.dispose();
+        if (dialogBtnUpTexture != null) dialogBtnUpTexture.dispose();
+        if (dialogBtnDownTexture != null) dialogBtnDownTexture.dispose();
+        if (promptFont != null) promptFont.dispose();
     }
 
     // -----------------------------------------------------------------------
@@ -579,21 +833,6 @@ public class LevelScreen extends BaseScreen
         int currentState = getVesselStateForSoul(pablo.getSoul());
         int nextState    = Math.min(currentState + 1, 8);
         pablo.setSoul(getSoulForVesselState(nextState));
-    }
-
-    // -----------------------------------------------------------------------
-    // dispose()
-    // -----------------------------------------------------------------------
-    @Override
-    public void dispose()
-    {
-        super.dispose();
-        if (maskTexture != null) maskTexture.dispose();
-        if (vesselTextures != null)
-            for (Texture[] row : vesselTextures)
-                if (row != null)
-                    for (Texture t : row)
-                        if (t != null) t.dispose();
     }
 
     private void addSolidTriangles(Polygon polygon)

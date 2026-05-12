@@ -36,22 +36,27 @@ public class MapGraph
         MapNode map1 = new MapNode("assets/Maps/Mappa1.tmx");
         MapNode map2 = new MapNode("assets/Maps/Mappa2.tmx");
         MapNode map3 = new MapNode("assets/Maps/Mappa3.tmx");
+        MapNode map4 = new MapNode("assets/Maps/Mappa4.tmx");
         // Aggiungi altri nodi qui seguendo lo stesso schema
 
         // ── Connessioni ───────────────────────────────────────────────────
-        //  map1  ──right──►  map2  ──right──►  map3
-        //        ◄──left──         ◄──left──
+        //  map1  ──right──►  map2  ──right──►  map3  ──right──►  map4
+        //        ◄──left──         ◄──left──         ◄──left──
         map1.rightNeighbor = map2.path;
 
         map2.leftNeighbor  = map1.path;
         map2.rightNeighbor = map3.path;
 
         map3.leftNeighbor  = map2.path;
+        map3.rightNeighbor = map4.path;
+
+        map4.leftNeighbor  = map3.path;
 
         // ── Registrazione ─────────────────────────────────────────────────
         NODES.put(map1.path, map1);
         NODES.put(map2.path, map2);
         NODES.put(map3.path, map3);
+        NODES.put(map4.path, map4);
     }
 
     // -----------------------------------------------------------------------

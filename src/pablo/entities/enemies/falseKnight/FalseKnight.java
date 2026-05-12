@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import pablo.Object;
 import pablo.entities.player.Pablo;
 import pablo.framework.BaseActor;
 
@@ -43,6 +44,9 @@ public class FalseKnight extends BaseActor {
     // -------------------------------------------------------------------------
     private int   facingDir    = 1;   // 1 = right, -1 = left
     private boolean onGround   = false;
+
+    private BaseActor belowSensor;
+    private BaseActor edgeSensor;
 
     private float attackCooldown = 0f;
     private float lastDt = 0f;
@@ -101,6 +105,19 @@ public class FalseKnight extends BaseActor {
         loadAnimations();
 
         setBoundaryRectangle();
+
+        // Floor sensors (edge detection)
+        belowSensor = new BaseActor(0, 0, s);
+        belowSensor.loadTexture("assets/white.png");
+        belowSensor.setSize(getWidth() - 8f, 6f);
+        belowSensor.setBoundaryRectangle();
+        belowSensor.setVisible(false);
+
+        edgeSensor = new BaseActor(0, 0, s);
+        edgeSensor.loadTexture("assets/white.png");
+        edgeSensor.setSize(6f, 6f);
+        edgeSensor.setBoundaryRectangle();
+        edgeSensor.setVisible(false);
 
         // Mace hitbox — separate actor, always in the scene but only "active" during strike
         maceHitbox = new BaseActor(0, 0, s);
@@ -219,6 +236,8 @@ public class FalseKnight extends BaseActor {
         turnCooldown = Math.max(0f, turnCooldown - dt);
         wallHitTimer = Math.max(0f, wallHitTimer - dt);
 
+        updateSensorPositions();
+
         applyGravity(dt);
         stateTimer += dt;
 
@@ -239,6 +258,8 @@ public class FalseKnight extends BaseActor {
 
         // Move
         moveBy(velocityVec.x * dt, velocityVec.y * dt);
+
+        updateSensorPositions();
 
         // Sync mace hitbox position every frame
         syncMaceHitbox();
@@ -290,7 +311,7 @@ public class FalseKnight extends BaseActor {
             velocityVec.x = 0;
         } else {
             setAnimation(animRun);
-            if (inAggro && dist > STOP_RANGE)
+            if (inAggro && dist > STOP_RANGE && !isAtEdge())
                 velocityVec.x = PATROL_SPEED * facingDir;
             else
                 velocityVec.x = 0f;
@@ -537,5 +558,44 @@ public class FalseKnight extends BaseActor {
     private void updateFacingTowardPablo() {
         if (pablo == null) return;
         facingDir = (pablo.getX() >= getX()) ? 1 : -1;
+    }
+
+    private boolean isAtEdge() {
+        return isOnGround() && !edgeAheadHasGround();
+    }
+
+    private boolean isOnGround() {
+        if (belowSensor == null) return false;
+
+        for (BaseActor actor : BaseActor.getList(getStage(), Object.class.getName()))
+        {
+            Object solid = (Object) actor;
+            if (belowSensor.overlaps(solid) && solid.isEnable())
+                return true;
+        }
+        return false;
+    }
+
+    private boolean edgeAheadHasGround() {
+        if (edgeSensor == null) return false;
+
+        for (BaseActor actor : BaseActor.getList(getStage(), Object.class.getName()))
+        {
+            Object solid = (Object) actor;
+            if (edgeSensor.overlaps(solid) && solid.isEnable())
+                return true;
+        }
+        return false;
+    }
+
+    private void updateSensorPositions() {
+        if (belowSensor != null)
+            belowSensor.setPosition(getX() + 4f, getY() - 6f);
+
+        if (edgeSensor != null)
+        {
+            float edgeX = (facingDir > 0) ? getX() + getWidth() : getX() - 6f;
+            edgeSensor.setPosition(edgeX, getY() - 6f);
+        }
     }
 }

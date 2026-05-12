@@ -36,7 +36,7 @@
     <property name="name" value="FalseKnight"/>
    </properties>
   </object>
-  <object id="24" name="spawntp" x="496" y="880" width="80" height="96">
+  <object id="24" name="spawntp" x="1136" y="848" width="80" height="96">
    <properties>
     <property name="name" value="spawntp"/>
    </properties>

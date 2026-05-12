@@ -211,7 +211,6 @@ public class LevelScreen extends BaseScreen
             // Viene dalla mappa a sinistra → lo metti al bordo sinistro
             pablo.setX(10f);
         }
-        pablo.setSoul(0);
 
 
         // -----------------------------------------------------------------------

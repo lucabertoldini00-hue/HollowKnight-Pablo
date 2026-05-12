@@ -2,22 +2,22 @@
 // Singleton che gestisce tutta l'audio del gioco: OST (Music) e SFX (Sound).
 //
 // STRUTTURA ASSET ATTESA:
-//   assets/audio/music/menu.mp3
-//   assets/audio/music/level.mp3
-//   assets/audio/music/boss.mp3
-//   assets/audio/sfx/player/jump.wav
-//   assets/audio/sfx/player/land.wav
-//   assets/audio/sfx/player/attack.wav
-//   assets/audio/sfx/player/dash.wav
-//   assets/audio/sfx/player/hurt.wav
-//   assets/audio/sfx/player/death.wav
-//   assets/audio/sfx/player/heal_start.wav
-//   assets/audio/sfx/player/heal_end.wav
-//   assets/audio/sfx/enemy/hit.wav
-//   assets/audio/sfx/enemy/death.wav
-//   assets/audio/sfx/ui/select.wav
-//   assets/audio/sfx/ui/confirm.wav
-//   assets/audio/sfx/ui/back.wav
+//   assets/Audio/music/menu.mp3
+//   assets/Audio/music/level.mp3
+//   assets/Audio/music/boss.mp3
+//   assets/Audio/sfx/player/jump.wav
+//   assets/Audio/sfx/player/land.wav
+//   assets/Audio/sfx/player/attack.wav
+//   assets/Audio/sfx/player/dash.wav
+//   assets/Audio/sfx/player/hurt.wav
+//   assets/Audio/sfx/player/death.wav
+//   assets/Audio/sfx/player/heal_start.wav
+//   assets/Audio/sfx/player/heal_end.wav
+//   assets/Audio/sfx/enemy/hit.wav
+//   assets/Audio/sfx/enemy/death.wav
+//   assets/Audio/sfx/ui/select.wav
+//   assets/Audio/sfx/ui/confirm.wav
+//   assets/Audio/sfx/ui/back.wav
 //
 // Tutti i file mancanti vengono ignorati silenziosamente (nessun crash).
 
@@ -121,33 +121,33 @@ public class SoundManager
 
     private void loadMusic()
     {
-        tryLoadMusic(Track.MENU,  "assets/audio/music/menu.ogg");
-        tryLoadMusic(Track.LEVEL, "assets/audio/music/level.ogg");
-        tryLoadMusic(Track.BOSS,  "assets/audio/music/boss.ogg");
+        tryLoadMusic(Track.MENU,  "assets/Audio/music/menu.ogg");
+        tryLoadMusic(Track.LEVEL, "assets/Audio/music/level.ogg");
+        tryLoadMusic(Track.BOSS,  "assets/Audio/music/boss.ogg");
     }
 
     private void loadSfx()
     {
-        tryLoadSfx(Sfx.PLAYER_JUMP,       "assets/audio/sfx/player/jump.wav");
-        tryLoadSfx(Sfx.PLAYER_LAND,       "assets/audio/sfx/player/land.wav");
-        tryLoadSfx(Sfx.PLAYER_ATTACK,     "assets/audio/sfx/player/attack.wav");
-        tryLoadSfx(Sfx.PLAYER_DASH,       "assets/audio/sfx/player/dash.wav");
-        tryLoadSfx(Sfx.PLAYER_HURT,       "assets/audio/sfx/player/hurt.wav");
-        tryLoadSfx(Sfx.PLAYER_DEATH,      "assets/audio/sfx/player/death.wav");
-        tryLoadSfx(Sfx.PLAYER_HEAL_START, "assets/audio/sfx/player/heal_start.wav");
-        tryLoadSfx(Sfx.PLAYER_HEAL_END,   "assets/audio/sfx/player/heal_end.wav");
-        tryLoadSfx(Sfx.PLAYER_SOUL_GAIN,  "assets/audio/sfx/player/soul_gain.wav");
+        tryLoadSfx(Sfx.PLAYER_JUMP,       "assets/Audio/sfx/player/jump.wav");
+        tryLoadSfx(Sfx.PLAYER_LAND,       "assets/Audio/sfx/player/land.wav");
+        tryLoadSfx(Sfx.PLAYER_ATTACK,     "assets/Audio/sfx/player/attack.wav");
+        tryLoadSfx(Sfx.PLAYER_DASH,       "assets/Audio/sfx/player/dash.wav");
+        tryLoadSfx(Sfx.PLAYER_HURT,       "assets/Audio/sfx/player/hurt.wav");
+        tryLoadSfx(Sfx.PLAYER_DEATH,      "assets/Audio/sfx/player/death.wav");
+        tryLoadSfx(Sfx.PLAYER_HEAL_START, "assets/Audio/sfx/player/heal_start.wav");
+        tryLoadSfx(Sfx.PLAYER_HEAL_END,   "assets/Audio/sfx/player/heal_end.wav");
+        tryLoadSfx(Sfx.PLAYER_SOUL_GAIN,  "assets/Audio/sfx/player/soul_gain.wav");
 
-        tryLoadSfx(Sfx.ENEMY_HIT,   "assets/audio/sfx/enemy/hit.wav");
-        tryLoadSfx(Sfx.ENEMY_DEATH, "assets/audio/sfx/enemy/death.wav");
-        tryLoadSfx(Sfx.BOSS_HIT,    "assets/audio/sfx/enemy/boss_hit.wav");
-        tryLoadSfx(Sfx.BOSS_DEATH,  "assets/audio/sfx/enemy/boss_death.wav");
-        tryLoadSfx(Sfx.BOSS_ATTACK, "assets/audio/sfx/enemy/boss_attack.wav");
-        tryLoadSfx(Sfx.BOSS_LAND,   "assets/audio/sfx/enemy/boss_land.wav");
+        tryLoadSfx(Sfx.ENEMY_HIT,   "assets/Audio/sfx/enemy/hit.wav");
+        tryLoadSfx(Sfx.ENEMY_DEATH, "assets/Audio/sfx/enemy/death.wav");
+        tryLoadSfx(Sfx.BOSS_HIT,    "assets/Audio/sfx/enemy/boss_hit.wav");
+        tryLoadSfx(Sfx.BOSS_DEATH,  "assets/Audio/sfx/enemy/boss_death.wav");
+        tryLoadSfx(Sfx.BOSS_ATTACK, "assets/Audio/sfx/enemy/boss_attack.wav");
+        tryLoadSfx(Sfx.BOSS_LAND,   "assets/Audio/sfx/enemy/boss_land.wav");
 
-        tryLoadSfx(Sfx.UI_SELECT,  "assets/audio/sfx/ui/select.wav");
-        tryLoadSfx(Sfx.UI_CONFIRM, "assets/audio/sfx/ui/confirm.wav");
-        tryLoadSfx(Sfx.UI_BACK,    "assets/audio/sfx/ui/back.wav");
+        tryLoadSfx(Sfx.UI_SELECT,  "assets/Audio/sfx/ui/select.wav");
+        tryLoadSfx(Sfx.UI_CONFIRM, "assets/Audio/sfx/ui/confirm.wav");
+        tryLoadSfx(Sfx.UI_BACK,    "assets/Audio/sfx/ui/back.wav");
     }
 
     private void initCooldowns()

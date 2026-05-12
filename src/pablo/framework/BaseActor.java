@@ -53,7 +53,7 @@ public class BaseActor extends Actor
     private Polygon boundaryPolygon;
 
     // stores size of game world for all actors
-    private static Rectangle worldBounds;
+    protected static Rectangle worldBounds;
 
     public BaseActor(float x, float y, Stage s)
     {
@@ -384,6 +384,11 @@ public class BaseActor extends Actor
 
     }
 
+    public void setBoundaryPolygon(float[] vertices)
+    {
+        boundaryPolygon = new Polygon(vertices);
+    }
+
     /**
      *  Ritorna il poligono che identifica le dimensioni dell'oggetto anche in base al suo angolo di rotazione
      */
@@ -492,7 +497,7 @@ public class BaseActor extends Actor
     // ----------------------------------------------
     // Metodi Liste di oggetti BaseActor
     // ----------------------------------------------
-
+    public static Rectangle getWorldBounds() { return worldBounds; }
     /**
      *  Recupera un elenco di tutte le istanze dell'oggetto dalla fase specificata con il nome di classe specificato
      *  o la cui classe estende la classe con il nome specificato.

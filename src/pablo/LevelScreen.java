@@ -10,7 +10,14 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapProperties;
+import com.badlogic.gdx.maps.objects.RectangleMapObject;
+import com.badlogic.gdx.maps.objects.PolygonMapObject;
+import com.badlogic.gdx.math.EarClippingTriangulator;
+import com.badlogic.gdx.math.Polygon;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.ShortArray;
+
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
@@ -40,6 +47,7 @@ public class LevelScreen extends BaseScreen
     // -----------------------------------------------------------------------
     private static final String DEFAULT_MAP = "assets/Maps/Mappa1.tmx";
     private final String mapPath;
+    private final String spawnSide; // "start", "left", "right"
 
     // -----------------------------------------------------------------------
     // Asset paths
@@ -100,25 +108,37 @@ public class LevelScreen extends BaseScreen
     // Costruttori
     // -----------------------------------------------------------------------
 
-    /** Usa la mappa di default (mapPablo2.tmx). */
+    /** Usa la mappa di default. */
     public LevelScreen()
     {
-        this(DEFAULT_MAP);
+        this(DEFAULT_MAP, "start");
     }
 
-    /**
-     * Usa la mappa specificata.
-     * @param mapPath path relativo al file .tmx, es. "assets/Maps/miaMap.tmx"
-     */
+    /** Usa la mappa specificata. */
     public LevelScreen(String mapPath)
     {
+        this(mapPath, "start");
+    }
+
+    /** Usa la mappa e lato di spawn specificati. */
+    public LevelScreen(String mapPath, String spawnSide)
+    {
+        super();
         this.mapPath = mapPath;
+        this.spawnSide = (spawnSide != null) ? spawnSide : "start";
+        initializeLevel();
     }
 
     // -----------------------------------------------------------------------
     // initialize()
     // -----------------------------------------------------------------------
     public void initialize()
+    {
+        // BaseScreen chiama initialize() nel suo costruttore: qui evitiamo
+        // di usare campi non ancora assegnati e inizializziamo dopo.
+    }
+
+    private void initializeLevel()
     {
         // Se mapPath è null, usa la mappa di default
         String effectiveMapPath = (mapPath != null) ? mapPath : DEFAULT_MAP;
@@ -132,12 +152,17 @@ public class LevelScreen extends BaseScreen
         // Solidi
         for (MapObject obj : tma.getRectangleList("solido"))
         {
-            MapProperties props = obj.getProperties();
-            new Object(
-                    (float) props.get("x"), (float) props.get("y"),
-                    (float) props.get("width"), (float) props.get("height"),
-                    mainStage
-            );
+            if (obj instanceof RectangleMapObject)
+            {
+                Rectangle rect = ((RectangleMapObject) obj).getRectangle();
+                new Object(rect.x, rect.y, rect.width, rect.height, mainStage);
+                continue;
+            }
+
+            if (obj instanceof PolygonMapObject)
+            {
+                addSolidTriangles(((PolygonMapObject) obj).getPolygon());
+            }
         }
 
         // Punto di spawn — errore chiaro se mancante
@@ -154,7 +179,16 @@ public class LevelScreen extends BaseScreen
                 (float) startProps.get("y"),
                 mainStage
         );
+        PlayerState.applyTo(pablo);
+        if (spawnSide.equals("right")) {
+            // Viene dalla mappa a destra → lo metti al bordo destro
+            pablo.setX(BaseActor.getWorldBounds().width - pablo.getWidth() - 10f);
+        } else if (spawnSide.equals("left")) {
+            // Viene dalla mappa a sinistra → lo metti al bordo sinistro
+            pablo.setX(10f);
+        }
         pablo.setSoul(0);
+
 
         // -----------------------------------------------------------------------
         // UI — maschere HP
@@ -394,6 +428,22 @@ public class LevelScreen extends BaseScreen
                 pablo.takeDamage(1);
         }
 
+        // Transizione mappa destra
+        MapGraph.MapNode node = MapGraph.get(mapPath);
+        if (node != null && node.rightNeighbor != null) {
+            if (pablo.getX() + pablo.getWidth() >= BaseActor.getWorldBounds().width - 2f) {
+                PlayerState.saveFrom(pablo);
+                BaseGame.setActiveScreen(new LevelScreen(node.rightNeighbor, "left"));
+            }
+        }
+        // Transizione mappa sinistra
+        if (node != null && node.leftNeighbor != null) {
+            if (pablo.getX() <= 2f) {
+                PlayerState.saveFrom(pablo);
+                BaseGame.setActiveScreen(new LevelScreen(node.leftNeighbor, "right"));
+            }
+        }
+
         logEnemyRuntimeState(dt);
     }
 
@@ -545,5 +595,30 @@ public class LevelScreen extends BaseScreen
                     for (Texture t : row)
                         if (t != null) t.dispose();
     }
-}
 
+    private void addSolidTriangles(Polygon polygon)
+    {
+        float[] vertices = polygon.getVertices();
+        if (vertices == null || vertices.length < 6) return;
+
+        EarClippingTriangulator triangulator = new EarClippingTriangulator();
+        ShortArray indices = triangulator.computeTriangles(vertices);
+        Rectangle bounds = polygon.getBoundingRectangle();
+
+        for (int i = 0; i < indices.size; i += 3)
+        {
+            int i1 = indices.get(i) * 2;
+            int i2 = indices.get(i + 1) * 2;
+            int i3 = indices.get(i + 2) * 2;
+
+            float[] tri = new float[] {
+                    vertices[i1], vertices[i1 + 1],
+                    vertices[i2], vertices[i2 + 1],
+                    vertices[i3], vertices[i3 + 1]
+            };
+
+            Object solid = new Object(polygon.getX(), polygon.getY(), bounds.width, bounds.height, mainStage);
+            solid.setBoundaryPolygon(tri);
+        }
+    }
+}

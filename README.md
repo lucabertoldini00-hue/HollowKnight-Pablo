@@ -324,6 +324,43 @@ public void resize(int width, int height) {
 
 ---
 
+## 🗺️ Sistema Multi‑Mappa
+
+### ✔ Come funziona
+
+* La logica delle connessioni è in `MapGraph.java`.
+* `LevelScreen` legge il nodo corrente e, quando Pablo supera il bordo sinistro/destrro, carica la mappa vicina.
+* Lo stato del player (HP/anima) viene salvato con `PlayerState.saveFrom()` e ripristinato con `PlayerState.applyTo()` durante la transizione.
+
+### ✔ Aggiungere una nuova mappa
+
+1. Crea il `.tmx` in `assets/Maps/` (es. `Mappa4.tmx`).
+2. In Tiled, aggiungi nel layer “Oggetti”:
+   * `start` (rettangolo spawn iniziale)
+   * `solido` (rettangoli o poligoni per collisioni)
+3. Registra la mappa in `MapGraph.java` e collega i vicini:
+
+```java
+MapNode map4 = new MapNode("assets/Maps/Mappa4.tmx");
+map3.rightNeighbor = map4.path;
+map4.leftNeighbor  = map3.path;
+NODES.put(map4.path, map4);
+```
+
+### ✔ Oggetti opzionali per boss/teleport
+
+* `tp` → trigger dialogo (interazione con `E`)
+* `spawntp` → punto di teletrasporto del player
+* `FalseKnight` → spawn del boss
+
+### ✔ Note pratiche
+
+* I nomi oggetto sono case‑insensitive (usa comunque gli stessi nomi per coerenza).
+* Se una mappa non ha vicini registrati, non avviene transizione.
+* Il ricettacolo (anima) non viene resettato al cambio mappa.
+
+---
+
 ## 💡 Note Finali
 
 * Stato progetto: **mid-prototype avanzato**

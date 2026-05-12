@@ -38,6 +38,15 @@ public class Pablo extends BaseActor
     private int soul = 0;
 
     // -----------------------------------------------------------------------
+    // Scala visiva (solo in gioco)
+    // -----------------------------------------------------------------------
+    private static final float VISUAL_SCALE    = 0.7f;
+    private static final float SENSOR_X_OFFSET = 3f;
+    private static final float SENSOR_Y_OFFSET = 7f;
+    private static final float SENSOR_INSET    = 7f;
+    private static final float SENSOR_HEIGHT   = 7f;
+
+    // -----------------------------------------------------------------------
     // Invulnerabilità
     // -----------------------------------------------------------------------
     private static final float INVULN_DURATION = 1.5f;
@@ -147,11 +156,13 @@ public class Pablo extends BaseActor
         frameDrop2      = loadTexture("assets/Pablo/jump8.png");
 
         setBoundaryPolygon(6);
+        setScale(VISUAL_SCALE);
         belowSensor = new BaseActor(0, 0, s);
         belowSensor.loadTexture("assets/white.png");
-        belowSensor.setSize(this.getWidth() - 8, 8);
+        belowSensor.setSize(getWidth() * VISUAL_SCALE - SENSOR_INSET * VISUAL_SCALE,
+                SENSOR_HEIGHT * VISUAL_SCALE);
         belowSensor.setBoundaryRectangle();
-        belowSensor.setVisible(true);
+        // belowSensor.setVisible(true); // debug: visibilita' sensore
 
         String[] attackFile = {
                 "assets/Pablo/attack3.png","assets/Pablo/attack10.png","assets/Pablo/attack8.png","assets/Pablo/attack9.png"
@@ -278,7 +289,8 @@ public class Pablo extends BaseActor
         moveBy(velocityVec.x * dt, velocityVec.y * dt);
         accelerationVec.set(0, 0);
 
-        belowSensor.setPosition(getX() + 4, getY() - 8);
+        belowSensor.setPosition(getX() + SENSOR_X_OFFSET * VISUAL_SCALE,
+                getY() - SENSOR_Y_OFFSET * VISUAL_SCALE);
 
         // 2. STATE MACHINE
         switch (currentState)
@@ -443,7 +455,7 @@ public class Pablo extends BaseActor
 
         // 4. SENSORE TERRA
         wasOnSolid = onSolid;
-        belowSensor.setColor(onSolid ? Color.GREEN : Color.RED);
+        // belowSensor.setColor(onSolid ? Color.GREEN : Color.RED); // debug: colore linea
 
         alignCamera();
         boundToWorld();

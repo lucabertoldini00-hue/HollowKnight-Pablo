@@ -20,7 +20,7 @@
    </properties>
   </object>
   <object id="5" x="-112" y="1408"/>
-  <object id="7" name="solido" x="1472" y="768" width="96" height="16">
+  <object id="7" name="solido" x="1472" y="768" width="96" height="32">
    <properties>
     <property name="name" value="solido"/>
    </properties>
@@ -30,22 +30,17 @@
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="9" name="solido" x="1680" y="880" width="208" height="96">
+  <object id="9" name="solido" x="1664" y="896" width="256" height="80">
    <properties>
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="10" name="solido" x="1776" y="832" width="112" height="48">
+  <object id="10" name="solido" x="1792" y="832" width="80" height="64">
    <properties>
     <property name="name" value="solido"/>
    </properties>
   </object>
-  <object id="11" name="solido" x="1888" y="896" width="32" height="80">
-   <properties>
-    <property name="name" value="solido"/>
-   </properties>
-  </object>
-  <object id="12" name="solido" x="1584" y="544" width="64" height="16">
+  <object id="12" name="solido" x="1584" y="544" width="64" height="32">
    <properties>
     <property name="name" value="solido"/>
    </properties>

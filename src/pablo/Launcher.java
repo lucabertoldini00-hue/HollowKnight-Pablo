@@ -8,7 +8,7 @@ import java.awt.DisplayMode;
 
 public class Launcher
 {
-    public static void main (String[] args)
+    public static void main(String[] args)
     {
         LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
         config.title = "HollowKnight-Pablo";

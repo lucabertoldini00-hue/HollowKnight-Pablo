@@ -208,6 +208,15 @@ public class TilemapActor extends Actor
     public void draw(Batch batch, float parentAlpha)
     {
         Camera mainCamera = getStage().getCamera();
+
+        // Sincronizza le dimensioni della camera tile con il viewport reale.
+        // Con ExtendViewport le dimensioni del mondo cambiano in base alla
+        // risoluzione dello schermo — se usiamo valori fissi (800×640) i tile
+        // risultano sfasati rispetto agli oggetti fisici (solidi, spawn, ecc.).
+        tiledCamera.setToOrtho(false,
+                getStage().getViewport().getWorldWidth(),
+                getStage().getViewport().getWorldHeight());
+
         tiledCamera.position.x = mainCamera.position.x;
         tiledCamera.position.y = mainCamera.position.y;
         tiledCamera.update();

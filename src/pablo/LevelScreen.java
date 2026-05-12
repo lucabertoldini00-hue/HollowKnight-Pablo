@@ -38,7 +38,7 @@ public class LevelScreen extends BaseScreen
     // -----------------------------------------------------------------------
     // Path mappa — parametrico: passa il .tmx che vuoi nel costruttore
     // -----------------------------------------------------------------------
-    private static final String DEFAULT_MAP = "assets/Maps/SenzaTitolo.tmx";
+    private static final String DEFAULT_MAP = "assets/Maps/Mappa1.tmx";
     private final String mapPath;
 
     // -----------------------------------------------------------------------

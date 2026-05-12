@@ -1,6 +1,4 @@
-// Pablo.java — modificato per integrare SoundManager
-// DIFF rispetto all'originale: aggiunte chiamate SoundManager.get().playSfx(...)
-// nei punti chiave della state machine e dei metodi helper.
+// Pablo.java
 
 package pablo.entities.player;
 
@@ -36,15 +34,6 @@ public class Pablo extends BaseActor
     public  static final int MAX_SOUL      = 100;
     private static final int SOUL_PER_HEAL = 33;
     private int soul = 0;
-
-    // -----------------------------------------------------------------------
-    // Scala visiva (solo in gioco)
-    // -----------------------------------------------------------------------
-    private static final float VISUAL_SCALE    = 0.7f;
-    private static final float SENSOR_X_OFFSET = 3f;
-    private static final float SENSOR_Y_OFFSET = 7f;
-    private static final float SENSOR_INSET    = 7f;
-    private static final float SENSOR_HEIGHT   = 7f;
 
     // -----------------------------------------------------------------------
     // Invulnerabilità
@@ -94,22 +83,28 @@ public class Pablo extends BaseActor
     private float totalJumpTime;
 
     private Animation attack;
-
-    // Animazione cura
     private Animation healAnim;
     private boolean   healApplied = false;
 
     // -----------------------------------------------------------------------
-    // SFX: flag per evitare ripetizioni
+    // SFX flag
     // -----------------------------------------------------------------------
-    private boolean landSoundPlayed   = false; // suono atterraggio già emesso
-    private boolean attackSoundPlayed = false; // suono attacco già emesso
+    private boolean landSoundPlayed   = false;
+    private boolean attackSoundPlayed = false;
 
-    // Spawn / respawn position
+    // -----------------------------------------------------------------------
+    // Spawn / respawn
+    // -----------------------------------------------------------------------
     private float spawnX;
     private float spawnY;
-    // Y threshold below which Pablo is considered in the void
     private static final float VOID_Y = -300f;
+
+    // -----------------------------------------------------------------------
+    // Transizione mappa
+    // Quando true, boundToWorld() non blocca Pablo sui bordi X,
+    // permettendogli di uscire dalla mappa e innescare una transizione.
+    // -----------------------------------------------------------------------
+    private boolean allowMapTransition = false;
 
     // -----------------------------------------------------------------------
     // Costruttore
@@ -126,8 +121,9 @@ public class Pablo extends BaseActor
         stand = loadTexture("assets/Pablo/stand.png");
 
         String[] walkFile = {
-                "assets/Pablo/walk1.png","assets/Pablo/walk2.png","assets/Pablo/walk3.png","assets/Pablo/walk4.png",
-                "assets/Pablo/walk5.png","assets/Pablo/walk6.png","assets/Pablo/walk7.png","assets/Pablo/walk8.png","assets/Pablo/walk9.png"
+                "assets/Pablo/walk1.png","assets/Pablo/walk2.png","assets/Pablo/walk3.png",
+                "assets/Pablo/walk4.png","assets/Pablo/walk5.png","assets/Pablo/walk6.png",
+                "assets/Pablo/walk7.png","assets/Pablo/walk8.png","assets/Pablo/walk9.png"
         };
         walk = loadAnimationFromFiles(walkFile, 0.10f, true);
 
@@ -136,14 +132,14 @@ public class Pablo extends BaseActor
         walkDeceleration   = 200;
         gravity            = 500;
         maxVerticalSpeed   = 1000;
-        jumpSpeed          = 500;
+        jumpSpeed          = 400;
 
         maxHealth = 5;
         health    = maxHealth;
 
         totalJumpTime = (jumpSpeed / gravity) * 2.0f;
 
-        String[] upFiles   = {"assets/Pablo/jump1.png","assets/Pablo/jump2.png","assets/Pablo/jump3.png"};
+        String[] upFiles = {"assets/Pablo/jump1.png","assets/Pablo/jump2.png","assets/Pablo/jump3.png"};
         jumpUp = loadAnimationFromFiles(upFiles, (totalJumpTime * 0.10f) / 3f, false);
 
         String[] landFiles = {"assets/Pablo/jump9.png","assets/Pablo/jump10.png"};
@@ -156,16 +152,15 @@ public class Pablo extends BaseActor
         frameDrop2      = loadTexture("assets/Pablo/jump8.png");
 
         setBoundaryPolygon(6);
-        setScale(VISUAL_SCALE);
         belowSensor = new BaseActor(0, 0, s);
-        belowSensor.loadTexture("assets/white.png");
-        belowSensor.setSize(getWidth() * VISUAL_SCALE - SENSOR_INSET * VISUAL_SCALE,
-                SENSOR_HEIGHT * VISUAL_SCALE);
+        // belowSensor.loadTexture("assets/white.png");
+        belowSensor.setSize(this.getWidth() - 8, 8);
         belowSensor.setBoundaryRectangle();
-        // belowSensor.setVisible(true); // debug: visibilita' sensore
+        // belowSensor.setVisible(true);
 
         String[] attackFile = {
-                "assets/Pablo/attack3.png","assets/Pablo/attack10.png","assets/Pablo/attack8.png","assets/Pablo/attack9.png"
+                "assets/Pablo/attack3.png","assets/Pablo/attack10.png",
+                "assets/Pablo/attack8.png","assets/Pablo/attack9.png"
         };
         attack = loadAnimationFromFiles(attackFile, 0.06f, false);
         attack.setPlayMode(Animation.PlayMode.NORMAL);
@@ -185,13 +180,8 @@ public class Pablo extends BaseActor
         };
         boolean dashAssetsDisponibili = true;
         for (String fileName : dashFiles)
-        {
-            if (!Gdx.files.internal(fileName).exists())
-            {
-                dashAssetsDisponibili = false;
-                break;
-            }
-        }
+            if (!Gdx.files.internal(fileName).exists()) { dashAssetsDisponibili = false; break; }
+
         if (dashAssetsDisponibili)
         {
             dashAnim = loadAnimationFromFiles(dashFiles, DASH_DURATION / 5f, false);
@@ -210,64 +200,39 @@ public class Pablo extends BaseActor
     {
         super.act(dt);
 
-        // Aggiorna i cooldown SFX
         SoundManager.get().update(dt);
 
-        // --- Hitstop ---
         if (hitstopActive)
         {
             hitstopTimer -= dt;
-            if (hitstopTimer <= 0f)
-                hitstopActive = false;
-            else
-                return;
+            if (hitstopTimer <= 0f) hitstopActive = false;
+            else return;
         }
 
         boolean onSolid = isOnSolid();
 
-        // --- Invulnerabilità / flash ---
         if (invulnerable)
         {
             invulnTimer -= dt;
             flashTimer  -= dt;
-            if (flashTimer <= 0f)
-            {
-                flashVisible = !flashVisible;
-                setVisible(flashVisible);
-                flashTimer = FLASH_INTERVAL;
-            }
-            if (invulnTimer <= 0f)
-            {
-                invulnerable = false;
-                setVisible(true);
-            }
+            if (flashTimer <= 0f) { flashVisible = !flashVisible; setVisible(flashVisible); flashTimer = FLASH_INTERVAL; }
+            if (invulnTimer <= 0f) { invulnerable = false; setVisible(true); }
         }
 
-        // --- Dash cooldown ---
         if (dashCooldown > 0f) dashCooldown -= dt;
 
-        // --- Atterraggio: resetta doppio salto ---
         if (onSolid && !wasOnSolid)
         {
             doubleJumpUsed = false;
-            // SFX atterraggio (emesso solo al momento del contatto)
-            if (!landSoundPlayed)
-            {
-                SoundManager.get().playSfx(Sfx.PLAYER_LAND);
-                landSoundPlayed = true;
-            }
+            if (!landSoundPlayed) { SoundManager.get().playSfx(Sfx.PLAYER_LAND); landSoundPlayed = true; }
         }
         if (!onSolid) landSoundPlayed = false;
 
-        // 1. FISICA
-        if (currentState != Playerstate.ATTACKING
-                && currentState != Playerstate.HEALING
-                && currentState != Playerstate.DASHING)
+        // Fisica
+        if (currentState != Playerstate.ATTACKING && currentState != Playerstate.HEALING && currentState != Playerstate.DASHING)
         {
-            if (Gdx.input.isKeyPressed(Input.Keys.LEFT)  || Gdx.input.isKeyPressed(Input.Keys.A))
-                accelerationVec.add(-walkAcceleration, 0);
-            if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D))
-                accelerationVec.add(walkAcceleration, 0);
+            if (Gdx.input.isKeyPressed(Input.Keys.LEFT)  || Gdx.input.isKeyPressed(Input.Keys.A)) accelerationVec.add(-walkAcceleration, 0);
+            if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) accelerationVec.add(walkAcceleration, 0);
         }
 
         accelerationVec.add(0, -gravity);
@@ -289,247 +254,141 @@ public class Pablo extends BaseActor
         moveBy(velocityVec.x * dt, velocityVec.y * dt);
         accelerationVec.set(0, 0);
 
-        belowSensor.setPosition(getX() + SENSOR_X_OFFSET * VISUAL_SCALE,
-                getY() - SENSOR_Y_OFFSET * VISUAL_SCALE);
+        belowSensor.setPosition(getX() + 4, getY() - 8);
 
-        // 2. STATE MACHINE
+        // State machine
         switch (currentState)
         {
             case IDLE:
             case WALKING:
-
                 attackSoundPlayed = false;
 
-                if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f)
+                if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f) { startDash(); break; }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.F) && soul >= SOUL_PER_HEAL && health < maxHealth)
                 {
-                    startDash();
-                    break;
+                    soul -= SOUL_PER_HEAL; currentState = Playerstate.HEALING; elapsedTime = 0; healApplied = false;
+                    SoundManager.get().playSfx(Sfx.PLAYER_HEAL_START); break;
                 }
-
-                if (Gdx.input.isKeyJustPressed(Input.Keys.F)
-                        && soul >= SOUL_PER_HEAL && health < maxHealth)
-                {
-                    soul -= SOUL_PER_HEAL;
-                    currentState = Playerstate.HEALING;
-                    elapsedTime  = 0;
-                    healApplied  = false;
-                    // SFX: inizio cura
-                    SoundManager.get().playSfx(Sfx.PLAYER_HEAL_START);
-                    break;
-                }
-
                 if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.J))
                 {
-                    currentState = Playerstate.ATTACKING;
-                    elapsedTime  = 0;
-                    spawnAttackHitbox();
-                    // SFX: attacco (whoosh)
-                    SoundManager.get().playSfx(Sfx.PLAYER_ATTACK);
-                    break;
+                    currentState = Playerstate.ATTACKING; elapsedTime = 0; spawnAttackHitbox();
+                    SoundManager.get().playSfx(Sfx.PLAYER_ATTACK); break;
                 }
-
                 if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W))
-                {
                     if (onSolid) { jump(false); break; }
-                }
-
-                if (wasOnSolid && !onSolid)
-                {
-                    currentState   = Playerstate.FALLING;
-                    jumpTimer      = totalJumpTime * 0.55f;
-                    canDoubleJump  = true;
-                    break;
-                }
-
+                if (wasOnSolid && !onSolid) { currentState = Playerstate.FALLING; jumpTimer = totalJumpTime * 0.55f; canDoubleJump = true; break; }
                 currentState = (Math.abs(velocityVec.x) > 1f) ? Playerstate.WALKING : Playerstate.IDLE;
                 setAnimation(currentState == Playerstate.WALKING ? walk : stand);
                 break;
 
             case DASHING:
-
-                dashTimer -= dt;
-                setAnimation(dashAnim);
-                velocityVec.x = DASH_SPEED * dashDir;
-                velocityVec.y = 0;
-
-                if (dashTimer <= 0f)
-                {
-                    velocityVec.x = maxHorizontalSpeed * dashDir * 0.5f;
-                    currentState  = onSolid ? Playerstate.IDLE : Playerstate.FALLING;
-                    dashCooldown  = DASH_COOLDOWN;
-                }
+                dashTimer -= dt; setAnimation(dashAnim);
+                velocityVec.x = DASH_SPEED * dashDir; velocityVec.y = 0;
+                if (dashTimer <= 0f) { velocityVec.x = maxHorizontalSpeed * dashDir * 0.5f; currentState = onSolid ? Playerstate.IDLE : Playerstate.FALLING; dashCooldown = DASH_COOLDOWN; }
                 break;
 
             case HEALING:
-                setAnimation(healAnim);
-                velocityVec.x = 0;
-                if (!healApplied && healAnim.isAnimationFinished(elapsedTime))
-                {
-                    heal(1);
-                    healApplied = true;
-                    // SFX: cura completata
-                    SoundManager.get().playSfx(Sfx.PLAYER_HEAL_END);
-                }
-                if (healAnim.isAnimationFinished(elapsedTime))
-                    currentState = !onSolid ? Playerstate.FALLING
-                            : Math.abs(velocityVec.x) > 1f ? Playerstate.WALKING : Playerstate.IDLE;
+                setAnimation(healAnim); velocityVec.x = 0;
+                if (!healApplied && healAnim.isAnimationFinished(elapsedTime)) { heal(1); healApplied = true; SoundManager.get().playSfx(Sfx.PLAYER_HEAL_END); }
+                if (healAnim.isAnimationFinished(elapsedTime)) currentState = !onSolid ? Playerstate.FALLING : Math.abs(velocityVec.x) > 1f ? Playerstate.WALKING : Playerstate.IDLE;
                 break;
 
             case JUMPING:
-
                 jumpTimer += dt;
-
-                if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f)
-                {
-                    startDash();
-                    break;
-                }
-
-                if ((Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W))
-                        && canDoubleJump && !doubleJumpUsed)
-                {
-                    jump(true);
-                    break;
-                }
-
+                if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f) { startDash(); break; }
+                if ((Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W)) && canDoubleJump && !doubleJumpUsed) { jump(true); break; }
                 if (velocityVec.y <= 0) { currentState = Playerstate.FALLING; break; }
-                if (onSolid && !wasOnSolid)
-                {
-                    currentState = Playerstate.LANDING;
-                    elapsedTime  = 0;
-                    jumpTimer    = 0;
-                    break;
-                }
+                if (onSolid && !wasOnSolid) { currentState = Playerstate.LANDING; elapsedTime = 0; jumpTimer = 0; break; }
                 updateJumpAnimation();
                 break;
 
             case FALLING:
-
                 jumpTimer += dt;
-
-                if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f)
-                {
-                    startDash();
-                    break;
-                }
-
-                if ((Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W))
-                        && canDoubleJump && !doubleJumpUsed)
-                {
-                    jump(true);
-                    break;
-                }
-
-                if (onSolid && !wasOnSolid)
-                {
-                    currentState = Playerstate.LANDING;
-                    elapsedTime  = 0;
-                    jumpTimer    = 0;
-                    break;
-                }
+                if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f) { startDash(); break; }
+                if ((Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W)) && canDoubleJump && !doubleJumpUsed) { jump(true); break; }
+                if (onSolid && !wasOnSolid) { currentState = Playerstate.LANDING; elapsedTime = 0; jumpTimer = 0; break; }
                 updateJumpAnimation();
                 break;
 
             case LANDING:
                 setAnimation(jumpLand);
-                if (jumpLand.isAnimationFinished(elapsedTime))
-                    currentState = Math.abs(velocityVec.x) > 1f ? Playerstate.WALKING : Playerstate.IDLE;
+                if (jumpLand.isAnimationFinished(elapsedTime)) currentState = Math.abs(velocityVec.x) > 1f ? Playerstate.WALKING : Playerstate.IDLE;
                 break;
 
             case ATTACKING:
                 setAnimation(attack);
-                if (attack.isAnimationFinished(elapsedTime))
-                    currentState = !onSolid ? Playerstate.FALLING
-                            : Math.abs(velocityVec.x) > 1f ? Playerstate.WALKING : Playerstate.IDLE;
+                if (attack.isAnimationFinished(elapsedTime)) currentState = !onSolid ? Playerstate.FALLING : Math.abs(velocityVec.x) > 1f ? Playerstate.WALKING : Playerstate.IDLE;
                 break;
         }
 
-        // 3. DIREZIONE
-        if (currentState != Playerstate.ATTACKING
-                && currentState != Playerstate.HEALING
-                && currentState != Playerstate.DASHING)
+        // Direzione sprite
+        if (currentState != Playerstate.ATTACKING && currentState != Playerstate.HEALING && currentState != Playerstate.DASHING)
         {
             if (velocityVec.x > 0) setScaleX(1);
             if (velocityVec.x < 0) setScaleX(-1);
         }
 
-        // 4. SENSORE TERRA
         wasOnSolid = onSolid;
-        // belowSensor.setColor(onSolid ? Color.GREEN : Color.RED); // debug: colore linea
+        // belowSensor.setColor(onSolid ? Color.GREEN : Color.RED);
 
         alignCamera();
         boundToWorld();
     }
 
     // -----------------------------------------------------------------------
+    // boundToWorld() — override: salta il clamp X se le transizioni sono abilitate
+    // -----------------------------------------------------------------------
+    @Override
+    public void boundToWorld()
+    {
+        // Clamp X solo se non siamo in modalità transizione mappa
+        if (!allowMapTransition)
+        {
+            if (getX() < 0) setX(0);
+            if (getX() + getWidth() > worldBounds.width) setX(worldBounds.width - getWidth());
+        }
+
+        // Clamp Y sempre (il void viene gestito da LevelScreen)
+        if (getY() < 0) setY(0);
+        if (getY() + getHeight() > worldBounds.height) setY(worldBounds.height - getHeight());
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
-
     private void startDash()
     {
-        dashDir      = getScaleX() > 0 ? 1f : -1f;
-        dashTimer    = DASH_DURATION;
-        currentState = Playerstate.DASHING;
-        elapsedTime  = 0;
-        invulnerable = true;
-        invulnTimer  = DASH_DURATION;
-        flashTimer   = FLASH_INTERVAL;
-        flashVisible = true;
-        // SFX: dash
+        dashDir = getScaleX() > 0 ? 1f : -1f; dashTimer = DASH_DURATION;
+        currentState = Playerstate.DASHING; elapsedTime = 0;
+        invulnerable = true; invulnTimer = DASH_DURATION; flashTimer = FLASH_INTERVAL; flashVisible = true;
         SoundManager.get().playSfx(Sfx.PLAYER_DASH);
     }
 
     private void jump(boolean isDoubleJump)
     {
-        velocityVec.y = jumpSpeed;
-        currentState  = Playerstate.JUMPING;
-        jumpTimer     = 0;
-        elapsedTime   = 0;
-
-        if (!isDoubleJump)
-        {
-            canDoubleJump  = true;
-            doubleJumpUsed = false;
-        }
-        else
-        {
-            doubleJumpUsed = true;
-        }
-
-        // SFX: salto (pitch leggermente più acuto per il doppio salto)
+        velocityVec.y = jumpSpeed; currentState = Playerstate.JUMPING; jumpTimer = 0; elapsedTime = 0;
+        if (!isDoubleJump) { canDoubleJump = true; doubleJumpUsed = false; }
+        else { doubleJumpUsed = true; }
         SoundManager.get().playSfx(Sfx.PLAYER_JUMP, isDoubleJump ? 1.15f : 1.0f);
     }
 
-    public void jump()
-    {
-        jump(false);
-    }
+    public void jump() { jump(false); }
 
     private void updateJumpAnimation()
     {
         float p = jumpTimer / totalJumpTime;
         if      (p < 0.10f) setAnimation(jumpUp);
-        else if (p < 0.50f)
-        {
-            float r = (p - 0.10f) / 0.40f;
-            setAnimation(r < 0.40f ? frameRise1 : r < 0.80f ? frameRise2 : frameAltezzaMax);
-        }
-        else if (p < 0.90f)
-        {
-            float d = (p - 0.50f) / 0.40f;
-            setAnimation(d < 0.20f ? frameAltezzaMax : d < 0.60f ? frameDrop1 : frameDrop2);
-        }
+        else if (p < 0.50f) { float r = (p - 0.10f) / 0.40f; setAnimation(r < 0.40f ? frameRise1 : r < 0.80f ? frameRise2 : frameAltezzaMax); }
+        else if (p < 0.90f) { float d = (p - 0.50f) / 0.40f; setAnimation(d < 0.20f ? frameAltezzaMax : d < 0.60f ? frameDrop1 : frameDrop2); }
         else setAnimation(frameDrop2);
     }
 
     private void spawnAttackHitbox()
     {
-        float hitboxWidth  = 40f;
-        float hitboxHeight = 30f;
+        float hitboxWidth  = 40f, hitboxHeight = 30f;
         float hitboxY = getY() + getHeight() / 2f - hitboxHeight / 2f;
         float hitboxX = (getScaleX() > 0) ? getX() + getWidth() : getX() - hitboxWidth;
-        new Hitbox(hitboxX, hitboxY, hitboxWidth, hitboxHeight, 10, 0.05f, getStage(),
-                () -> gainSoul(33));
+        new Hitbox(hitboxX, hitboxY, hitboxWidth, hitboxHeight, 10, 0.05f, getStage(), () -> gainSoul(11));
     }
 
     public boolean belowOverlaps(BaseActor actor) { return belowSensor.overlaps(actor); }
@@ -550,77 +409,33 @@ public class Pablo extends BaseActor
     public void takeDamage(int amount)
     {
         if (isDead || invulnerable) return;
-
-        if (currentState == Playerstate.HEALING)
-        {
-            currentState = Playerstate.IDLE;
-            healApplied  = false;
-        }
-
+        if (currentState == Playerstate.HEALING) { currentState = Playerstate.IDLE; healApplied = false; }
         health -= amount;
-
         if (health <= 0)
         {
-            health = 0;
-            isDead = true;
-            setVisible(true);
-            // SFX: morte
+            health = 0; isDead = true; setVisible(true);
             SoundManager.get().playSfx(Sfx.PLAYER_DEATH);
-            System.out.println("Pablo died!");
         }
         else
         {
-            // SFX: danno ricevuto
             SoundManager.get().playSfx(Sfx.PLAYER_HURT);
-
-            hitstopActive = true;
-            hitstopTimer  = HITSTOP_DURATION;
-            invulnerable  = true;
-            invulnTimer   = INVULN_DURATION;
-            flashTimer    = FLASH_INTERVAL;
-            flashVisible  = true;
+            hitstopActive = true; hitstopTimer = HITSTOP_DURATION;
+            invulnerable = true; invulnTimer = INVULN_DURATION; flashTimer = FLASH_INTERVAL; flashVisible = true;
         }
     }
 
-    public void heal(int amount)
-    {
-        health += amount;
-        if (health > maxHealth) health = maxHealth;
-    }
+    public void heal(int amount) { health = Math.min(health + amount, maxHealth); }
 
-    /**
-     * Teleports Pablo back to his spawn position and resets all state.
-     * Call this when he falls into the void or dies (future death screen excluded).
-     */
     public void respawn()
     {
         setPosition(spawnX, spawnY);
-        velocityVec.set(0, 0);
-        accelerationVec.set(0, 0);
-
-        currentState   = Playerstate.FALLING;
-        jumpTimer      = 0;
-        elapsedTime    = 0;
-        wasOnSolid     = false;
-
-        // Reset combat and defensive state
-        invulnerable   = false;
-        hitstopActive  = false;
-        invulnTimer    = 0;
-        flashTimer     = 0;
-        flashVisible   = true;
-        setVisible(true);
-
-        // Reset health on void fall (remove this line if you want void = no HP loss)
-        health         = maxHealth;
-        isDead         = false;
+        velocityVec.set(0, 0); accelerationVec.set(0, 0);
+        currentState = Playerstate.FALLING; jumpTimer = 0; elapsedTime = 0; wasOnSolid = false;
+        invulnerable = false; hitstopActive = false; invulnTimer = 0; flashTimer = 0; flashVisible = true; setVisible(true);
+        health = maxHealth; isDead = false;
     }
 
-    /** Returns true when Pablo has fallen below the void threshold. */
-    public boolean isInVoid()
-    {
-        return getY() < VOID_Y || (getY() <= 0f && velocityVec.y < 0f && !isOnSolid());
-    }
+    public boolean isInVoid() { return getY() < VOID_Y || (getY() <= 0f && velocityVec.y < 0f && !isOnSolid()); }
 
     // -----------------------------------------------------------------------
     // Anima
@@ -629,20 +444,38 @@ public class Pablo extends BaseActor
     {
         int prev = soul;
         soul = Math.min(soul + amount, MAX_SOUL);
-        // SFX: guadagno anima (solo se effettivamente aumentata)
-        if (soul > prev)
-            SoundManager.get().playSfx(Sfx.PLAYER_SOUL_GAIN);
+        if (soul > prev) SoundManager.get().playSfx(Sfx.PLAYER_SOUL_GAIN);
     }
 
-    public void setSoul(int amount)
+    public void setSoul(int amount)  { soul = MathUtils.clamp(amount, 0, MAX_SOUL); }
+
+    // -----------------------------------------------------------------------
+    // Getter / Setter
+    // -----------------------------------------------------------------------
+    public int     getSoul()          { return soul; }
+    public int     getMaxSoul()       { return MAX_SOUL; }
+    public boolean isInvulnerable()   { return invulnerable; }
+    public boolean isDead()           { return isDead; }
+    public int     getHealth()        { return health; }
+    public void setHealth(int h)
     {
-        soul = MathUtils.clamp(amount, 0, MAX_SOUL);
+        health = MathUtils.clamp(h, 0, maxHealth);
+        isDead = (health <= 0);
     }
+    public int     getMaxHealth()     { return maxHealth; }
 
-    public int     getSoul()        { return soul; }
-    public int     getMaxSoul()     { return MAX_SOUL; }
-    public boolean isInvulnerable() { return invulnerable; }
-    public boolean isDead()         { return isDead; }
-    public int     getHealth()      { return health; }
-    public int     getMaxHealth()   { return maxHealth; }
+    /**
+     * Imposta gli HP direttamente — usato da PlayerState.applyTo()
+     * per ripristinare la salute dopo una transizione di mappa.
+     */
+
+
+    /**
+     * Abilita o disabilita la possibilità di uscire dai bordi X della mappa.
+     * Va abilitato solo quando la mappa ha vicini registrati in MapGraph.
+     */
+    public void setAllowMapTransition(boolean allow)
+    {
+        allowMapTransition = allow;
+    }
 }

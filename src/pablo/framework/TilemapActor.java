@@ -12,6 +12,7 @@ import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
+import com.badlogic.gdx.maps.objects.PolygonMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.TiledMapTile;
@@ -64,6 +65,15 @@ public class TilemapActor extends Actor
     }
 
     // -----------------------------------------------------------------------
+    // getMapProperties — espone le proprietà globali della mappa
+    // -----------------------------------------------------------------------
+
+    public MapProperties getMapProperties()
+    {
+        return tiledMap.getProperties();
+    }
+
+    // -----------------------------------------------------------------------
     // getRectangleList — cerca oggetti rettangolari per tipo/nome
     // -----------------------------------------------------------------------
 
@@ -75,7 +85,7 @@ public class TilemapActor extends Actor
         {
             for (MapObject obj : layer.getObjects())
             {
-                if (!(obj instanceof RectangleMapObject))
+                if (!(obj instanceof RectangleMapObject) && !(obj instanceof PolygonMapObject))
                     continue;
 
                 MapProperties props = obj.getProperties();

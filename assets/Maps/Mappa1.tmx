@@ -19,7 +19,6 @@
     <property name="name" value="start"/>
    </properties>
   </object>
-  <object id="5" x="-112" y="1408"/>
   <object id="7" name="solido" x="1472" y="773" width="96" height="16">
    <properties>
     <property name="name" value="solido"/>
@@ -55,7 +54,7 @@
     <property name="name" value="Crawlid"/>
    </properties>
   </object>
-  <object id="15" name="Vengefly" x="416" y="800" width="64" height="64">
+  <object id="15" name="Vengefly" x="1008" y="704" width="64" height="64">
    <properties>
     <property name="name" value="Vengefly"/>
    </properties>

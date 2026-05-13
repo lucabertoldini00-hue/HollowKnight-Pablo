@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="120" height="65" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="41">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="120" height="65" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="46">
  <tileset firstgid="1" name="2" tilewidth="16" tileheight="16" tilecount="8040" columns="120">
   <image source="2.png" width="1920" height="1080"/>
  </tileset>
@@ -84,6 +84,21 @@
   <object id="40" name="start" x="64" y="672" width="80" height="64">
    <properties>
     <property name="name" value="start"/>
+   </properties>
+  </object>
+  <object id="41" name="HuskWarrior" x="288" y="832" width="80" height="64">
+   <properties>
+    <property name="name" value="HuskWarrior"/>
+   </properties>
+  </object>
+  <object id="43" name="HuskBully" x="816" y="832" width="112" height="80">
+   <properties>
+    <property name="name" value="HuskBully"/>
+   </properties>
+  </object>
+  <object id="45" name="Tiktik" x="352" y="288" width="64" height="64">
+   <properties>
+    <property name="name" value="Tiktik"/>
    </properties>
   </object>
  </objectgroup>

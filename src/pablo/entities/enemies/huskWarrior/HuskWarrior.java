@@ -86,6 +86,9 @@ public class HuskWarrior extends Enemy
     private Animation animDeathLand;
     private Animation animDeathCorpse;
 
+    // Detection
+    private static final float DETECTION_RADIUS      = 220f;
+
     public HuskWarrior(float x, float y, Stage stage, Pablo pablo)
     {
         super(x, y, stage);
@@ -179,6 +182,9 @@ public class HuskWarrior extends Enemy
         edgeSensor.setBoundaryRectangle();
         edgeSensor.setVisible(false);
 
+        // Posiziona i sensori subito per il primo frame
+        updateSensorPositions();
+
         enterState(HuskWarriorState.IDLE);
     }
 
@@ -226,6 +232,13 @@ public class HuskWarrior extends Enemy
         setAnimation(animIdle);
         faceDirection(direction);
 
+        if (isInDetectionRange())
+        {
+            faceTarget();
+            enterState(HuskWarriorState.ATTACK_WINDUP);
+            return;
+        }
+
         if (stateTimer >= IDLE_DURATION)
             enterState(HuskWarriorState.PATROL);
     }
@@ -234,6 +247,13 @@ public class HuskWarrior extends Enemy
     {
         applyGravity(dt);
         updateSensorPositions();
+
+        if (isInDetectionRange())
+        {
+            faceTarget();
+            enterState(HuskWarriorState.ATTACK_WINDUP);
+            return;
+        }
 
         if (isOnGround() && !edgeAheadHasGround())
         {
@@ -257,6 +277,13 @@ public class HuskWarrior extends Enemy
         updateSensorPositions();
 
         setAnimation(animTurn);
+
+        if (isInDetectionRange())
+        {
+            faceTarget();
+            enterState(HuskWarriorState.ATTACK_WINDUP);
+            return;
+        }
 
         if (animTurn.isAnimationFinished(stateTimer))
         {
@@ -544,6 +571,29 @@ public class HuskWarrior extends Enemy
             return pabloCenterX > selfCenterX;
         else
             return pabloCenterX < selfCenterX;
+    }
+
+    private boolean isInDetectionRange()
+    {
+        float selfX = getX() + getWidth() / 2f;
+        float selfY = getY() + getHeight() / 2f;
+
+        float pabloX = pablo.getX() + pablo.getWidth() / 2f;
+        float pabloY = pablo.getY() + pablo.getHeight() / 2f;
+
+        float dx = pabloX - selfX;
+        float dy = pabloY - selfY;
+
+        return dx * dx + dy * dy < DETECTION_RADIUS * DETECTION_RADIUS;
+    }
+
+    private void faceTarget()
+    {
+        if (pablo.getX() > getX())
+            direction = 1f;
+        else
+            direction = -1f;
+        faceDirection(direction);
     }
 
     // True when Pablo is falling from above the warrior's midpoint

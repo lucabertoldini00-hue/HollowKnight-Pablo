@@ -164,7 +164,6 @@ public class LevelScreen extends BaseScreen
 
     private void initializeLevel()
     {
-        // Se mapPath è null, usa la mappa di default
         String effectiveMapPath = (mapPath != null) ? mapPath : DEFAULT_MAP;
         if (mapPath == null)
             Gdx.app.log("LevelScreen", "mapPath è null, usando default: " + DEFAULT_MAP);
@@ -189,7 +188,7 @@ public class LevelScreen extends BaseScreen
             }
         }
 
-        // Punto di spawn — errore chiaro se mancante
+        // Punto di spawn
         ArrayList<MapObject> startPoints = tma.getRectangleList("start");
         if (startPoints.isEmpty())
             throw new IllegalStateException(
@@ -204,14 +203,10 @@ public class LevelScreen extends BaseScreen
                 mainStage
         );
         PlayerState.applyTo(pablo);
-        if (spawnSide.equals("right")) {
-            // Viene dalla mappa a destra → lo metti al bordo destro
+        if (spawnSide.equals("right"))
             pablo.setX(BaseActor.getWorldBounds().width - pablo.getWidth() - 10f);
-        } else if (spawnSide.equals("left")) {
-            // Viene dalla mappa a sinistra → lo metti al bordo sinistro
+        else if (spawnSide.equals("left"))
             pablo.setX(10f);
-        }
-
 
         // -----------------------------------------------------------------------
         // UI — maschere HP
@@ -278,13 +273,9 @@ public class LevelScreen extends BaseScreen
         // FalseKnight — opzionale
         // -----------------------------------------------------------------------
         if (bossTrigger == null)
-        {
             spawnFalseKnightIfPresent();
-        }
         else
-        {
             Gdx.app.log("LevelScreen", "FalseKnight in attesa di conferma dialogo.");
-        }
 
         // Z-order
         tma.toBack();
@@ -310,13 +301,11 @@ public class LevelScreen extends BaseScreen
     private void spawnEnemyType(TilemapActor tma, String type)
     {
         ArrayList<MapObject> objects = tma.getRectangleList(type);
-
         for (MapObject obj : objects)
         {
             MapProperties props = obj.getProperties();
             float x = (float) props.get("x");
             float y = (float) props.get("y");
-
             Enemy enemy = createEnemy(type, x, y);
             enemy.toFront();
         }
@@ -385,6 +374,9 @@ public class LevelScreen extends BaseScreen
         }
 
         // Collisioni nemici <-> solidi
+        // Tutti i nemici ricevono preventOverlap — sia in settle che attivi.
+        // La collision orizzontale (onWallHit) viene applicata solo ai nemici
+        // che hanno terminato il settle e sono vicini alla camera.
         for (BaseActor eActor : BaseActor.getList(mainStage, Enemy.class.getName()))
         {
             Enemy enemy = (Enemy) eActor;
@@ -399,7 +391,9 @@ public class LevelScreen extends BaseScreen
                         if (Math.abs(offset.x) > Math.abs(offset.y))
                         {
                             enemy.velocityVec.x = 0;
-                            enemy.onWallHit();
+                            // onWallHit solo se l'AI è attiva
+                            if (!enemy.isSettling() && enemy.isActiveNearCamera())
+                                enemy.onWallHit();
                         }
                         else
                         {
@@ -408,6 +402,8 @@ public class LevelScreen extends BaseScreen
                     }
                 }
             }
+            // Snap verticale: evita attraversamenti quando la caduta è veloce
+            enemy.snapToGroundIfOverlapping();
         }
 
         // Screen shake
@@ -469,15 +465,19 @@ public class LevelScreen extends BaseScreen
 
         // Transizione mappa destra
         MapGraph.MapNode node = MapGraph.get(mapPath);
-        if (node != null && node.rightNeighbor != null) {
-            if (pablo.getX() + pablo.getWidth() >= BaseActor.getWorldBounds().width - 2f) {
+        if (node != null && node.rightNeighbor != null)
+        {
+            if (pablo.getX() + pablo.getWidth() >= BaseActor.getWorldBounds().width - 2f)
+            {
                 PlayerState.saveFrom(pablo);
                 BaseGame.setActiveScreen(new LevelScreen(node.rightNeighbor, "left"));
             }
         }
         // Transizione mappa sinistra
-        if (node != null && node.leftNeighbor != null) {
-            if (pablo.getX() <= 2f) {
+        if (node != null && node.leftNeighbor != null)
+        {
+            if (pablo.getX() <= 2f)
+            {
                 PlayerState.saveFrom(pablo);
                 BaseGame.setActiveScreen(new LevelScreen(node.leftNeighbor, "right"));
             }
@@ -522,8 +522,8 @@ public class LevelScreen extends BaseScreen
         }
 
         vesselAnimTime += dt;
-        int   frameCount     = vesselDrawables[vesselState].length;
-        float totalDuration  = FRAME_DURATION * frameCount;
+        int   frameCount    = vesselDrawables[vesselState].length;
+        float totalDuration = FRAME_DURATION * frameCount;
         vesselAnimTime %= totalDuration;
 
         int frameIndex = (int)(vesselAnimTime / FRAME_DURATION);
@@ -595,7 +595,7 @@ public class LevelScreen extends BaseScreen
                 MapProperties props = tpObj.getProperties();
                 float x = (float) props.get("x");
                 float y = (float) props.get("y");
-                float w = props.containsKey("width") ? (float) props.get("width") : 32f;
+                float w = props.containsKey("width")  ? (float) props.get("width")  : 32f;
                 float h = props.containsKey("height") ? (float) props.get("height") : 32f;
                 bossTrigger = new BaseActor(x, y, mainStage);
                 bossTrigger.setSize(w, h);
@@ -679,7 +679,7 @@ public class LevelScreen extends BaseScreen
 
         TextButtonStyle btnStyle = new TextButtonStyle();
         btnStyle.font = dialogFont;
-        btnStyle.up = new TextureRegionDrawable(new TextureRegion(dialogBtnUpTexture));
+        btnStyle.up   = new TextureRegionDrawable(new TextureRegion(dialogBtnUpTexture));
         btnStyle.down = new TextureRegionDrawable(new TextureRegion(dialogBtnDownTexture));
         btnStyle.over = btnStyle.down;
 
@@ -763,11 +763,11 @@ public class LevelScreen extends BaseScreen
                 if (row != null)
                     for (Texture t : row)
                         if (t != null) t.dispose();
-        if (dialogTexture != null) dialogTexture.dispose();
-        if (dialogFont != null) dialogFont.dispose();
-        if (dialogBtnUpTexture != null) dialogBtnUpTexture.dispose();
+        if (dialogTexture        != null) dialogTexture.dispose();
+        if (dialogFont           != null) dialogFont.dispose();
+        if (dialogBtnUpTexture   != null) dialogBtnUpTexture.dispose();
         if (dialogBtnDownTexture != null) dialogBtnDownTexture.dispose();
-        if (promptFont != null) promptFont.dispose();
+        if (promptFont           != null) promptFont.dispose();
     }
 
     // -----------------------------------------------------------------------
@@ -836,11 +836,18 @@ public class LevelScreen extends BaseScreen
 
     private void addSolidTriangles(Polygon polygon)
     {
-        float[] vertices = polygon.getVertices();
-        if (vertices == null || vertices.length < 6) return;
+        float[] worldVertices = polygon.getTransformedVertices();
+        if (worldVertices == null || worldVertices.length < 6) return;
+
+        float[] localVertices = new float[worldVertices.length];
+        for (int i = 0; i < worldVertices.length; i += 2)
+        {
+            localVertices[i]     = worldVertices[i]     - polygon.getX();
+            localVertices[i + 1] = worldVertices[i + 1] - polygon.getY();
+        }
 
         EarClippingTriangulator triangulator = new EarClippingTriangulator();
-        ShortArray indices = triangulator.computeTriangles(vertices);
+        ShortArray indices = triangulator.computeTriangles(localVertices);
         Rectangle bounds = polygon.getBoundingRectangle();
 
         for (int i = 0; i < indices.size; i += 3)
@@ -850,9 +857,9 @@ public class LevelScreen extends BaseScreen
             int i3 = indices.get(i + 2) * 2;
 
             float[] tri = new float[] {
-                    vertices[i1], vertices[i1 + 1],
-                    vertices[i2], vertices[i2 + 1],
-                    vertices[i3], vertices[i3 + 1]
+                    localVertices[i1], localVertices[i1 + 1],
+                    localVertices[i2], localVertices[i2 + 1],
+                    localVertices[i3], localVertices[i3 + 1]
             };
 
             Object solid = new Object(polygon.getX(), polygon.getY(), bounds.width, bounds.height, mainStage);
@@ -860,3 +867,4 @@ public class LevelScreen extends BaseScreen
         }
     }
 }
+

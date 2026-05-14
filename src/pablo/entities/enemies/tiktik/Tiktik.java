@@ -93,6 +93,9 @@ public class Tiktik extends Enemy
                 PATH+"death(land)2.png"
         }, 1f, true);
 
+        // RIPRISTINA L'ANIMAZIONE DI BASE PER AVERE I BOUNDS CORRETTI!
+        setAnimation(animWalk);
+
         setBoundaryRectangle();
 
         belowSensor = new BaseActor(0, 0, stage);
@@ -106,6 +109,9 @@ public class Tiktik extends Enemy
         edgeSensor.setSize(6f, 6f);
         edgeSensor.setBoundaryRectangle();
         edgeSensor.setVisible(false);
+
+        // Posiziona i sensori subito per il primo frame
+        updateSensorPositions();
 
         enterState(TiktikState.PATROL);
     }
@@ -304,3 +310,4 @@ public class Tiktik extends Enemy
         elapsedTime = 0f;
     }
 }
+

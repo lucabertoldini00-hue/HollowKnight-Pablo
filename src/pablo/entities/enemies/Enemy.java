@@ -1,15 +1,12 @@
 // Enemy.java
-// Base class for all ground-based enemies (Crawlid, Tiktik).
-// Vengefly also extends this but ignores the floor sensors and gravity.
-//
-// What lives here:  health, direction, gravity, floor sensors, flip(), onWallHit(), takeDamage()
-// What stays in subclasses: speed, stun logic, AI state, patrol/hover behaviour
-
 package pablo.entities.enemies;
 
 import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.math.Vector2;
 import pablo.Object;
 import pablo.framework.BaseActor;
 
@@ -18,22 +15,23 @@ public abstract class Enemy extends BaseActor
     private static final float CAMERA_ACTIVATION_MARGIN = 320f;
     protected static final float VOID_Y = -300f;
 
-    // --- shared physics constants (subclasses can override by setting these in their constructor) ---
+    private static final float SETTLE_TIME = 0.5f;
+    private float settleTimer = SETTLE_TIME;
+
     protected float gravity          = 700f;
     protected float maxVerticalSpeed = 700f;
 
-    // --- shared state ---
     protected int   health;
-    protected float direction; // 1 = right, -1 = left
+    protected float direction = 1f;
 
-    // --- floor sensors (ground-based enemies only; Vengefly leaves these null) ---
     protected BaseActor belowSensor;
     protected BaseActor edgeSensor;
+
+    protected boolean useGravityWhenOffScreen = true;
 
     public Enemy(float x, float y, Stage stage)
     {
         super(x, y, stage);
-        direction = 1f; // default: start moving right
     }
 
     @Override
@@ -41,28 +39,58 @@ public abstract class Enemy extends BaseActor
     {
         super.act(dt);
 
+        // Fase di settle: applica solo gravità + collisioni, niente AI.
+        // Garantisce che tutti i nemici siano a terra prima che l'AI parta,
+        // indipendentemente dalla posizione della camera.
+        if (settleTimer > 0f)
+        {
+            settleTimer -= dt;
+            if (useGravityWhenOffScreen)
+            {
+                applyGravity(dt);
+                moveBy(0, velocityVec.y * dt);
+                updateSensorPositions();
+            }
+            velocityVec.x = 0;
+            removeIfBelowVoid();
+            return;
+        }
+
         if (!isActiveNearCamera())
         {
-            velocityVec.set(0, 0);
+            if (useGravityWhenOffScreen)
+            {
+                applyGravity(dt);
+                moveBy(0, velocityVec.y * dt);
+                updateSensorPositions();
+            }
+            velocityVec.x = 0;
+            removeIfBelowVoid();
+            return;
         }
 
         removeIfBelowVoid();
     }
 
-    /**
-     * Checks if the enemy should update its AI/logic based on camera proximity.
-     * Deprecated: Centralized in Enemy.act() to prevent physics issues.
-     */
-    protected boolean canUpdateAI()
+    @Override
+    public void setAnimation(Animation<TextureRegion> anim)
     {
-        return isActiveNearCamera();
+        super.setAnimation(anim);
+        // Mantiene i bounds coerenti se le frame hanno dimensioni diverse.
+        setBoundaryRectangle();
+        updateSensorPositions();
     }
 
-    /**
-     * Enemies are spawned for the whole map at level load. Keep them frozen
-     * while far outside the camera so ground enemies do not walk/fall away
-     * before Pablo reaches their part of the level.
-     */
+    public boolean isSettling()
+    {
+        return settleTimer > 0f;
+    }
+
+    protected boolean canUpdateAI()
+    {
+        return isActiveNearCamera() && !isSettling();
+    }
+
     public boolean isActiveNearCamera()
     {
         if (getStage() == null)
@@ -80,61 +108,33 @@ public abstract class Enemy extends BaseActor
                 && getY() <= top;
     }
 
-    // ------------------------------------------------------------------
-    // Shared helpers — called by subclasses from their own act() methods
-    // ------------------------------------------------------------------
-
-    /**
-     * Applies downward gravity to velocityVec.y and clamps to maxVerticalSpeed.
-     * Ground-based enemies call this every frame. Vengefly skips it.
-     */
     protected void applyGravity(float dt)
     {
         velocityVec.y -= gravity * dt;
         velocityVec.y  = MathUtils.clamp(velocityVec.y, -maxVerticalSpeed, maxVerticalSpeed);
     }
 
-    /**
-     * Reverses horizontal direction and mirrors the sprite accordingly.
-     */
     protected void flip()
     {
         direction *= -1f;
         faceDirection(direction);
     }
 
-    // Enemy.java — FIXED faceDirection()
     protected void faceDirection(float horizontalDirection)
     {
         if (horizontalDirection > 0f)
-            setScaleX(1f);       // moving RIGHT → face right (normal, unflipped)
+            setScaleX(1f);
         else if (horizontalDirection < 0f)
-            setScaleX(-1f);      // moving LEFT  → face left (flipped)
+            setScaleX(-1f);
     }
 
-    /**
-     * Keeps the visible sprite facing the same way the enemy is moving.
-     * The direction field can still be used by AI as its planned patrol side.
-     */
     protected void syncFacingToHorizontalMovement()
     {
-        // Skip when stationary: faceDirection(0) is a no-op anyway,
-        // and logging it produces misleading "expected" output.
         if (Math.abs(velocityVec.x) < 0.1f)
             return;
-
         faceDirection(velocityVec.x);
-
-        // Debug — only fires when enemy is genuinely moving
-        System.out.println("[FacingDebug] " + getClass().getSimpleName()
-                + " vel.x=" + velocityVec.x
-                + " scaleX=" + getScaleX()
-                + " expected=" + (velocityVec.x > 0 ? "+1 (right)" : "-1 (left)"));
     }
 
-    /**
-     * Removes enemies that fall below the same void threshold used by Pablo.
-     */
     protected boolean removeIfBelowVoid()
     {
         if (getY() < VOID_Y)
@@ -142,41 +142,25 @@ public abstract class Enemy extends BaseActor
             remove();
             return true;
         }
-
         return false;
     }
 
-    /**
-     * Called by LevelScreen when preventOverlap() returns an X-dominant offset (wall hit).
-     * Default behaviour: flip direction. Subclasses may override.
-     */
     public void onWallHit()
     {
         flip();
     }
 
-    /**
-     * Stub — wired up to the combat system in a later phase.
-     * Subclasses override to add stun, animations, etc.
-     */
     public void takeDamage(int amount)
     {
         health -= amount;
         if (health <= 0)
-            remove(); // removes this actor from the Stage
+            remove();
     }
 
-    // ------------------------------------------------------------------
-    // Sensor helpers — used by ground-based enemies
-    // ------------------------------------------------------------------
-
-    /**
-     * True if belowSensor overlaps any enabled solid Object.
-     * Returns false if belowSensor was never initialised (e.g. Vengefly).
-     */
     protected boolean isOnGround()
     {
         if (belowSensor == null) return false;
+        if (getStage() == null) return false;
 
         for (BaseActor actor : BaseActor.getList(getStage(), Object.class.getName()))
         {
@@ -187,11 +171,6 @@ public abstract class Enemy extends BaseActor
         return false;
     }
 
-    /**
-     * True if edgeSensor overlaps any enabled solid Object ahead of the enemy.
-     * When this returns false the enemy is at an edge and should flip.
-     * Returns false if edgeSensor was never initialised.
-     */
     protected boolean edgeAheadHasGround()
     {
         if (edgeSensor == null) return false;
@@ -205,26 +184,50 @@ public abstract class Enemy extends BaseActor
         return false;
     }
 
-    /**
-     * Repositions both sensors relative to the enemy's current position.
-     * Must be called after any movement. Ground-based enemies call this
-     * at the top and bottom of act(). Vengefly skips it.
-     */
     protected void updateSensorPositions()
     {
         if (belowSensor != null)
-            belowSensor.setPosition(getX() + 4f, getY() - 6f);
+        {
+            float sensorWidth = Math.max(4f, getWidth() - 8f);
+            boolean sizeChanged = belowSensor.getWidth() != sensorWidth || belowSensor.getHeight() != 6f;
+            if (sizeChanged)
+            {
+                belowSensor.setSize(sensorWidth, 6f);
+                belowSensor.setBoundaryRectangle();
+            }
+            belowSensor.setPosition(getX() + (getWidth() - sensorWidth) / 2f, getY() - 6f);
+        }
 
         if (edgeSensor != null)
         {
-            float edgeX;
-
-            if (direction > 0)
-                edgeX = getX() + getWidth();
-            else
-                edgeX = getX() - 6f;
-
+            float edgeX = (direction > 0) ? getX() + getWidth() : getX() - 6f;
             edgeSensor.setPosition(edgeX, getY() - 6f);
+        }
+    }
+
+    public void snapToGroundIfOverlapping()
+    {
+        if (belowSensor == null || getStage() == null)
+            return;
+        if (velocityVec.y > 0)
+            return;
+
+        for (BaseActor actor : BaseActor.getList(getStage(), Object.class.getName()))
+        {
+            Object solid = (Object) actor;
+            if (!solid.isEnable())
+                continue;
+
+            if (belowSensor.overlaps(solid))
+            {
+                Vector2 offset = belowSensor.preventOverlap(solid);
+                if (offset != null && Math.abs(offset.y) > Math.abs(offset.x) && offset.y > 0f)
+                {
+                    moveBy(0, offset.y);
+                    velocityVec.y = 0;
+                    updateSensorPositions();
+                }
+            }
         }
     }
 }

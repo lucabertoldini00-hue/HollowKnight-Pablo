@@ -26,4 +26,5 @@ public class Launcher
         Game myGame = new PabloGame();
         new LwjglApplication(myGame, config);
     }
+
 }

@@ -397,7 +397,7 @@ public class BaseActor extends Actor
         boundaryPolygon.setPosition( getX(), getY() );
         boundaryPolygon.setOrigin( getOriginX(), getOriginY() );
         boundaryPolygon.setRotation( getRotation() );
-        boundaryPolygon.setScale( getScaleX(), getScaleY() );
+        boundaryPolygon.setScale(Math.abs(getScaleX()), Math.abs(getScaleY()));
         return boundaryPolygon;
     }
 

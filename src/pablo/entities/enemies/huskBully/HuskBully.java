@@ -170,6 +170,9 @@ public class HuskBully extends Enemy
         edgeSensor.setBoundaryRectangle();
         edgeSensor.setVisible(false);
 
+        // Posiziona i sensori subito per il primo frame
+        updateSensorPositions();
+
         enterState(HuskBullyState.IDLE);
     }
 

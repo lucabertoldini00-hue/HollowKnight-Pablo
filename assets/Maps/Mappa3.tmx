@@ -55,12 +55,12 @@
     <property name="name" value="start"/>
    </properties>
   </object>
-  <object id="47" name="Tiktik" x="512" y="880" width="64" height="64">
+  <object id="47" name="Tiktik" x="512" y="912" width="64" height="64">
    <properties>
     <property name="name" value="Tiktik"/>
    </properties>
   </object>
-  <object id="48" name="HuskHornhead" x="1360" y="880" width="64" height="64">
+  <object id="48" name="HuskHornhead" x="1360" y="912" width="64" height="64">
    <properties>
     <property name="name" value="HuskHornhead"/>
    </properties>

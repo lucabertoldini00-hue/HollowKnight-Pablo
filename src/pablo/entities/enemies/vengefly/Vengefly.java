@@ -63,6 +63,7 @@ public class Vengefly extends Enemy
     // Player reference
     // -------------------------------------------------------------------------
     private Pablo pablo;
+    protected boolean useGravityWhenOffScreen = true;
 
     // -------------------------------------------------------------------------
     // Animations
@@ -130,6 +131,9 @@ public class Vengefly extends Enemy
 
         // edgeSensor not needed — Vengefly never walks on surfaces
         edgeSensor = null;
+
+        // Posiziona il sensore subito per il primo frame
+        updateSensorPositions();
 
         enterState(VengeflyState.HOVERING);
     }

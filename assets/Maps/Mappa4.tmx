@@ -31,7 +31,7 @@
     <property name="name" value="tp"/>
    </properties>
   </object>
-  <object id="23" name="FalseKnight" x="1616" y="752" width="160" height="112">
+  <object id="23" name="FalseKnight" x="1664" y="928" width="160" height="112">
    <properties>
     <property name="name" value="FalseKnight"/>
    </properties>

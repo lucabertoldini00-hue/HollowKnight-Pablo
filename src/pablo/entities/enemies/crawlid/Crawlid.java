@@ -107,6 +107,9 @@ public class Crawlid extends Enemy
         edgeSensor.setBoundaryRectangle();
         edgeSensor.setVisible(false);
 
+        // Posiziona i sensori subito per il primo frame
+        updateSensorPositions();
+
         enterState(CrawlidState.PATROL);
     }
 
@@ -150,8 +153,13 @@ public class Crawlid extends Enemy
         applyGravity(dt);
         updateSensorPositions();
 
+        boolean onGround = isOnGround();
+        com.badlogic.gdx.Gdx.app.log("CrawlidDebug", "x=" + getX() + " y=" + getY()
+            + " onGround=" + onGround
+            + " belowSensor=" + (belowSensor != null ? belowSensor.getX() + "," + belowSensor.getY() : "null"));
+
         // At a ledge with no ground ahead → start turn
-        if (isOnGround() && !edgeAheadHasGround())
+        if (onGround && !edgeAheadHasGround())
         {
             enterState(CrawlidState.TURNING);
             return;
@@ -283,3 +291,4 @@ public class Crawlid extends Enemy
         elapsedTime = 0f; // reset BaseActor animation clock
     }
 }
+

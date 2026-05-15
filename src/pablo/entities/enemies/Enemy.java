@@ -120,12 +120,14 @@ public abstract class Enemy extends BaseActor
         faceDirection(direction);
     }
 
+    // All enemy sprites face LEFT by default in their art assets.
+    // scaleX = -1 flips them to face right when moving right.
     protected void faceDirection(float horizontalDirection)
     {
         if (horizontalDirection > 0f)
-            setScaleX(1f);
+            setScaleX(-1f);   // flip left-facing sprite to face right
         else if (horizontalDirection < 0f)
-            setScaleX(-1f);
+            setScaleX(1f);    // no flip — sprite already faces left
     }
 
     protected void syncFacingToHorizontalMovement()

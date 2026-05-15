@@ -33,8 +33,6 @@ public class HuskHornhead extends Enemy
 
     private static final float LAND_TUMBLE_DURATION = 7 * 0.066f;
 
-    private static final float SPRITE_FACING = -1f;
-
     // -------------------------------------------------------------------------
     // State
     // -------------------------------------------------------------------------
@@ -477,14 +475,5 @@ public class HuskHornhead extends Enemy
         state = next;
         stateTimer = 0f;
         elapsedTime = 0f;
-    }
-
-    @Override
-    protected void faceDirection(float horizontalDirection)
-    {
-        if (horizontalDirection > 0f)
-            setScaleX(SPRITE_FACING);
-        else if (horizontalDirection < 0f)
-            setScaleX(-SPRITE_FACING);
     }
 }

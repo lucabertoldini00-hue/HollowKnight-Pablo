@@ -124,7 +124,7 @@ public class Tiktik extends Enemy
     {
         super.act(dt);
 
-        if (!canUpdateAI())
+        if (!canUpdateAI() && !isInDeathSequence())
             return;
 
         if (removeIfBelowVoid())
@@ -309,5 +309,21 @@ public class Tiktik extends Enemy
         stateTimer  = 0f;
         elapsedTime = 0f;
     }
-}
 
+    // Tiktik sprite faces RIGHT by default (unlike all other enemies).
+    @Override
+    protected void faceDirection(float horizontalDirection)
+    {
+        if (horizontalDirection > 0f)
+            setScaleX(1f);    // no flip — sprite already faces right
+        else if (horizontalDirection < 0f)
+            setScaleX(-1f);   // flip to face left
+    }
+
+    private boolean isInDeathSequence()
+    {
+        return state == TiktikState.HIT_STOP ||
+                state == TiktikState.DEAD_AIR ||
+                state == TiktikState.DEAD_LAND;
+    }
+}

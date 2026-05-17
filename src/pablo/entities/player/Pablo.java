@@ -297,6 +297,11 @@ public class Pablo extends BaseActor
                 jumpTimer += dt;
                 if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f) { startDash(); break; }
                 if ((Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W)) && canDoubleJump && !doubleJumpUsed) { jump(true); break; }
+                if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.J)) {
+                    currentState = Playerstate.ATTACKING; elapsedTime = 0; 
+                    spawnAttackHitbox(Gdx.input.isKeyPressed(Input.Keys.S)); 
+                    SoundManager.get().playSfx(Sfx.PLAYER_ATTACK); break;
+                }
                 if (velocityVec.y <= 0) { currentState = Playerstate.FALLING; break; }
                 if (onSolid && !wasOnSolid) { currentState = Playerstate.LANDING; elapsedTime = 0; jumpTimer = 0; break; }
                 updateJumpAnimation();
@@ -306,6 +311,11 @@ public class Pablo extends BaseActor
                 jumpTimer += dt;
                 if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f) { startDash(); break; }
                 if ((Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W)) && canDoubleJump && !doubleJumpUsed) { jump(true); break; }
+                if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.J)) {
+                    currentState = Playerstate.ATTACKING; elapsedTime = 0; 
+                    spawnAttackHitbox(Gdx.input.isKeyPressed(Input.Keys.S)); 
+                    SoundManager.get().playSfx(Sfx.PLAYER_ATTACK); break;
+                }
                 if (onSolid && !wasOnSolid) { currentState = Playerstate.LANDING; elapsedTime = 0; jumpTimer = 0; break; }
                 updateJumpAnimation();
                 break;
@@ -385,10 +395,33 @@ public class Pablo extends BaseActor
 
     private void spawnAttackHitbox()
     {
+        spawnAttackHitbox(false);
+    }
+
+    private void spawnAttackHitbox(boolean downStrike)
+    {
         float hitboxWidth  = 40f, hitboxHeight = 30f;
         float hitboxY = getY() + getHeight() / 2f - hitboxHeight / 2f;
         float hitboxX = (getScaleX() > 0) ? getX() + getWidth() : getX() - hitboxWidth;
-        new Hitbox(hitboxX, hitboxY, hitboxWidth, hitboxHeight, 10, 0.05f, getStage(), () -> gainSoul(11));
+
+        if (downStrike)
+        {
+            hitboxWidth = 30f; hitboxHeight = 40f;
+            hitboxX = getX() + getWidth() / 2f - hitboxWidth / 2f;
+            hitboxY = getY() - hitboxHeight;
+            new Hitbox(hitboxX, hitboxY, hitboxWidth, hitboxHeight, 10, 0.05f, getStage(), () -> {
+                gainSoul(11);
+                // Pogo leap
+                velocityVec.y = jumpSpeed * 0.85f;
+                canDoubleJump = true;
+                doubleJumpUsed = false;
+                currentState = Playerstate.JUMPING;
+            });
+        }
+        else
+        {
+            new Hitbox(hitboxX, hitboxY, hitboxWidth, hitboxHeight, 10, 0.05f, getStage(), () -> gainSoul(11));
+        }
     }
 
     public boolean belowOverlaps(BaseActor actor) { return belowSensor.overlaps(actor); }
@@ -479,3 +512,5 @@ public class Pablo extends BaseActor
         allowMapTransition = allow;
     }
 }
+
+

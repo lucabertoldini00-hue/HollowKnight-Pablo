@@ -33,8 +33,6 @@ public class HuskHornhead extends Enemy
 
     private static final float LAND_TUMBLE_DURATION = 7 * 0.066f;
 
-    private static final float SPRITE_FACING = -1f;
-
     // -------------------------------------------------------------------------
     // State
     // -------------------------------------------------------------------------
@@ -155,16 +153,15 @@ public class HuskHornhead extends Enemy
     {
         super.act(dt);
 
-        if (!canUpdateAI())
+        if (!canUpdateAI() && !isInDeathSequence())
             return;
 
+        // Hit-stop: freeze completely, then launch into death arc
         if (state == HuskHornheadState.HIT_STOP)
         {
             hitStopTimer -= dt;
-
             if (hitStopTimer <= 0f)
                 launchDeath();
-
             return;
         }
 
@@ -479,12 +476,10 @@ public class HuskHornhead extends Enemy
         elapsedTime = 0f;
     }
 
-    @Override
-    protected void faceDirection(float horizontalDirection)
+    private boolean isInDeathSequence()
     {
-        if (horizontalDirection > 0f)
-            setScaleX(SPRITE_FACING);
-        else if (horizontalDirection < 0f)
-            setScaleX(-SPRITE_FACING);
+        return state == HuskHornheadState.HIT_STOP ||
+                state == HuskHornheadState.DEAD_AIR ||
+                state == HuskHornheadState.DEAD_LAND;
     }
 }

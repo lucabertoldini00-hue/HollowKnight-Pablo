@@ -146,10 +146,10 @@ public class Vengefly extends Enemy
     {
         super.act(dt);
 
-        if (!canUpdateAI())
+        if (!canUpdateAI() && !isInDeathSequence())
             return;
 
-        // Hit-stop: freeze, then launch into death arc
+        // Hit-stop: freeze completely, then launch into death arc
         if (state == VengeflyState.HIT_STOP)
         {
             hitStopTimer -= dt;
@@ -364,5 +364,12 @@ public class Vengefly extends Enemy
         stateTimer  = 0f;
         elapsedTime = 0f;
         velocityVec.set(0, 0);
+    }
+
+    private boolean isInDeathSequence()
+    {
+        return state == VengeflyState.HIT_STOP ||
+                state == VengeflyState.DEAD_AIR ||
+                state == VengeflyState.DEAD_GROUND;
     }
 }

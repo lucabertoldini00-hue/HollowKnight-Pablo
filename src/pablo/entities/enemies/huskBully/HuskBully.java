@@ -184,7 +184,7 @@ public class HuskBully extends Enemy
     {
         super.act(dt);
 
-        if (!canUpdateAI())
+        if (!canUpdateAI() && !isInDeathSequence())
             return;
 
         // Hit-stop: freeze completely, then launch into death arc
@@ -498,5 +498,12 @@ public class HuskBully extends Enemy
         state       = next;
         stateTimer  = 0f;
         elapsedTime = 0f; // reset BaseActor animation clock
+    }
+
+    private boolean isInDeathSequence()
+    {
+        return state == HuskBullyState.HIT_STOP ||
+                state == HuskBullyState.DEAD_AIR ||
+                state == HuskBullyState.DEAD_LAND;
     }
 }

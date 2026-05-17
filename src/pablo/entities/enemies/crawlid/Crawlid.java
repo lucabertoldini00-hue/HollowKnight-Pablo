@@ -121,16 +121,16 @@ public class Crawlid extends Enemy
     {
         super.act(dt);
 
-        if (!canUpdateAI())
+        if (!canUpdateAI() && !isInDeathSequence())
             return;
 
-        // Hit-stop: freeze in place, then launch
+        // Hit-stop: freeze completely, then launch into death arc
         if (state == CrawlidState.HIT_STOP)
         {
             hitStopTimer -= dt;
             if (hitStopTimer <= 0f)
                 launchDeath();
-            return; // no movement, no animation switch
+            return;
         }
 
         stateTimer += dt;
@@ -290,5 +290,11 @@ public class Crawlid extends Enemy
         stateTimer  = 0f;
         elapsedTime = 0f; // reset BaseActor animation clock
     }
-}
 
+    private boolean isInDeathSequence()
+    {
+        return state == CrawlidState.HIT_STOP ||
+                state == CrawlidState.DEAD_AIR ||
+                state == CrawlidState.DEAD_LAND;
+    }
+}

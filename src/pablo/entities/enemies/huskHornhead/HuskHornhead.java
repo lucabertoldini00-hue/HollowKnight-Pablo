@@ -153,16 +153,15 @@ public class HuskHornhead extends Enemy
     {
         super.act(dt);
 
-        if (!canUpdateAI())
+        if (!canUpdateAI() && !isInDeathSequence())
             return;
 
+        // Hit-stop: freeze completely, then launch into death arc
         if (state == HuskHornheadState.HIT_STOP)
         {
             hitStopTimer -= dt;
-
             if (hitStopTimer <= 0f)
                 launchDeath();
-
             return;
         }
 
@@ -475,5 +474,12 @@ public class HuskHornhead extends Enemy
         state = next;
         stateTimer = 0f;
         elapsedTime = 0f;
+    }
+
+    private boolean isInDeathSequence()
+    {
+        return state == HuskHornheadState.HIT_STOP ||
+                state == HuskHornheadState.DEAD_AIR ||
+                state == HuskHornheadState.DEAD_LAND;
     }
 }

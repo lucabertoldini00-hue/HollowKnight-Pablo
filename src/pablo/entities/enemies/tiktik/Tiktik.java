@@ -124,7 +124,7 @@ public class Tiktik extends Enemy
     {
         super.act(dt);
 
-        if (!canUpdateAI())
+        if (!canUpdateAI() && !isInDeathSequence())
             return;
 
         if (removeIfBelowVoid())
@@ -319,5 +319,11 @@ public class Tiktik extends Enemy
         else if (horizontalDirection < 0f)
             setScaleX(-1f);   // flip to face left
     }
-}
 
+    private boolean isInDeathSequence()
+    {
+        return state == TiktikState.HIT_STOP ||
+                state == TiktikState.DEAD_AIR ||
+                state == TiktikState.DEAD_LAND;
+    }
+}

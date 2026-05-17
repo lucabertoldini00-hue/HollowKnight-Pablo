@@ -193,13 +193,14 @@ public class HuskWarrior extends Enemy
     {
         super.act(dt);
 
-        if (!canUpdateAI())
+        if (!canUpdateAI() && !isInDeathSequence())
             return;
 
         if (state == HuskWarriorState.HIT_STOP)
         {
             hitStopTimer -= dt;
-            if (hitStopTimer <= 0f) launchDeath();
+            if (hitStopTimer <= 0f)
+                launchDeath();
             return;
         }
 
@@ -612,6 +613,13 @@ public class HuskWarrior extends Enemy
         hit1Landed  = false;
         hit2Landed  = false;
         hit3Landed  = false;
+    }
+
+    private boolean isInDeathSequence()
+    {
+        return state == HuskWarriorState.HIT_STOP ||
+                state == HuskWarriorState.DEAD_AIR ||
+                state == HuskWarriorState.DEAD_LAND;
     }
 
     // =========================================================================

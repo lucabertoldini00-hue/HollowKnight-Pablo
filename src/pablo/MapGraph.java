@@ -13,6 +13,9 @@ import java.util.Map;
 
 public class MapGraph
 {
+    private static final String FIRST_MAP_PATH = "assets/Maps/Mappa1.tmx";
+    private static final String LAST_MAP_PATH  = "assets/Maps/Mappa4.tmx";
+
     // -----------------------------------------------------------------------
     // Nodo mappa
     // -----------------------------------------------------------------------
@@ -33,10 +36,10 @@ public class MapGraph
     static
     {
         // ── Definizione nodi ──────────────────────────────────────────────
-        MapNode map1 = new MapNode("assets/Maps/Mappa1.tmx");
+        MapNode map1 = new MapNode(FIRST_MAP_PATH);
         MapNode map2 = new MapNode("assets/Maps/Mappa2.tmx");
         MapNode map3 = new MapNode("assets/Maps/Mappa3.tmx");
-        MapNode map4 = new MapNode("assets/Maps/Mappa4.tmx");
+        MapNode map4 = new MapNode(LAST_MAP_PATH);
         // Aggiungi altri nodi qui seguendo lo stesso schema
 
         // ── Connessioni ───────────────────────────────────────────────────
@@ -67,6 +70,16 @@ public class MapGraph
     public static MapNode get(String mapPath)
     {
         return NODES.get(mapPath);
+    }
+
+    public static String getFirstPath()
+    {
+        return FIRST_MAP_PATH;
+    }
+
+    public static String getLastPath()
+    {
+        return LAST_MAP_PATH;
     }
 
     /** True se esiste un vicino a destra per questa mappa. */

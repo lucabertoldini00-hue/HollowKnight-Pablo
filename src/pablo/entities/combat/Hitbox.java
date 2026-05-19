@@ -7,6 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import pablo.SoundManager;
 import pablo.SoundManager.Sfx;
 import pablo.entities.enemies.Enemy;
+import pablo.entities.enemies.falseKnight.FalseKnight;
 import pablo.framework.BaseActor;
 
 import java.util.HashSet;
@@ -23,6 +24,7 @@ public class Hitbox extends BaseActor
 
     private final Runnable onHit;
     private final Set<Enemy> hitEnemies = new HashSet<>();
+    private final Set<FalseKnight> hitBosses = new HashSet<>();
 
     public Hitbox(float x, float y, float width, float height,
                   int damage, float lifetime, Stage stage)
@@ -66,8 +68,22 @@ public class Hitbox extends BaseActor
 
             if (!hitEnemies.contains(enemy) && overlaps(enemy))
             {
-                enemy.takeDamage(damage);
+                float knockbackDir = this.getX() < enemy.getX() ? 1f : -1f;
+                enemy.takeDamage(damage, knockbackDir);
                 hitEnemies.add(enemy);
+                SoundManager.get().playSfx(Sfx.ENEMY_HIT);
+                if (onHit != null) onHit.run();
+            }
+        }
+
+        for (BaseActor actor : BaseActor.getList(getStage(), FalseKnight.class.getName()))
+        {
+            FalseKnight boss = (FalseKnight) actor;
+
+            if (!hitBosses.contains(boss) && overlaps(boss))
+            {
+                boss.takeDamage(damage);
+                hitBosses.add(boss);
                 SoundManager.get().playSfx(Sfx.ENEMY_HIT);
                 if (onHit != null) onHit.run();
             }

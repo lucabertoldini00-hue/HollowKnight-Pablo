@@ -29,6 +29,20 @@ public abstract class Enemy extends BaseActor
 
     protected boolean useGravityWhenOffScreen = true;
 
+    // -----------------------------------------------------------------------
+    // Damage Flash QoL
+    // -----------------------------------------------------------------------
+    private static final float FLASH_DURATION = 0.15f;
+    private float flashTimer = 0f;
+    private boolean isFlashing = false;
+
+    // -----------------------------------------------------------------------
+    // Damage Knockback
+    // -----------------------------------------------------------------------
+    private float knockbackTimer = 0f;
+    private float knockbackSpeedX = 0f;
+    private static final float KNOCKBACK_DURATION = 0.15f;
+
     public Enemy(float x, float y, Stage stage)
     {
         super(x, y, stage);
@@ -38,6 +52,27 @@ public abstract class Enemy extends BaseActor
     public void act(float dt)
     {
         super.act(dt);
+
+        if (isFlashing)
+        {
+            flashTimer -= dt;
+            if (flashTimer <= 0f)
+            {
+                isFlashing = false;
+                setColor(com.badlogic.gdx.graphics.Color.WHITE);
+            }
+        }
+
+        if (knockbackTimer > 0f) {
+            knockbackTimer -= dt;
+            moveBy(knockbackSpeedX * dt, 0);
+            updateSensorPositions();
+            
+            // Only stop X movement if we are handling it here, subclasses handle X movement usually.
+            // Temporary block subclass X movement if needed, but since we are in `super.act()`, 
+            // subclasses usually set velocityVec.x later. So let's rely on knockbackTimer in subclasses if needed,
+            // or just add it here and subclasses will add to it.
+        }
 
         // Fase di settle: applica solo gravità + collisioni, niente AI.
         // Garantisce che tutti i nemici siano a terra prima che l'AI parta,
@@ -156,7 +191,35 @@ public abstract class Enemy extends BaseActor
     {
         health -= amount;
         if (health <= 0)
-            remove();
+            health = 0;
+    }
+
+    public void takeDamage(int amount, float knockbackDir)
+    {
+        int oldHealth = health;
+        takeDamage(amount);
+
+        if (oldHealth > 0 && health <= 0)
+        {
+            this.addAction(com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence(
+                com.badlogic.gdx.scenes.scene2d.actions.Actions.delay(3f),
+                com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeOut(1f),
+                com.badlogic.gdx.scenes.scene2d.actions.Actions.removeActor()
+            ));
+        }
+
+        if (oldHealth <= 0) return;
+
+        // Damage Flash QoL
+        isFlashing = true;
+        flashTimer = FLASH_DURATION;
+        setColor(com.badlogic.gdx.graphics.Color.RED);
+        
+        // Knockback QoL
+        if (health > 0) {
+            knockbackSpeedX = knockbackDir * 250f;
+            knockbackTimer = KNOCKBACK_DURATION;
+        }
     }
 
     protected boolean isOnGround()
@@ -231,5 +294,10 @@ public abstract class Enemy extends BaseActor
                 }
             }
         }
+    }
+
+    public boolean isDead()
+    {
+        return health <= 0;
     }
 }

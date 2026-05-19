@@ -53,6 +53,13 @@ public class Pablo extends BaseActor
     private boolean hitstopActive = false;
 
     // -----------------------------------------------------------------------
+    // Knockback
+    // -----------------------------------------------------------------------
+    private float knockbackTimer = 0f;
+    private float knockbackSpeedX = 0f;
+    private static final float KNOCKBACK_DURATION = 0.2f;
+
+    // -----------------------------------------------------------------------
     // Dash
     // -----------------------------------------------------------------------
     private static final float DASH_SPEED     = 520f;
@@ -100,6 +107,15 @@ public class Pablo extends BaseActor
     private static final float VOID_Y = -300f;
 
     // -----------------------------------------------------------------------
+    // Coyote Time e Jump Buffer (QoL)
+    // -----------------------------------------------------------------------
+    private static final float COYOTE_TIME = 0.15f;
+    private float coyoteTimer = 0f;
+
+    private static final float JUMP_BUFFER_TIME = 0.15f;
+    private float jumpBufferTimer = 0f;
+
+    // -----------------------------------------------------------------------
     // Transizione mappa
     // Quando true, boundToWorld() non blocca Pablo sui bordi X,
     // permettendogli di uscire dalla mappa e innescare una transizione.
@@ -130,7 +146,7 @@ public class Pablo extends BaseActor
         maxHorizontalSpeed = 200;
         walkAcceleration   = 200;
         walkDeceleration   = 200;
-        gravity            = 500;
+        gravity            = 400;
         maxVerticalSpeed   = 1000;
         jumpSpeed          = 400;
 
@@ -202,6 +218,14 @@ public class Pablo extends BaseActor
 
         SoundManager.get().update(dt);
 
+        // --- Aggiornamento Timer QoL ---
+        if (coyoteTimer > 0f) coyoteTimer -= dt;
+        if (jumpBufferTimer > 0f) jumpBufferTimer -= dt;
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W)) {
+            jumpBufferTimer = JUMP_BUFFER_TIME;
+        }
+
         if (hitstopActive)
         {
             hitstopTimer -= dt;
@@ -225,21 +249,34 @@ public class Pablo extends BaseActor
         {
             doubleJumpUsed = false;
             if (!landSoundPlayed) { SoundManager.get().playSfx(Sfx.PLAYER_LAND); landSoundPlayed = true; }
+            
+            // Applica il Jump Buffer
+            if (jumpBufferTimer > 0f) {
+                jumpBufferTimer = 0f;
+                jump(false);
+            }
         }
         if (!onSolid) landSoundPlayed = false;
 
         // Fisica
         if (currentState != Playerstate.ATTACKING && currentState != Playerstate.HEALING && currentState != Playerstate.DASHING)
         {
-            if (Gdx.input.isKeyPressed(Input.Keys.LEFT)  || Gdx.input.isKeyPressed(Input.Keys.A)) accelerationVec.add(-walkAcceleration, 0);
-            if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) accelerationVec.add(walkAcceleration, 0);
+            if (knockbackTimer > 0f) {
+                // Durante il knockback disabilitiamo i comandi orizzontali ma applichiamo knockback
+                knockbackTimer -= dt;
+                velocityVec.x = knockbackSpeedX;
+            } else {
+                if (Gdx.input.isKeyPressed(Input.Keys.LEFT)  || Gdx.input.isKeyPressed(Input.Keys.A)) accelerationVec.add(-walkAcceleration, 0);
+                if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) accelerationVec.add(walkAcceleration, 0);
+            }
         }
 
         accelerationVec.add(0, -gravity);
         velocityVec.add(accelerationVec.x * dt, accelerationVec.y * dt);
 
-        if (!Gdx.input.isKeyPressed(Input.Keys.RIGHT) && !Gdx.input.isKeyPressed(Input.Keys.LEFT) &&
-                !Gdx.input.isKeyPressed(Input.Keys.D)     && !Gdx.input.isKeyPressed(Input.Keys.A))
+        if (knockbackTimer <= 0f && !Gdx.input.isKeyPressed(Input.Keys.RIGHT) && !Gdx.input.isKeyPressed(Input.Keys.LEFT) &&
+                !Gdx.input.isKeyPressed(Input.Keys.D)     && !Gdx.input.isKeyPressed(Input.Keys.A) &&
+                currentState != Playerstate.DASHING)
         {
             float dec = walkDeceleration * dt;
             float dir = (velocityVec.x > 0) ? 1 : -1;
@@ -274,9 +311,22 @@ public class Pablo extends BaseActor
                     currentState = Playerstate.ATTACKING; elapsedTime = 0; spawnAttackHitbox();
                     SoundManager.get().playSfx(Sfx.PLAYER_ATTACK); break;
                 }
-                if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W))
-                    if (onSolid) { jump(false); break; }
-                if (wasOnSolid && !onSolid) { currentState = Playerstate.FALLING; jumpTimer = totalJumpTime * 0.55f; canDoubleJump = true; break; }
+                
+                if (jumpBufferTimer > 0f) {
+                    if (onSolid) {
+                        jumpBufferTimer = 0f;
+                        jump(false);
+                        break;
+                    }
+                }
+                
+                if (wasOnSolid && !onSolid) { 
+                    currentState = Playerstate.FALLING; 
+                    jumpTimer = totalJumpTime * 0.55f; 
+                    canDoubleJump = true; 
+                    coyoteTimer = COYOTE_TIME; // Attiva coyote time
+                    break; 
+                }
                 currentState = (Math.abs(velocityVec.x) > 1f) ? Playerstate.WALKING : Playerstate.IDLE;
                 setAnimation(currentState == Playerstate.WALKING ? walk : stand);
                 break;
@@ -295,6 +345,12 @@ public class Pablo extends BaseActor
 
             case JUMPING:
                 jumpTimer += dt;
+                
+                // Variable Jump Height logic: se salta ma rilascia il tasto, taglia la Y speed
+                if (!Gdx.input.isKeyPressed(Input.Keys.SPACE) && !Gdx.input.isKeyPressed(Input.Keys.W)) {
+                    earlyJumpRelease();
+                }
+                
                 if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f) { startDash(); break; }
                 if ((Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W)) && canDoubleJump && !doubleJumpUsed) { jump(true); break; }
                 if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.J)) {
@@ -310,7 +366,22 @@ public class Pablo extends BaseActor
             case FALLING:
                 jumpTimer += dt;
                 if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashCooldown <= 0f) { startDash(); break; }
-                if ((Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.isKeyJustPressed(Input.Keys.W)) && canDoubleJump && !doubleJumpUsed) { jump(true); break; }
+                
+                // Coyote time jump
+                if (jumpBufferTimer > 0f && coyoteTimer > 0f) {
+                    jumpBufferTimer = 0f;
+                    coyoteTimer = 0f;
+                    jump(false);
+                    break;
+                }
+                
+                // Double jump
+                if (jumpBufferTimer > 0f && canDoubleJump && !doubleJumpUsed && coyoteTimer <= 0f) { 
+                    jumpBufferTimer = 0f;
+                    jump(true); 
+                    break; 
+                }
+
                 if (Gdx.input.isButtonPressed(Input.Buttons.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.J)) {
                     currentState = Playerstate.ATTACKING; elapsedTime = 0; 
                     spawnAttackHitbox(Gdx.input.isKeyPressed(Input.Keys.S)); 
@@ -384,6 +455,15 @@ public class Pablo extends BaseActor
 
     public void jump() { jump(false); }
 
+    public void earlyJumpRelease()
+    {
+        if (currentState == Playerstate.JUMPING && velocityVec.y > 0)
+        {
+            velocityVec.y *= 0.45f;
+            currentState = Playerstate.FALLING;
+        }
+    }
+
     private void updateJumpAnimation()
     {
         float p = jumpTimer / totalJumpTime;
@@ -441,6 +521,11 @@ public class Pablo extends BaseActor
     // -----------------------------------------------------------------------
     public void takeDamage(int amount)
     {
+        takeDamage(amount, 0f);
+    }
+
+    public void takeDamage(int amount, float enemyX)
+    {
         if (isDead || invulnerable) return;
         if (currentState == Playerstate.HEALING) { currentState = Playerstate.IDLE; healApplied = false; }
         health -= amount;
@@ -454,6 +539,16 @@ public class Pablo extends BaseActor
             SoundManager.get().playSfx(Sfx.PLAYER_HURT);
             hitstopActive = true; hitstopTimer = HITSTOP_DURATION;
             invulnerable = true; invulnTimer = INVULN_DURATION; flashTimer = FLASH_INTERVAL; flashVisible = true;
+
+            // Knockback logic
+            float knockbackDir = (this.getX() < enemyX) ? -1f : 1f;
+            knockbackSpeedX = knockbackDir * 350f;
+            knockbackTimer = KNOCKBACK_DURATION;
+            // Spinta verso l'alto per accentuare il knockback
+            velocityVec.y = jumpSpeed * 0.6f;
+            currentState = Playerstate.FALLING;
+            jumpTimer = 0f;
+            wasOnSolid = false;
         }
     }
 
@@ -512,5 +607,4 @@ public class Pablo extends BaseActor
         allowMapTransition = allow;
     }
 }
-
 

@@ -2,8 +2,10 @@
 package pablo.entities.enemies.huskWarrior;
 
 import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import pablo.entities.enemies.Enemy;
+import pablo.entities.enemies.EnemyStats;
 import pablo.entities.player.Pablo;
 import pablo.framework.BaseActor;
 
@@ -14,26 +16,32 @@ public class HuskWarrior extends Enemy
     // Movement
     private static final float PATROL_SPEED          = 50f;
     private static final float IDLE_DURATION         = 0.8f;
-    private static final float RECOIL_SPEED          = 70f;      // backward push on block
+    private static final float RECOIL_SPEED          = 70f;
 
     // Shield timings
     private static final float SHIELD_ANTICIPATE_DUR = 0.040f;
-    private static final float SHIELD_FRONT_IMPACT   = 0.050f;   // shield(front)1 hold
-    private static final float SHIELD_FRONT_HOLD     = 0.300f;   // shield(front)2 hold + recoil
-    private static final float SHIELD_TOP_DUR        = 0.166f;   // top1+top2 combined
+    private static final float SHIELD_FRONT_IMPACT   = 0.050f;
+    private static final float SHIELD_FRONT_HOLD     = 0.300f;
+    private static final float SHIELD_TOP_DUR        = 0.166f;
     private static final float SHIELD_TOP_BUMP_IMPACT= 0.050f;
     private static final float SHIELD_TOP_BUMP_HOLD  = 0.150f;
 
-    // Attack timings
-    private static final float WINDUP_INTRO_DUR      = 3 * 0.066f; // attack1-3 = 0.198f
-    private static final float WINDUP_TOTAL_DUR      = WINDUP_INTRO_DUR + 0.150f; // + hold attack4
-    private static final float STRIKE2_THRESHOLD     = 0.080f;   // attack7 onset (30+50ms)
-    private static final float STRIKE3_THRESHOLD     = 0.130f;   // attack8 onset (+50ms)
-    private static final float ATTACK_TOTAL_DUR      = 0.210f;   // full combo done
-    private static final float ATTACK_COOLDOWN_DUR   = 0.200f;
+    // Attack timings — allungati per rendere i pattern leggibili e punibili
+    private static final float WINDUP_INTRO_DUR      = 3 * 0.090f; // era 3×66ms, ora 3×90ms = 270ms
+    private static final float WINDUP_TOTAL_DUR      = WINDUP_INTRO_DUR + 0.250f; // hold più lungo (era 150ms)
+    private static final float STRIKE2_THRESHOLD     = 0.110f;  // leggermente più lento
+    private static final float STRIKE3_THRESHOLD     = 0.190f;
+    private static final float ATTACK_TOTAL_DUR      = 0.300f;  // era 0.210f
+    private static final float ATTACK_COOLDOWN_DUR   = 0.450f;  // era 0.200f — finestra di punizione più lunga
 
-    // Pogo bounce given to Pablo on top block
+    // Cooldown globale tra sequenze d'attacco (impedisce spam immediato)
+    private static final float GLOBAL_ATTACK_COOLDOWN = 2.0f;   // secondi prima di poter riattaccare
+
     private static final float POGO_BOUNCE_SPEED     = 380f;
+
+    // Hitbox tuning
+    private static final float HITBOX_INSET_X = 10f;
+    private static final float HITBOX_INSET_Y = 6f;
 
     // Death
     private static final float HIT_STOP_DURATION    = 0.100f;
@@ -49,6 +57,11 @@ public class HuskWarrior extends Enemy
     // -------------------------------------------------------------------------
     private HuskWarriorState state;
     private float stateTimer;
+
+    // -------------------------------------------------------------------------
+    // Cooldown globale — impedisce attacchi consecutivi senza pausa
+    // -------------------------------------------------------------------------
+    private float globalAttackCooldown = 0f;
 
     // -------------------------------------------------------------------------
     // Death
@@ -74,19 +87,18 @@ public class HuskWarrior extends Enemy
     private Animation animWalk;
     private Animation animTurn;
     private Animation animShieldAnticipate;
-    private Animation animShieldFrontImpact; // shield(front)1
-    private Animation animShieldFrontHold;   // shield(front)2
-    private Animation animShieldTop;         // shield(top)1+2
-    private Animation animShieldTopImpact;   // shield(topBump)1
-    private Animation animShieldTopHold;     // shield(topBump)2
-    private Animation animWindupIntro;       // attack1-3
-    private Animation animWindupHold;        // attack4 held
-    private Animation animAttackStrikes;     // attack5-8
+    private Animation animShieldFrontImpact;
+    private Animation animShieldFrontHold;
+    private Animation animShieldTop;
+    private Animation animShieldTopImpact;
+    private Animation animShieldTopHold;
+    private Animation animWindupIntro;
+    private Animation animWindupHold;
+    private Animation animAttackStrikes;
     private Animation animDeathAir;
     private Animation animDeathLand;
     private Animation animDeathCorpse;
 
-    // Detection
     private static final float DETECTION_RADIUS      = 220f;
 
     public HuskWarrior(float x, float y, Stage stage, Pablo pablo)
@@ -94,7 +106,7 @@ public class HuskWarrior extends Enemy
         super(x, y, stage);
         this.pablo = pablo;
 
-        health = 16; // 4 unshielded hits from Pablo (4 dmg each)
+        health = EnemyStats.HUSK_WARRIOR_HEALTH;
 
         animIdle = loadAnimationFromFiles(new String[]{
                 PATH+"idle1.png", PATH+"idle2.png", PATH+"idle3.png",
@@ -111,12 +123,10 @@ public class HuskWarrior extends Enemy
                 PATH+"turn1.png", PATH+"turn2.png"
         }, 0.083f, false);
 
-        // Shield anticipate: single frame, 40ms
         animShieldAnticipate = loadAnimationFromFiles(new String[]{
                 PATH+"shield(anticipate).png"
         }, 0.040f, false);
 
-        // Shield front: impact frame, then hold frame (separate anims for clean phasing)
         animShieldFrontImpact = loadAnimationFromFiles(new String[]{
                 PATH+"shield(front)1.png"
         }, 0.050f, false);
@@ -125,7 +135,6 @@ public class HuskWarrior extends Enemy
                 PATH+"shield(front)2.png"
         }, 1f, true);
 
-        // Shield top: raise sequence plays once
         animShieldTop = loadAnimationFromFiles(new String[]{
                 PATH+"shield(top)1.png", PATH+"shield(top)2.png"
         }, 0.083f, false);
@@ -138,20 +147,18 @@ public class HuskWarrior extends Enemy
                 PATH+"shield(topBump)2.png"
         }, 1f, true);
 
-        // Windup: attack1-3 intro, then attack4 held (same split as HuskHornhead anticipate)
         animWindupIntro = loadAnimationFromFiles(new String[]{
                 PATH+"attack1.png", PATH+"attack2.png", PATH+"attack3.png"
-        }, 0.066f, false);
+        }, 0.090f, false);   // era 0.066f
 
         animWindupHold = loadAnimationFromFiles(new String[]{
                 PATH+"attack4.png"
         }, 1f, true);
 
-        // Three strikes: average frame duration (~52ms); hitboxes spawned by stateTimer
         animAttackStrikes = loadAnimationFromFiles(new String[]{
                 PATH+"attack5.png", PATH+"attack6.png",
                 PATH+"attack7.png", PATH+"attack8.png"
-        }, 0.052f, false);
+        }, 0.075f, false);   // era 0.052f — strike leggermente più lenti e leggibili
 
         animDeathAir = loadAnimationFromFiles(new String[]{
                 PATH+"death(air).png"
@@ -169,6 +176,7 @@ public class HuskWarrior extends Enemy
         }, 1f, true);
 
         setBoundaryRectangle();
+        applyHitbox();
 
         belowSensor = new BaseActor(0, 0, stage);
         belowSensor.loadTexture("assets/white.png");
@@ -182,10 +190,34 @@ public class HuskWarrior extends Enemy
         edgeSensor.setBoundaryRectangle();
         edgeSensor.setVisible(false);
 
-        // Posiziona i sensori subito per il primo frame
         updateSensorPositions();
 
         enterState(HuskWarriorState.IDLE);
+    }
+
+    @Override
+    public void setAnimation(Animation<TextureRegion> anim)
+    {
+        super.setAnimation(anim);
+        applyHitbox();
+    }
+
+    private void applyHitbox()
+    {
+        float w = getWidth();
+        float h = getHeight();
+
+        float insetX = Math.min(HITBOX_INSET_X, w * 0.33f);
+        float insetY = Math.min(HITBOX_INSET_Y, h * 0.33f);
+
+        float[] vertices = new float[] {
+            insetX,      insetY,
+            w - insetX,  insetY,
+            w - insetX,  h - insetY,
+            insetX,      h - insetY
+        };
+
+        setBoundaryPolygon(vertices);
     }
 
     @Override
@@ -203,6 +235,10 @@ public class HuskWarrior extends Enemy
                 launchDeath();
             return;
         }
+
+        // Decrementa il cooldown globale ogni frame
+        if (globalAttackCooldown > 0f)
+            globalAttackCooldown = Math.max(0f, globalAttackCooldown - dt);
 
         stateTimer += dt;
 
@@ -233,7 +269,8 @@ public class HuskWarrior extends Enemy
         setAnimation(animIdle);
         faceDirection(direction);
 
-        if (isInDetectionRange())
+        // Attacca solo se il cooldown globale è scaduto
+        if (isInDetectionRange() && globalAttackCooldown <= 0f)
         {
             faceTarget();
             enterState(HuskWarriorState.ATTACK_WINDUP);
@@ -249,7 +286,8 @@ public class HuskWarrior extends Enemy
         applyGravity(dt);
         updateSensorPositions();
 
-        if (isInDetectionRange())
+        // Attacca solo se il cooldown globale è scaduto
+        if (isInDetectionRange() && globalAttackCooldown <= 0f)
         {
             faceTarget();
             enterState(HuskWarriorState.ATTACK_WINDUP);
@@ -279,7 +317,8 @@ public class HuskWarrior extends Enemy
 
         setAnimation(animTurn);
 
-        if (isInDetectionRange())
+        // Attacca solo se il cooldown globale è scaduto
+        if (isInDetectionRange() && globalAttackCooldown <= 0f)
         {
             faceTarget();
             enterState(HuskWarriorState.ATTACK_WINDUP);
@@ -316,28 +355,27 @@ public class HuskWarrior extends Enemy
 
         if (stateTimer < SHIELD_FRONT_IMPACT)
         {
-            // Impact frame — planted
             setAnimation(animShieldFrontImpact);
             velocityVec.x = 0;
         }
         else
         {
-            // Hold frame — recoil pushback away from Pablo
             setAnimation(animShieldFrontHold);
             float recoilDir;
-
-            if (pablo.getX() > getX())
-                recoilDir = -1f;
-            else
-                recoilDir = 1f;
-            velocityVec.x   = recoilDir * RECOIL_SPEED;
+            if (pablo.getX() > getX()) recoilDir = -1f;
+            else                        recoilDir =  1f;
+            velocityVec.x = recoilDir * RECOIL_SPEED;
         }
 
         moveBy(velocityVec.x * dt, velocityVec.y * dt);
         syncFacingToHorizontalMovement();
 
         if (stateTimer >= total)
+        {
+            // Dopo la parata, piccolo cooldown prima di riattaccare
+            globalAttackCooldown = 0.8f;
             enterState(HuskWarriorState.ATTACK_WINDUP);
+        }
     }
 
     private void tickShieldTop(float dt)
@@ -363,10 +401,8 @@ public class HuskWarrior extends Enemy
 
         float total = SHIELD_TOP_BUMP_IMPACT + SHIELD_TOP_BUMP_HOLD;
 
-        if (stateTimer < SHIELD_TOP_BUMP_IMPACT)
-            setAnimation(animShieldTopImpact);
-        else
-            setAnimation(animShieldTopHold);
+        if (stateTimer < SHIELD_TOP_BUMP_IMPACT) setAnimation(animShieldTopImpact);
+        else                                      setAnimation(animShieldTopHold);
 
         faceDirection(direction);
 
@@ -381,10 +417,8 @@ public class HuskWarrior extends Enemy
         moveBy(0, velocityVec.y * dt);
         updateSensorPositions();
 
-        if (stateTimer < WINDUP_INTRO_DUR)
-            setAnimation(animWindupIntro); // attack1-3 at 66ms each
-        else
-            setAnimation(animWindupHold);  // attack4 held for 150ms
+        if (stateTimer < WINDUP_INTRO_DUR) setAnimation(animWindupIntro);
+        else                                setAnimation(animWindupHold);
 
         faceDirection(direction);
 
@@ -402,21 +436,16 @@ public class HuskWarrior extends Enemy
         setAnimation(animAttackStrikes);
         faceDirection(direction);
 
-        // Strike 1 — attack5+6 window (~0-80ms)
         if (!hit1Landed)
         {
             if (overlaps(pablo)) pablo.takeDamage(1);
             hit1Landed = true;
         }
-
-        // Strike 2 — attack7 window (~80-130ms)
         if (!hit2Landed && stateTimer >= STRIKE2_THRESHOLD)
         {
             if (overlaps(pablo)) pablo.takeDamage(1);
             hit2Landed = true;
         }
-
-        // Strike 3 — attack8 window (~130-210ms)
         if (!hit3Landed && stateTimer >= STRIKE3_THRESHOLD)
         {
             if (overlaps(pablo)) pablo.takeDamage(1);
@@ -429,7 +458,6 @@ public class HuskWarrior extends Enemy
 
     private void tickAttackCooldown(float dt)
     {
-        // Punish window: warrior rests, shield is DOWN, all hits land
         applyGravity(dt);
         velocityVec.x = 0;
         moveBy(0, velocityVec.y * dt);
@@ -439,7 +467,12 @@ public class HuskWarrior extends Enemy
         faceDirection(direction);
 
         if (stateTimer >= ATTACK_COOLDOWN_DUR)
+        {
+            // Fine sequenza d'attacco: imposta il cooldown globale prima di riprendere l'IA.
+            // Questo impedisce che il warrior riattacchi immediatamente al prossimo tickIdle/tickPatrol.
+            globalAttackCooldown = GLOBAL_ATTACK_COOLDOWN;
             enterState(HuskWarriorState.IDLE);
+        }
     }
 
     private void tickDeadAir(float dt)
@@ -457,7 +490,7 @@ public class HuskWarrior extends Enemy
         if (isOnGround())
         {
             velocityVec.set(0, 0);
-            setRotation(0); // snap on impact
+            setRotation(0);
             enterState(HuskWarriorState.DEAD_LAND);
         }
     }
@@ -466,7 +499,6 @@ public class HuskWarrior extends Enemy
     {
         if (stateTimer < LAND_TUMBLE_DURATION)
         {
-            // Frames 1-7: tumble with decelerating slide
             float progress   = stateTimer / LAND_TUMBLE_DURATION;
             float slideSpeed = 60f * (1f - progress);
             velocityVec.x = deathKnockbackDir * slideSpeed;
@@ -476,7 +508,6 @@ public class HuskWarrior extends Enemy
         }
         else
         {
-            // Frame 8: hold forever — no remove()
             velocityVec.set(0, 0);
             setAnimation(animDeathCorpse);
         }
@@ -485,54 +516,47 @@ public class HuskWarrior extends Enemy
     @Override
     public void takeDamage(int amount)
     {
-        // Ignore during death
         if (state == HuskWarriorState.HIT_STOP ||
                 state == HuskWarriorState.DEAD_AIR   ||
                 state == HuskWarriorState.DEAD_LAND)
             return;
 
-        // Ignore during active combat (committed to attack)
         if (state == HuskWarriorState.ATTACK_WINDUP ||
                 state == HuskWarriorState.ATTACKING)
             return;
 
-        // Already in a shield state — ignore repeat hits
         if (state == HuskWarriorState.SHIELD_ANTICIPATE ||
                 state == HuskWarriorState.SHIELD_FRONT    ||
                 state == HuskWarriorState.SHIELD_TOP      ||
                 state == HuskWarriorState.SHIELD_TOP_BUMP)
             return;
 
-        // Blocking only active while patrolling — cooldown is the punish window
         boolean canBlock = (state == HuskWarriorState.IDLE    ||
                 state == HuskWarriorState.PATROL   ||
                 state == HuskWarriorState.TURNING);
 
         if (canBlock && isPogoFromAbove())
         {
-            pablo.velocityVec.y = POGO_BOUNCE_SPEED; // bounce Pablo upward
+            pablo.velocityVec.y = POGO_BOUNCE_SPEED;
             enterState(HuskWarriorState.SHIELD_TOP);
-            return; // no damage
+            return;
         }
 
         if (canBlock && isShieldFacingPablo())
         {
-            enterState(HuskWarriorState.SHIELD_ANTICIPATE); // block → retaliate
-            return; // no damage
+            enterState(HuskWarriorState.SHIELD_ANTICIPATE);
+            return;
         }
 
-        // Unshielded hit (from behind, or during cooldown)
         health -= amount;
 
         if (health <= 0)
         {
             health = 0;
-            if (pablo.getX() < getX())
-                deathKnockbackDir = 1f;
-            else
-                deathKnockbackDir = -1f;
-            spinDir           = deathKnockbackDir;
-            hitStopTimer      = HIT_STOP_DURATION;
+            if (pablo.getX() < getX()) deathKnockbackDir = 1f;
+            else                        deathKnockbackDir = -1f;
+            spinDir      = deathKnockbackDir;
+            hitStopTimer = HIT_STOP_DURATION;
             spawnShieldProp();
             enterState(HuskWarriorState.HIT_STOP);
         }
@@ -548,56 +572,44 @@ public class HuskWarrior extends Enemy
     @Override
     public void onWallHit()
     {
-        if (state == HuskWarriorState.PATROL)
-            flip();
-        // All other states: walls are ignored
+        if (state == HuskWarriorState.PATROL) flip();
     }
 
     private void spawnShieldProp()
     {
-        // Shield flies opposite to knockback direction and arcs upward
         float shieldVelX = -deathKnockbackDir * 190f;
         float shieldVelY = 310f;
-        float shieldSpin = deathKnockbackDir * 380f; // degrees/sec
+        float shieldSpin = deathKnockbackDir * 380f;
         new ShieldProp(getX(), getY() + getHeight() * 0.5f,
                 getStage(), shieldVelX, shieldVelY, shieldSpin);
     }
 
-    // Returns true if the shield side of the warrior is the side Pablo is on
     private boolean isShieldFacingPablo()
     {
         float pabloCenterX = pablo.getX() + pablo.getWidth()  / 2f;
         float selfCenterX  = getX()       + getWidth()        / 2f;
-        if (direction > 0)
-            return pabloCenterX > selfCenterX;
-        else
-            return pabloCenterX < selfCenterX;
+        if (direction > 0) return pabloCenterX > selfCenterX;
+        else               return pabloCenterX < selfCenterX;
     }
 
     private boolean isInDetectionRange()
     {
-        float selfX = getX() + getWidth() / 2f;
-        float selfY = getY() + getHeight() / 2f;
-
-        float pabloX = pablo.getX() + pablo.getWidth() / 2f;
+        float selfX  = getX() + getWidth()  / 2f;
+        float selfY  = getY() + getHeight() / 2f;
+        float pabloX = pablo.getX() + pablo.getWidth()  / 2f;
         float pabloY = pablo.getY() + pablo.getHeight() / 2f;
-
-        float dx = pabloX - selfX;
-        float dy = pabloY - selfY;
-
+        float dx     = pabloX - selfX;
+        float dy     = pabloY - selfY;
         return dx * dx + dy * dy < DETECTION_RADIUS * DETECTION_RADIUS;
     }
 
     private void faceTarget()
     {
-        if (pablo.getX() > getX())
-            direction = 1f;
-        else
-            direction = -1f;
+        if (pablo.getX() > getX()) direction = 1f;
+        else                        direction = -1f;
         faceDirection(direction);
     }
 
-    // True when Pablo is falling from above the warrior's midpoint
     private boolean isPogoFromAbove()
     {
         float warriorMidY  = getY() + getHeight() * 0.5f;
@@ -623,7 +635,7 @@ public class HuskWarrior extends Enemy
     }
 
     // =========================================================================
-    // Shield Prop — independent physics actor spawned at moment of death
+    // Shield Prop
     // =========================================================================
     private static class ShieldProp extends BaseActor
     {
@@ -648,7 +660,7 @@ public class HuskWarrior extends Enemy
             velY -= GRAVITY * dt;
             moveBy(velX * dt, velY * dt);
             setRotation(getRotation() + spinRate * dt);
-            if (getY() < -200f) remove(); // self-cleanup when off-screen
+            if (getY() < -200f) remove();
         }
     }
 }

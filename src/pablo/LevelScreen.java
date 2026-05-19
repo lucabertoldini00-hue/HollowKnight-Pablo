@@ -8,6 +8,8 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapProperties;
@@ -48,8 +50,20 @@ import pablo.entities.enemies.huskWarrior.HuskWarrior;
 
 import java.util.ArrayList;
 
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+
 public class LevelScreen extends BaseScreen
 {
+    private static final String PROMPT_FONT_PATH = "assets/TrajanPro-Regular.ttf";
+
+    private static final Color PROMPT_COL_ORN  = new Color(0.40f, 0.90f, 0.45f, 1.0f);
+    private static final Color PROMPT_COL_TEXT = new Color(0.75f, 1.00f, 0.75f, 1.0f);
+    private static final Color PROMPT_BG_COL   = new Color(0.02f, 0.02f, 0.03f, 0.94f);
+
+    private static final float PROMPT_PANEL_W = 240f;
+    private static final float PROMPT_PANEL_H = 80f;
+    private static final float PROMPT_LINE_W  = 80f;
+    private static final float PROMPT_LINE_H  = 2f;
     // -----------------------------------------------------------------------
     // Path mappa — parametrico: passa il .tmx che vuoi nel costruttore
     // -----------------------------------------------------------------------
@@ -97,16 +111,28 @@ public class LevelScreen extends BaseScreen
     private Vector2 bossSpawnPoint = null;
     private boolean bossDialogOpen = false;
     private boolean bossFightStarted = false;
+    private boolean bossDeathSequenceActive = false;
 
     private Table bossDialog;
     private Texture dialogTexture;
     private BitmapFont dialogFont;
     private Texture dialogBtnUpTexture;
     private Texture dialogBtnDownTexture;
+    private Table bossDeathTable;
+    private Texture bossDeathBgTexture;
+    private Texture bossDeathTexture;
+    private Image bossDeathImage;
+    private Label bossDeathLine1;
+    private Label bossDeathLine2;
 
     private Table bossPromptTable;
     private Label bossPromptLabel;
     private BitmapFont promptFont;
+    private boolean promptFontOwned;
+    private Texture promptBgTexture;
+    private Texture promptLineTexture;
+    private Texture promptDotTexture;
+    private Texture promptDecoTexture;
 
     private float shakeDuration  = 0f;
     private float shakeIntensity = 5f;
@@ -336,6 +362,21 @@ public class LevelScreen extends BaseScreen
         // Ricettacolo anima
         updateVessel(dt);
 
+        // Respawn immediato alla morte
+        if (pablo.isDead())
+        {
+            if (bossFightStarted && !bossDeathSequenceActive)
+            {
+                startBossDeathSequence();
+                return;
+            }
+             pablo.respawn();
+             voidTimer = 0f;
+             return;
+        }
+        if (bossDeathSequenceActive)
+            return;
+
         // Void fall
         if (pablo.getY() <= 2f && !pablo.isOnSolid())
         {
@@ -402,6 +443,13 @@ public class LevelScreen extends BaseScreen
             enemy.snapToGroundIfOverlapping();
         }
 
+        for (BaseActor eActor : BaseActor.getList(mainStage, Enemy.class.getName()))
+        {
+            Enemy enemy = (Enemy) eActor;
+            if (!enemy.isDead() && !enemy.isSettling() && pablo.overlaps(enemy))
+                pablo.takeDamage(1, enemy.getX() + enemy.getWidth() / 2f);
+        }
+
         // Screen shake
         if (shakeDuration > 0)
         {
@@ -417,17 +465,20 @@ public class LevelScreen extends BaseScreen
             if (pablo.overlaps(bossTrigger))
             {
                 bossPromptLabel.setVisible(true);
+                bossPromptTable.setVisible(true);
                 if (Gdx.input.isKeyJustPressed(Input.Keys.E))
                     openBossDialog();
             }
             else
             {
                 bossPromptLabel.setVisible(false);
+                bossPromptTable.setVisible(false);
             }
         }
         else if (bossPromptLabel != null)
         {
             bossPromptLabel.setVisible(false);
+            bossPromptTable.setVisible(false);
         }
 
         // FalseKnight — solo se presente nella mappa
@@ -456,7 +507,7 @@ public class LevelScreen extends BaseScreen
             }
 
             if (falseKnight.maceOverlapsPablo())
-                pablo.takeDamage(1);
+                pablo.takeDamage(5, falseKnight.getX() + falseKnight.getWidth() / 2f);
         }
 
         // Transizione mappa destra
@@ -554,6 +605,15 @@ public class LevelScreen extends BaseScreen
             return true;
         }
         if (keyCode == Input.Keys.K) { pablo.takeDamage(1); return true; }
+        if (keyCode == Input.Keys.NUM_9 || keyCode == Input.Keys.NUMPAD_9)
+        {
+            if (MapGraph.getFirstPath().equals(mapPath))
+            {
+                PlayerState.saveFrom(pablo);
+                BaseGame.setActiveScreen(new LevelScreen(MapGraph.getLastPath(), "start"));
+            }
+            return true;
+        }
         if (keyCode == Input.Keys.O)
         {
             if (falseKnight != null) falseKnight.takeDamage(1);
@@ -651,8 +711,23 @@ public class LevelScreen extends BaseScreen
     private void buildBossDialog()
     {
         dialogTexture = loadTextureSafe("assets/dialog.png", new Color(0f, 0f, 0f, 0.75f));
-        dialogFont = new BitmapFont();
-        dialogFont.getData().setScale(1.1f);
+        try
+        {
+            FreeTypeFontGenerator gen = new FreeTypeFontGenerator(
+                    Gdx.files.internal(PROMPT_FONT_PATH));
+            FreeTypeFontParameter param = new FreeTypeFontParameter();
+            param.size = 20;
+            param.color = PROMPT_COL_TEXT;
+            param.hinting = FreeTypeFontGenerator.Hinting.Full;
+            dialogFont = gen.generateFont(param);
+            gen.dispose();
+        }
+        catch (Exception e)
+        {
+            Gdx.app.log("LevelScreen", "Font dialogo non trovato, uso default: " + e.getMessage());
+            dialogFont = new BitmapFont();
+            dialogFont.setColor(PROMPT_COL_TEXT);
+        }
 
         Pixmap upPix = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         upPix.setColor(new Color(0.25f, 0.25f, 0.25f, 0.9f));
@@ -672,7 +747,7 @@ public class LevelScreen extends BaseScreen
         btnStyle.down = new TextureRegionDrawable(new TextureRegion(dialogBtnDownTexture));
         btnStyle.over = btnStyle.down;
 
-        LabelStyle labelStyle = new LabelStyle(dialogFont, Color.WHITE);
+        LabelStyle labelStyle = new LabelStyle(dialogFont, PROMPT_COL_TEXT);
 
         Label message = new Label(
                 "Questa è la tua prova finale, vuoi affrontare il boss?",
@@ -706,7 +781,7 @@ public class LevelScreen extends BaseScreen
         });
 
         Table box = new Table();
-        box.setBackground(new TextureRegionDrawable(new TextureRegion(dialogTexture)));
+        box.setBackground(new TextureRegionDrawable(new TextureRegion(promptBgTexture)));
         box.pad(24f);
         box.add(message).width(520).center().row();
 
@@ -725,18 +800,79 @@ public class LevelScreen extends BaseScreen
 
     private void buildBossPrompt()
     {
-        promptFont = new BitmapFont();
-        promptFont.getData().setScale(1.1f);
-        LabelStyle style = new LabelStyle(promptFont, Color.WHITE);
+        buildPromptAssets();
 
+        LabelStyle style = new LabelStyle(promptFont, PROMPT_COL_TEXT);
         bossPromptLabel = new Label("Premi E", style);
         bossPromptLabel.setVisible(false);
+
+        Table panel = new Table();
+        panel.setBackground(new TextureRegionDrawable(new TextureRegion(promptBgTexture)));
+        panel.setSize(PROMPT_PANEL_W, PROMPT_PANEL_H);
+        panel.pad(8f);
+
+        Table topOrn = new Table();
+        Image lineLeft = new Image(promptLineTexture);
+        Image lineRight = new Image(promptLineTexture);
+        Image deco = new Image(promptDecoTexture);
+        Image dot = new Image(promptDotTexture);
+        topOrn.add(lineLeft).size(PROMPT_LINE_W, PROMPT_LINE_H).padRight(6f);
+        topOrn.add(deco).size(10f, 10f).padRight(2f);
+        topOrn.add(dot).size(6f, 6f).padRight(2f);
+        topOrn.add(deco).size(10f, 10f).padLeft(2f).padRight(6f);
+        topOrn.add(lineRight).size(PROMPT_LINE_W, PROMPT_LINE_H);
+
+        Table bottomOrn = new Table();
+        Image lineLeftB = new Image(promptLineTexture);
+        Image lineRightB = new Image(promptLineTexture);
+        Image decoB = new Image(promptDecoTexture);
+        Image dotB = new Image(promptDotTexture);
+        bottomOrn.add(lineLeftB).size(PROMPT_LINE_W, PROMPT_LINE_H).padRight(6f);
+        bottomOrn.add(decoB).size(10f, 10f).padRight(2f);
+        bottomOrn.add(dotB).size(6f, 6f).padRight(2f);
+        bottomOrn.add(decoB).size(10f, 10f).padLeft(2f).padRight(6f);
+        bottomOrn.add(lineRightB).size(PROMPT_LINE_W, PROMPT_LINE_H);
+
+        panel.add(topOrn).expandX().center().row();
+        panel.add(bossPromptLabel).padTop(4f).padBottom(4f).center().row();
+        panel.add(bottomOrn).expandX().center();
 
         bossPromptTable = new Table();
         bossPromptTable.setFillParent(true);
         bossPromptTable.bottom();
-        bossPromptTable.add(bossPromptLabel).padBottom(24f);
+        bossPromptTable.add(panel).padBottom(24f);
+        bossPromptTable.setVisible(false);
         uiStage.addActor(bossPromptTable);
+    }
+
+    private void buildPromptAssets()
+    {
+        if (promptFont != null && promptBgTexture != null)
+            return;
+
+        promptFontOwned = false;
+        try
+        {
+            FreeTypeFontGenerator gen = new FreeTypeFontGenerator(
+                    Gdx.files.internal(PROMPT_FONT_PATH));
+            FreeTypeFontParameter param = new FreeTypeFontParameter();
+            param.size = 18;
+            param.color = PROMPT_COL_TEXT;
+            param.hinting = FreeTypeFontGenerator.Hinting.Full;
+            promptFont = gen.generateFont(param);
+            gen.dispose();
+            promptFontOwned = true;
+        }
+        catch (Exception e)
+        {
+            Gdx.app.log("LevelScreen", "Font prompt non trovato, uso default: " + e.getMessage());
+            promptFont = new BitmapFont();
+        }
+
+        promptBgTexture   = makeColorTex(PROMPT_BG_COL);
+        promptLineTexture = makeHLineTex(256, 2, PROMPT_COL_ORN);
+        promptDotTexture  = makeDotTex(6, PROMPT_COL_ORN);
+        promptDecoTexture = makeDiamondTex(10, PROMPT_COL_ORN);
     }
 
     // -----------------------------------------------------------------------
@@ -756,7 +892,13 @@ public class LevelScreen extends BaseScreen
         if (dialogFont           != null) dialogFont.dispose();
         if (dialogBtnUpTexture   != null) dialogBtnUpTexture.dispose();
         if (dialogBtnDownTexture != null) dialogBtnDownTexture.dispose();
-        if (promptFont           != null) promptFont.dispose();
+        if (promptFontOwned && promptFont != null) promptFont.dispose();
+        if (promptBgTexture   != null) promptBgTexture.dispose();
+        if (promptLineTexture != null) promptLineTexture.dispose();
+        if (promptDotTexture  != null) promptDotTexture.dispose();
+        if (promptDecoTexture != null) promptDecoTexture.dispose();
+        if (bossDeathBgTexture != null) bossDeathBgTexture.dispose();
+        if (bossDeathTexture != null) bossDeathTexture.dispose();
     }
 
     // -----------------------------------------------------------------------
@@ -778,6 +920,61 @@ public class LevelScreen extends BaseScreen
             pix.dispose();
             return t;
         }
+    }
+
+    private Texture makeColorTex(Color c)
+    {
+        Pixmap p = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        p.setColor(c);
+        p.fill();
+        Texture t = new Texture(p);
+        p.dispose();
+        return t;
+    }
+
+    private Texture makeHLineTex(int w, int h, Color c)
+    {
+        Pixmap p = new Pixmap(w, h, Pixmap.Format.RGBA8888);
+        p.setColor(0, 0, 0, 0);
+        p.fill();
+        for (int x = 0; x < w; x++)
+        {
+            float alpha = 0.8f * (float) Math.sin(Math.PI * x / w);
+            p.setColor(c.r, c.g, c.b, alpha);
+            for (int y = 0; y < h; y++)
+                p.drawPixel(x, y);
+        }
+        Texture t = new Texture(p);
+        p.dispose();
+        return t;
+    }
+
+    private Texture makeDotTex(int size, Color c)
+    {
+        Pixmap p = new Pixmap(size, size, Pixmap.Format.RGBA8888);
+        p.setColor(0, 0, 0, 0);
+        p.fill();
+        p.setColor(c);
+        p.fillCircle(size / 2, size / 2, size / 2 - 1);
+        Texture t = new Texture(p);
+        p.dispose();
+        return t;
+    }
+
+    private Texture makeDiamondTex(int size, Color c)
+    {
+        Pixmap p = new Pixmap(size, size, Pixmap.Format.RGBA8888);
+        p.setColor(0, 0, 0, 0);
+        p.fill();
+        p.setColor(c);
+        int half = size / 2;
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+                if (Math.abs(x - half) + Math.abs(y - half) <= half)
+                    p.drawPixel(x, y);
+        Texture t = new Texture(p);
+        p.dispose();
+        return t;
     }
 
     private Texture createEmptyVesselTexture(int size)
@@ -855,5 +1052,58 @@ public class LevelScreen extends BaseScreen
             solid.setBoundaryPolygon(tri);
         }
     }
-}
 
+    private void startBossDeathSequence()
+    {
+        bossDeathSequenceActive = true;
+
+        if (bossDeathTable == null)
+            buildBossDeathOverlay();
+
+        bossDeathTable.setVisible(true);
+        bossDeathImage.setVisible(false);
+        bossDeathLine1.setVisible(false);
+        bossDeathLine2.setVisible(false);
+
+        bossDeathTable.clearActions();
+        bossDeathTable.addAction(Actions.sequence(
+                Actions.delay(3f),
+                Actions.run(() -> {
+                    bossDeathLine1.setVisible(true);
+                    bossDeathLine2.setVisible(true);
+                }),
+                Actions.delay(4f),
+                Actions.run(() -> bossDeathImage.setVisible(true)),
+                Actions.delay(0.6f),
+                Actions.run(() -> Gdx.app.exit())
+        ));
+    }
+
+    private void buildBossDeathOverlay()
+    {
+        buildPromptAssets();
+
+        bossDeathBgTexture = makeColorTex(new Color(0f, 0f, 0f, 1f));
+        bossDeathTexture = loadTextureSafe("assets/se.jpg", new Color(0f, 0f, 0f, 1f));
+        bossDeathImage = new Image(bossDeathTexture);
+        bossDeathImage.setVisible(false);
+        LabelStyle style = new LabelStyle(promptFont, PROMPT_COL_TEXT);
+
+        bossDeathLine1 = new Label("Beh, sei morto... puoi sempre riprovarci...", style);
+        bossDeathLine2 = new Label("Oppure no", style);
+        bossDeathLine1.setFontScale(4f);
+        bossDeathLine2.setFontScale(4f);
+
+        Table textBox = new Table();
+        textBox.add(bossDeathImage).padBottom(18f).row();
+        textBox.add(bossDeathLine1).padBottom(10f).row();
+        textBox.add(bossDeathLine2);
+
+        bossDeathTable = new Table();
+        bossDeathTable.setFillParent(true);
+        bossDeathTable.setBackground(new TextureRegionDrawable(new TextureRegion(bossDeathBgTexture)));
+        bossDeathTable.add(textBox).center();
+        bossDeathTable.setVisible(false);
+        uiStage.addActor(bossDeathTable);
+    }
+}

@@ -4,6 +4,7 @@ package pablo.entities.enemies.huskHornhead;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import pablo.entities.enemies.Enemy;
+import pablo.entities.enemies.EnemyStats;
 import pablo.entities.player.Pablo;
 import pablo.framework.BaseActor;
 
@@ -68,7 +69,7 @@ public class HuskHornhead extends Enemy
         super(x, y, stage);
         this.pablo = pablo;
 
-        health = 12;
+        health = EnemyStats.HUSK_HORNHEAD_HEALTH;
 
         animIdle = loadAnimationFromFiles(new String[]{
                 PATH + "idle1.png", PATH + "idle2.png", PATH + "idle3.png",

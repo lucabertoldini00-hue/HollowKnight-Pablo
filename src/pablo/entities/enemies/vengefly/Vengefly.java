@@ -10,6 +10,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import pablo.entities.enemies.Enemy;
+import pablo.entities.enemies.EnemyStats;
 import pablo.entities.player.Pablo;
 import pablo.framework.BaseActor;
 
@@ -39,6 +40,7 @@ public class Vengefly extends Enemy
     private static final float DEATH_GRAVITY     = 1400f;  // heavy fall arc
     private static final float MAX_FALL_SPEED    = 1200f;
     private static final float SPIN_SPEED        = 520f;   // degrees/sec while dead
+    private static final float SPAWN_AGGRO_DELAY = 0.40f;  // grace period before detecting Pablo
 
     // -------------------------------------------------------------------------
     // State
@@ -58,6 +60,7 @@ public class Vengefly extends Enemy
     private float hitStopTimer;
     private float deathKnockbackDir; // +1 or -1
     private float spinDir;
+    private float aggroDelayTimer;
 
     // -------------------------------------------------------------------------
     // Player reference
@@ -81,11 +84,10 @@ public class Vengefly extends Enemy
     public Vengefly(float x, float y, Stage stage, Pablo pablo)
     {
         super(x, y, stage);
-        this.pablo  = pablo;
-        this.spawnX = x;
-        this.spawnY = y;
+        this.pablo = pablo;
 
-        health = 8;
+        health = EnemyStats.VENGEFLY_HEALTH;
+        aggroDelayTimer = SPAWN_AGGRO_DELAY;
 
         // --- Idle: 5 frames, 50ms each, looping ---
         animIdle = loadAnimationFromFiles(new String[]{
@@ -149,6 +151,9 @@ public class Vengefly extends Enemy
         if (!canUpdateAI() && !isInDeathSequence())
             return;
 
+        if (aggroDelayTimer > 0f)
+            aggroDelayTimer = Math.max(0f, aggroDelayTimer - dt);
+
         // Hit-stop: freeze completely, then launch into death arc
         if (state == VengeflyState.HIT_STOP)
         {
@@ -167,7 +172,6 @@ public class Vengefly extends Enemy
             case STARTLE:     tickStartle(dt);     break;
             case CHASE:       tickChase(dt);       break;
             case DEAD_AIR:    tickDeadAir(dt);     break;
-            case DEAD_GROUND: tickDeadGround();    break;
         }
     }
 
@@ -195,7 +199,7 @@ public class Vengefly extends Enemy
             faceDirection(dx);
 
         // Aggro check every frame
-        if (isInDetectionRange())
+        if (aggroDelayTimer <= 0f && isInDetectionRange())
             enterState(VengeflyState.STARTLE);
     }
 

@@ -7,6 +7,7 @@ package pablo.entities.enemies.huskBully;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import pablo.entities.enemies.Enemy;
+import pablo.entities.enemies.EnemyStats;
 import pablo.entities.player.Pablo;
 import pablo.framework.BaseActor;
 
@@ -89,7 +90,7 @@ public class HuskBully extends Enemy
         super(x, y, stage);
         this.pablo = pablo;
 
-        health = 14;
+        health = EnemyStats.HUSK_BULLY_HEALTH;
 
         // --- Idle: 6 frames at 83ms, looping ---
         animIdle = loadAnimationFromFiles(new String[]{

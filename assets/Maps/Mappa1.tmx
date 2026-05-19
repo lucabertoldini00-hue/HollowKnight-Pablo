@@ -64,16 +64,6 @@
     <property name="name" value="Tiktik"/>
    </properties>
   </object>
-  <object id="17" name="HuskBully" x="800" y="928" width="64" height="48">
-   <properties>
-    <property name="name" value="HuskBully"/>
-   </properties>
-  </object>
-  <object id="18" name="HuskBully" x="320" y="928" width="64" height="48">
-   <properties>
-    <property name="name" value="HuskBully"/>
-   </properties>
-  </object>
   <object id="19" name="HuskWarrior" x="1216" y="912" width="80" height="64">
    <properties>
     <property name="name" value="HuskWarrior"/>

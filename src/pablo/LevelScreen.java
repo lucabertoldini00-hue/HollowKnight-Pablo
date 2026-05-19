@@ -165,8 +165,6 @@ public class LevelScreen extends BaseScreen
     private void initializeLevel()
     {
         String effectiveMapPath = (mapPath != null) ? mapPath : DEFAULT_MAP;
-        if (mapPath == null)
-            Gdx.app.log("LevelScreen", "mapPath è null, usando default: " + DEFAULT_MAP);
 
         Gdx.app.log("LevelScreen", "Caricamento mappa: " + effectiveMapPath);
 
@@ -274,8 +272,6 @@ public class LevelScreen extends BaseScreen
         // -----------------------------------------------------------------------
         if (bossTrigger == null)
             spawnFalseKnightIfPresent();
-        else
-            Gdx.app.log("LevelScreen", "FalseKnight in attesa di conferma dialogo.");
 
         // Z-order
         tma.toBack();
@@ -494,11 +490,6 @@ public class LevelScreen extends BaseScreen
 
         enemyRuntimeLogTimer = 0f;
         enemyRuntimeLogCount++;
-
-        Camera cam = mainStage.getCamera();
-        Gdx.app.log("EnemyRuntime", "sample=" + enemyRuntimeLogCount
-                + " camera=" + cam.position.x + "," + cam.position.y
-                + " enemies=" + BaseActor.count(mainStage, Enemy.class.getName()));
     }
 
     // -----------------------------------------------------------------------
@@ -634,7 +625,6 @@ public class LevelScreen extends BaseScreen
     {
         if (bossSpawnPoint == null)
         {
-            Gdx.app.log("LevelScreen", "FalseKnight non presente in questa mappa — skip.");
             return;
         }
 
@@ -643,7 +633,6 @@ public class LevelScreen extends BaseScreen
         falseKnight.setScreenShakeCallback(() -> shakeDuration = 0.15f);
         falseKnight.toFront();
         bossFightStarted = true;
-        Gdx.app.log("LevelScreen", "FalseKnight spawned at " + bossSpawnPoint.x + "," + bossSpawnPoint.y);
     }
 
     private void openBossDialog()

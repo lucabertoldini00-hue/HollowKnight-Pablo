@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="120" height="65" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="46">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="120" height="65" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="58">
  <tileset firstgid="1" name="2" tilewidth="16" tileheight="16" tilecount="8040" columns="120">
   <image source="2.png" width="1920" height="1080"/>
  </tileset>
@@ -21,12 +21,6 @@
    </properties>
    <polygon points="0,0 0,144 176,320 240,320 240,304 320,320 368,256 240,256 224,256 176,160 192,48 288,48 320,64 368,48 368,0"/>
   </object>
-  <object id="27" name="solido" x="784" y="544">
-   <properties>
-    <property name="name" value="solido"/>
-   </properties>
-   <polygon points="0,0 64,0 64,16 0,16"/>
-  </object>
   <object id="28" name="solido" x="960" y="432">
    <properties>
     <property name="name" value="solido"/>
@@ -37,7 +31,7 @@
    <properties>
     <property name="name" value="solido"/>
    </properties>
-   <polygon points="0,0 48,0 48,80 32,96 0,80"/>
+   <polygon points="0,0 48,0 48,66.6667 32,80 0,66.6667"/>
   </object>
   <object id="30" name="solido" x="320" y="144">
    <properties>
@@ -51,35 +45,11 @@
    </properties>
    <polygon points="0,0 0,96 128,128 128,0"/>
   </object>
-  <object id="32" name="solido" x="720" y="320">
-   <properties>
-    <property name="name" value="solido"/>
-   </properties>
-   <polygon points="0,0 161.333,16 176,16 176,-64 0,-64 0,0"/>
-  </object>
-  <object id="34" name="solido" x="624" y="697">
-   <properties>
-    <property name="name" value="solido"/>
-   </properties>
-   <polygon points="0,0 48,0 48,16 0,16"/>
-  </object>
-  <object id="35" name="solido" x="675" y="822">
-   <properties>
-    <property name="name" value="solido"/>
-   </properties>
-   <polygon points="0,0 45,0 45,16 0,16"/>
-  </object>
   <object id="37" name="solido" x="784" y="80">
    <properties>
     <property name="name" value="solido"/>
    </properties>
-   <polygon points="0,0 64,0 48,80 16,80 0,64"/>
-  </object>
-  <object id="38" name="solido" x="944" y="752">
-   <properties>
-    <property name="name" value="solido"/>
-   </properties>
-   <polygon points="0,0 0,48 32,48 64,48 64,0"/>
+   <polygon points="0,0 64,0 48,64 16,64 0,51.2"/>
   </object>
   <object id="40" name="start" x="64" y="672" width="80" height="64">
    <properties>
@@ -91,14 +61,59 @@
     <property name="name" value="HuskWarrior"/>
    </properties>
   </object>
-  <object id="43" name="HuskBully" x="800" y="864" width="64" height="48">
-   <properties>
-    <property name="name" value="HuskBully"/>
-   </properties>
-  </object>
   <object id="45" name="Tiktik" x="352" y="288" width="64" height="64">
    <properties>
     <property name="name" value="Tiktik"/>
+   </properties>
+  </object>
+  <object id="47" name="solido" x="160" y="384" width="368" height="32">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="48" name="solido" x="720" y="256" width="176" height="64">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="49" name="solido" x="960" y="432" width="400" height="16">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="50" name="solido" x="624" y="704" width="48" height="16">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="51" name="solido" x="784" y="544" width="64" height="16">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="52" name="solido" x="672" y="821" width="48" height="16">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="54" name="solido" x="944" y="768" width="64" height="32">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="55" name="solido" x="112" y="943" width="1088" height="16">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="56" name="solido" x="1200" y="896" width="16" height="48">
+   <properties>
+    <property name="name" value="solido"/>
+   </properties>
+  </object>
+  <object id="57" name="solido" x="112" y="896" width="16" height="48">
+   <properties>
+    <property name="name" value="solido"/>
    </properties>
   </object>
  </objectgroup>

@@ -389,6 +389,7 @@ public class BaseActor extends Actor
         boundaryPolygon = new Polygon(vertices);
     }
 
+
     /**
      *  Ritorna il poligono che identifica le dimensioni dell'oggetto anche in base al suo angolo di rotazione
      */

@@ -30,7 +30,6 @@ public class IntroScreen extends BaseScreen
 
         music = Gdx.audio.newMusic(Gdx.files.internal("assets/Video/intro.mp3"));
         music.play();
-        System.out.println("Parte");
     }
 
     @Override

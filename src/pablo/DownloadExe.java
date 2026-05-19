@@ -72,7 +72,6 @@ public class DownloadExe {
             Path jar     = tmp.resolve("Pablo.jar");
             Path ico     = tmp.resolve("mask.ico");
 
-            System.out.println("Progetto: " + project);
 
             require(Files.isRegularFile(src.resolve("pablo").resolve("Launcher.java")),
                     "Launcher.java non trovato in " + src);
@@ -100,7 +99,6 @@ public class DownloadExe {
             require(hasMzHeader(dest.resolve(EXE_NAME)),
                     "Pablo.exe non è un eseguibile Windows valido.");
 
-            System.out.println("Creato: " + dest.resolve(EXE_NAME));
         } finally {
             delete(tmp);
         }
@@ -281,7 +279,6 @@ public class DownloadExe {
             // via classpath lookup (Gdx.files.internal controlla il classpath prima
             // del filesystem → l'exe funziona da qualsiasi directory).
             if (Files.isDirectory(assets)) {
-                System.out.println("Bundle assets in JAR: " + assets);
                 addDirectoryToJar(out, written, assets.getParent(), assets);
             }
         }

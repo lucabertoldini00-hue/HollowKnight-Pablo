@@ -154,9 +154,6 @@ public class Crawlid extends Enemy
         updateSensorPositions();
 
         boolean onGround = isOnGround();
-        com.badlogic.gdx.Gdx.app.log("CrawlidDebug", "x=" + getX() + " y=" + getY()
-            + " onGround=" + onGround
-            + " belowSensor=" + (belowSensor != null ? belowSensor.getX() + "," + belowSensor.getY() : "null"));
 
         // At a ledge with no ground ahead → start turn
         if (onGround && !edgeAheadHasGround())

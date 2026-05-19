@@ -367,25 +367,7 @@ NODES.put(map4.path, map4);
 * Core loop già funzionante
 * Base solida per espansione gameplay
 
----
-
-## ✅ Aggiornamenti recenti (sessione)
-
-* Fix compilazione: `edgeAheadHasground` e aggiunta `Enemy.isDead()` per filtrare danni da cadaveri.
-* Player QoL: salto a altezza variabile con rilascio anticipato del tasto.
-* Nemici: dissolvenza morte (3s + fade 1s) e niente danni da hitbox quando sono morti.
-* FalseKnight: ora riceve danno dai colpi del player; colpi al player = 5 danni.
-* Respawn: alla morte il player torna allo spawn (fuori boss fight).
-* Boss fight: sequenza morte con schermo nero, testo ingrandito, `se.jpg` 1s prima dell’uscita.
-* HuskWarrior: hitbox ridotta con boundary polygon dedicato.
-* Debug mapping: tasto `9` dalla prima mappa → ultima mappa.
-* UI prompt/dialogo boss: stile menu pausa, sfondo scuro, testo verde, prompt nascosto fuori trigger.
-
----
-
-## 🐞 Bug Report (merge da BUG.md)
-
-# Bug Report — Integrazione nuove mappe nel gioco HollowKnight-Pablo
+* # Bug Report — Integrazione nuove mappe nel gioco HollowKnight-Pablo
 
 Questo documento descrive tutti i problemi riscontrati e risolti durante la sessione di debugging, in ordine cronologico.
 
@@ -433,7 +415,7 @@ che restituiva una lista vuota, causando un `IndexOutOfBoundsException`.
 Senza il layer Oggetti non esistono né l'oggetto `start` (posizione di spawn di Pablo) né gli oggetti `solido` (collisioni). Il gioco non può partire senza sapere dove piazzare il giocatore.
 
 ### Soluzione
-Aggiungere in Tiled un **Object Layer** chiamato "Oggetti" contenente almeno:
+Aggiungere in Tiled un **Object Layer** chiamato `"Oggetti"` contenente almeno:
 - Un rettangolo `start` (con custom property `name = "start"`) per lo spawn del giocatore
 - Rettangoli `solido` (con custom property `name = "solido"`) per pavimento, soffitto e muri
 
@@ -585,342 +567,34 @@ Quando un oggetto non veniva trovato nella mappa, l'unico messaggio era un `Inde
 In `TilemapActor.java` sono stati aggiunti due meccanismi di logging:
 
 1. **Log al caricamento** — stampa tutti gli oggetti trovati in ogni layer:
-```
-[TilemapActor] Layer Oggetti — tileList:
-  - [start]
-  - [solido]
-  - [Crawlid]
-  - [Tiktik]
-```
-
-2. **Warning mirato** — se un nome non viene trovato, stampa un warning con la lista di nomi disponibili.
-
----
-
-## 10. Tilemap con poligoni — collisioni non funzionanti
-
-### Cos'era
-Le collisioni con le forme poligonali create in Tiled non funzionavano, perché `LevelScreen` leggeva solo rettangoli con `getRectangleList("solido")`.
-
-### Causa
-Le forme poligonali vengono restituite da `getPolygonList()`, ma non erano gestite.
-
-### Soluzione
-In `LevelScreen.java` è stata aggiunta la creazione di `Object` solidi anche per i `PolygonMapObject`:
 ```java
-if (obj instanceof PolygonMapObject)
-    addSolidTriangles(((PolygonMapObject) obj).getPolygon());
-```
-Con triangolazione tramite `EarClippingTriangulator` per ottenere poligoni convexi.
-
----
-
-## 11. Pablo rimane bloccato sui bordi con mappe multiple
-
-### Cos'era
-Pablo non poteva uscire dai bordi X della mappa per triggerare la transizione, perché `boundToWorld()` clampava sempre la posizione.
-
-### Causa
-La funzione `boundToWorld()` in `Pablo.java` non distingueva tra gameplay normale e transizione mappa.
-
-### Soluzione
-Aggiunto un flag `allowMapTransition` in `Pablo`:
-```java
-public void setAllowMapTransition(boolean allow)
-```
-E in `boundToWorld()`:
-```java
-if (!allowMapTransition) {
-    if (getX() < 0) setX(0);
-    if (getX() + getWidth() > worldBounds.width) setX(worldBounds.width - getWidth());
+private void logAllObjects() {
+    Gdx.app.log("TilemapActor", "--- Oggetti nella mappa " + loadedPath + " ---");
+    for (MapLayer layer : tiledMap.getLayers()) { ... }
 }
 ```
-Durante le transizioni, `LevelScreen` abilita il flag.
 
----
-
-## 12. HUD anima resetta durante cambio mappa
-
-### Cos'era
-Il ricettacolo dell’anima veniva resettato quando si entrava in una nuova mappa.
-
-### Causa
-`LevelScreen` ricreava il `Pablo` con `new Pablo(...)` e non reapplicava l’anima.
-
-### Soluzione
-Introdotta la classe `PlayerState` per salvare/anima/HP:
+2. **Warning quando un tipo non viene trovato:**
 ```java
-PlayerState.saveFrom(pablo);
-BaseGame.setActiveScreen(new LevelScreen(node.rightNeighbor, "left"));
-```
-E `PlayerState.applyTo(pablo)` dopo lo spawn.
-
----
-
-## 13. Input tastiera non intercettato dal menu
-
-### Cos'era
-Nel menu principale, i tasti `W/S` e `ENTER` non funzionavano.
-
-### Causa
-`MenuScreen` non aggiungeva l’input processor corretto.
-
-### Soluzione
-In `MenuScreen`, aggiunto:
-```java
-BaseGame.setInputProcessor(uiStage);
+if (list.isEmpty())
+    Gdx.app.log("TilemapActor", "ATTENZIONE: nessun oggetto '"
+        + propertyName + "' trovato in " + loadedPath);
 ```
 
----
-
-## 14. Audio menu non si riattiva dopo ritorno
-
-### Cos'era
-Dopo essere entrati nel gioco e tornati al menu, la musica non ripartiva.
-
-### Causa
-`MenuScreen` non rilanciava `SoundManager` in `initialize()`.
-
-### Soluzione
-In `MenuScreen.initialize()`:
-```java
-SoundManager.get().playMusic(Music.MENU);
-```
+Questo ha permesso di identificare immediatamente che `start` e `solido` non venivano riconosciuti, e di ricondurre il problema all'offset del layer Oggetti.
 
 ---
 
-## 15. Errore “VideoPlayerMesh” all’avvio
-
-### Cos'era
-Crash immediato con:
-```
-NoClassDefFoundError: VideoPlayerMesh
-```
-
-### Causa
-Le librerie `gdx-video` erano miste tra `gdx-video-1.0.0.jar` e `gdx-video-1.0.0-anonl.jar`.
-
-### Soluzione
-Usare solo la variante `anonl` per entrambe:
-```
-gdx-video-1.0.0-anonl.jar
-gdx-video-desktop-1.0.0-anonl.jar
-```
-
----
-
-## 16. Collisione Pablo con poligoni — glitch a velocità alte
-
-### Cos'era
-Pablo attraversava i poligoni quando cadeva velocemente.
-
-### Causa
-La collisione veniva risolta solo con `preventOverlap`, che può fallire con alte velocità.
-
-### Soluzione
-Aggiunto `snapToGroundIfOverlapping()` per i nemici e una logica simile per il player.
-
----
-
-## 17. Mappa non loggata correttamente — confusione in debug
-
-### Cos'era
-I log mostrano solo il path del TMX, senza indicare il nome effettivo della mappa.
-
-### Soluzione
-Aggiunto un log più esplicito in `LevelScreen`:
-```java
-Gdx.app.log("LevelScreen", "Caricamento mappa: " + effectiveMapPath);
-```
-
----
-
-## 18. Input Interazione boss non chiude dialogo
-
-### Cos'era
-Il dialogo boss restava aperto anche dopo la scelta.
-
-### Soluzione
-`closeBossDialog()` viene chiamato in entrambe le scelte `SI/NO`.
-
----
-
-## 19. Enemy AI non attiva off-screen ma cade nel vuoto
-
-### Cos'era
-I nemici fuori camera restavano congelati in aria e poi “cadevano” di colpo quando entravano in camera.
-
-### Soluzione
-In `Enemy`, è stata aggiunta la fase di **settle** con gravità anche off-screen per i primi 0.5s.
-
----
-
-## 20. Nessun supporto mappe in `MapGraph`
-
-### Cos'era
-Non esisteva alcuna struttura formale per gestire mappe multiple.
-
-### Soluzione
-Aggiunto `MapGraph` come registro statico per tutte le mappe e i loro vicini.
-
----
-
-## 21. Trigger boss in mappe senza boss
-
-### Cos'era
-Il trigger boss veniva creato anche in mappe non connesse al boss, generando prompt inutili.
-
-### Soluzione
-Se non esiste un oggetto `tp` o `FalseKnight`, il prompt non viene creato.
-
----
-
-## 22. Errori di collisione su asset troppo grandi
-
-### Cos'era
-Gli sprite con dimensioni diverse causavano hitbox inconsistenti.
-
-### Soluzione
-`Enemy.setAnimation()` ora richiama `setBoundaryRectangle()` ad ogni cambio frame.
-
----
-
-## 23. Hitbox attacco Pablo non corretta dopo loadTexture
-
-### Cos'era
-La hitbox del colpo di Pablo era troppo grande perché `loadTexture()` resettava la size del `Hitbox`.
-
-### Soluzione
-Dopo `loadTexture()` la size viene reimpostata manualmente nella classe `Hitbox`.
-
----
-
-## 24. Sistema Void Respawn non consistente
-
-### Cos'era
-Cadendo nel vuoto, il respawn non sempre avveniva o avveniva subito.
-
-### Soluzione
-Aggiunto `voidTimer` con `VOID_RESPAWN_DELAY` e reset pulito.
-
----
-
-## 25. Boss Fight: mancata animazione di morte nemici
-
-### Cos'era
-I nemici scomparivano immediatamente alla morte senza animazione di cadavere.
-
-### Soluzione
-Rimosso il `remove()` immediato in `Enemy.takeDamage()` e aggiunta dissolvenza dopo 3s.
-
----
-
-## 26. AI: edge sensor non funzionante
-
-### Cos'era
-I nemici camminavano nel vuoto perché `edgeAheadHasground()` non veniva trovato (errore di compilazione).
-
-### Soluzione
-Corretto il nome del metodo (case sensitive) e uniformato in tutte le classi.
-
----
-
-## 27. Pablo non torna alla mappa iniziale dopo morte
-
-### Cos'era
-La morte del player non resettava correttamente la posizione.
-
-### Soluzione
-Aggiunto `respawn()` in `Pablo` e chiamato in `LevelScreen`.
-
----
-
-## 28. FalseKnight non riceveva danno
-
-### Cos'era
-Il boss non veniva colpito perché non estende `Enemy`.
-
-### Soluzione
-`Hitbox` ora gestisce anche `FalseKnight` separatamente.
-
----
-
-## 29. HuskWarrior hitbox troppo grande
-
-### Cos'era
-Il player veniva colpito anche quando era visivamente distante.
-
-### Soluzione
-Ridotta hitbox con `setBoundaryPolygon()` e offset personalizzati.
-
----
-
-## 30. Prompt “Premi E” sempre visibile
-
-### Cos'era
-Il pannello del prompt boss restava visibile anche fuori dal trigger.
-
-### Soluzione
-Toggle di visibilità sulla `Table` completa quando `pablo` esce dall’area.
-
----
-
-## 31. Boss dialog e prompt con stile diverso dal menu
-
-### Cos'era
-Il prompt boss e il dialogo non erano in linea con lo stile del menu pausa.
-
-### Soluzione
-Introdotti font Trajan + colori verdi + pannello scuro e decorazioni.
-
----
-
-## 32. Boss death sequence mancante
-
-### Cos'era
-In boss fight, la morte portava al respawn immediato.
-
-### Soluzione
-Sequenza: schermo nero → testo → `se.jpg` → uscita.
-
----
-
-## 33. Danno del boss troppo basso
-
-### Cos'era
-Il FalseKnight infliggeva solo 1 danno.
-
-### Soluzione
-Danno impostato a 5.
-
----
-
-## 34. Teleport debug tra mappe
-
-### Cos'era
-Nessun comando rapido per saltare all’ultima mappa.
-
-### Soluzione
-Tasto `9` dalla prima mappa → ultima mappa.
-
----
-
-## 35. Jump variabile (QoL)
-
-### Cos'era
-Il salto aveva altezza fissa e poco responsiva.
-
-### Soluzione
-Rilascio anticipato del tasto riduce la velocità verticale per salti corti.
-
----
-
-## 36. Danni da nemici morti
-
-### Cos'era
-I cadaveri continuavano a danneggiare il player.
-
-### Soluzione
-Blocco danni quando `Enemy.isDead()`.
-
-
+## Riepilogo
+
+| # | Bug | File modificato | Tipo |
+|---|-----|-----------------|------|
+| 1 | Mappa infinita incompatibile | `Senza_Titolo.tmx` (Tiled) | Configurazione |
+| 2 | Path assoluto tileset | `Senza_Titolo.tmx` (Tiled) | Configurazione |
+| 3 | Layer Oggetti assente | `Senza_Titolo.tmx` (Tiled) | Configurazione |
+| 4 | Oggetto `start` non trovato | `LevelScreen.java`, `TilemapActor.java` | Bug + Configurazione |
+| 5 | FalseKnight obbligatorio | `LevelScreen.java` | Design |
+| 6 | Path mappa hardcoded | `LevelScreen.java` | Design |
+| 7 | BufferOverflowException | `TilemapActor.java` | Bug |
+| 8 | Sprite distorti | `BaseScreen.java` | Bug |
+| 9 | Logging assente | `TilemapActor.java` | Miglioramento |
